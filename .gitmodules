@@ -1,0 +1,3 @@
+[submodule "external/YOLOv6"]
+	path = external/YOLOv6
+	url = https://github.com/meituan/YOLOv6.git

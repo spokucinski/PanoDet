@@ -21,3 +21,8 @@ pip install -r external/YOLOv6/requirements.txt
 pip install -r external/YOLOv7/requirements.txt 
 pip install -r external/YOLOv8/requirements.txt
 ```
+
+Install PyTorch manually one more time on top of all the auto-installs
+```
+conda install pytorch torchvision torchaudio pytorch-cuda=11.7 -c pytorch -c nvidia -y
+```

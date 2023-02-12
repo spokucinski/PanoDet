@@ -4,3 +4,6 @@
 [submodule "external/YOLOv5"]
 	path = external/YOLOv5
 	url = https://github.com/ultralytics/yolov5.git
+[submodule "external/YOLOv7"]
+	path = external/YOLOv7
+	url = https://github.com/WongKinYiu/yolov7.git

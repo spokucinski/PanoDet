@@ -25,11 +25,11 @@ yolov6_train_path = '../external/YOLOv6/tools/train.py'
 yolov6_val_path = '../external/YOLOv6/tools/eval.py'
 tested_yolov6_models = ['yolov6n', 'yolov6n6']#['yolov6n', 'yolov6n6', 'yolov6s', 'yolov6s6', 'yolov6m', 'yolov6m6', 'yolov6l', 'yolov6l6']
 
-v7_datasets_path = '../datasets/YOLOv5' # Dataset format for v7 is the same as for v5
+v7_datasets_path = '../datasets/YOLOv7' # Dataset format for v7 is the same as for v5
 yolov7_train_path = '../external/YOLOv7/train.py'
 yolov7_train_aux_path = '../external/YOLOv7/train_aux.py'
-yolov7_val_path = '../external/YOLOv5/val.py'
-tested_yolov7_models = ['yolov7', 'yolov7x', 'yolov7-w6', 'yolov7-e6', 'yolov7-d6', 'yolov7-e6e']
+yolov7_val_path = '../external/YOLOv7/test.py'
+tested_yolov7_models = ['yolov7'] #['yolov7', 'yolov7x', 'yolov7-w6', 'yolov7-e6', 'yolov7-d6', 'yolov7-e6e']
 
 yolov8_train_path = ''
 yolov8_val_path = ''
@@ -159,6 +159,10 @@ for tested_dataset in v7_datasets_to_test:
             for epoch_size in epochs:
                 for batch_size in batch_sizes:
 
+                    # YOLOv7 does not support auto batch size
+                    if batch_size == -1:
+                        continue
+
                     # Split the path to datset with use of os separator, take the last separated element ('datasetname.yaml')
                     # split it again with the dot and take the first part - name of the .yaml file ('datasetname')
                     tested_dataset_name = tested_dataset.split(os.sep)[-1].split('.')[0]
@@ -170,7 +174,8 @@ for tested_dataset in v7_datasets_to_test:
                     if run_name not in done_trainings:
                         if "6" in tested_model:
                             train_cmd = ['python', f'{yolov7_train_aux_path}',
-                                         f'--device=cpu',
+                                         f'--device=0',
+                                         f'--weights=""',
                                          f'--project={results_path}/YOLOv7/{tested_dataset_name}/Train',
                                          f'--name={run_name}',
                                          f'--data={tested_dataset}',
@@ -181,7 +186,8 @@ for tested_dataset in v7_datasets_to_test:
                                          f'--cfg=../external/YOLOv7/cfg/training/{tested_model}.yaml']
                         else:
                             train_cmd = ['python', f'{yolov7_train_path}',
-                                         f'--device=cpu',
+                                         f'--device=0',
+                                         f'--weights=""',
                                          f'--project={results_path}/YOLOv7/{tested_dataset_name}/Train',
                                          f'--name={run_name}',
                                          f'--data={tested_dataset}',
@@ -192,21 +198,27 @@ for tested_dataset in v7_datasets_to_test:
                                          f'--cfg=../external/YOLOv7/cfg/training/{tested_model}.yaml']
                         subprocess.Popen(train_cmd, stdout=subprocess.PIPE).wait()
 
-                    if not os.path.exists(os.path.join(results_path, 'YOLOv6', tested_dataset_name, 'Test')):
-                        os.makedirs(os.path.join(results_path, 'YOLOv6', tested_dataset_name, 'Test'))
-                    done_tests = os.listdir(os.path.join(results_path, 'YOLOv6', tested_dataset_name, 'Test'))
+                    if not os.path.exists(os.path.join(results_path, 'YOLOv7', tested_dataset_name, 'Test')):
+                        os.makedirs(os.path.join(results_path, 'YOLOv7', tested_dataset_name, 'Test'))
+                    done_tests = os.listdir(os.path.join(results_path, 'YOLOv7', tested_dataset_name, 'Test'))
                     if run_name not in done_tests:
-                        best_model = os.path.join(results_path, 'YOLOv6', tested_dataset_name, 'Train', run_name,
-                                                  'weights', 'best_ckpt.pt')
-                        test_cmd = ['python',
-                                    yolov6_val_path,
-                                    f'--task=val',
-                                    f'--save_dir={results_path}/YOLOv6/{tested_dataset_name}/Test',
-                                    f'--name={run_name}',
+                        best_model = os.path.join(results_path, 'YOLOv7', tested_dataset_name, 'Train', run_name,
+                                                  'weights', 'best.pt')
+                        # CRITICAL WARNING:
+                        # Because of unknown reasons YOLOv7 expects the path to the model
+                        # to be lowercase. In "google_utils.py" while loading the model they call .lower()
+                        # on the file path. It has to be manually removed to be working reasonably
+                        # from line 21:     file = Path(str(file).strip().replace("'", '').lower())
+                        # to line 21:       file = Path(str(file).strip().replace("'", ''))
+                        test_cmd = ['python', f'{yolov7_val_path}',
                                     f'--data={tested_dataset}',
-                                    f'--img={image_size}',
+                                    f'--img-size={image_size}',
+                                    f'--batch-size={batch_size}',
+                                    f'--device=0',
+                                    f'--project={results_path}/YOLOv7/{tested_dataset_name}/Test',
+                                    f'--name={run_name}',
                                     f'--weights={best_model}',
-                                    # '--save-txt'
+                                    f'--task=test',
                                     ]
                         subprocess.Popen(test_cmd, stdout=subprocess.PIPE).wait()
 

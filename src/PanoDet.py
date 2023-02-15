@@ -2,8 +2,13 @@ import os
 import subprocess
 import DatasetManager
 import ExperimentManager
+
 import YOLOv5
-from ultralytics import YOLO
+import YOLOv6
+import YOLOv7
+import YOLOv8
+
+
 
 # Initial notes
 # Main development tool is PyCharm
@@ -71,65 +76,33 @@ for tested_dataset in v5_datasets_to_test:
                                          yolov5_val_path)
 
 # YOLOv6 Experiments
-v6_datasets_to_test = []
-for root, dirs, files in os.walk(v6_datasets_path):
-    for file in files:
-        if file.endswith(".yaml"):
-            v6_datasets_to_test.append(os.path.join(root, file))
+v6_datasets_to_test = DatasetManager.get_dataset_file_paths(v6_datasets_path, dataset_file_extension)
+for tested_dataset in v6_datasets_to_test:
+    for tested_model in tested_yolov6_models:
+        for image_size in image_sizes:
+            for epoch_size in epochs:
+                for batch_size in batch_sizes:
 
-# # YOLOv6 Experiments
-# v6_datasets_to_test = []
-# for root, dirs, files in os.walk(v6_datasets_path):
-#     for file in files:
-#         if file.endswith(".yaml"):
-#             v6_datasets_to_test.append(os.path.join(root, file))
-#
-# for tested_dataset in v6_datasets_to_test:
-#     for tested_model in tested_yolov6_models:
-#         for image_size in image_sizes:
-#             for epoch_size in epochs:
-#                 for batch_size in batch_sizes:
-#
-#                     # YOLOv6 does not support auto batch size
-#                     if batch_size == -1:
-#                         continue
-#
-#                     # Split the path to datset with use of os separator, take the last separated element ('datasetname.yaml')
-#                     # split it again with the dot and take the first part - name of the .yaml file ('datasetname')
-#                     tested_dataset_name = tested_dataset.split(os.sep)[-1].split('.')[0]
-#                     run_name = f'{tested_model}_{image_size}_{epoch_size}_{batch_size}'
-#
-#                     if not os.path.exists(os.path.join(results_path, 'YOLOv6', tested_dataset_name, 'Train')):
-#                         os.makedirs(os.path.join(results_path, 'YOLOv6', tested_dataset_name, 'Train'))
-#                     done_trainings = os.listdir(os.path.join(results_path, 'YOLOv6', tested_dataset_name, 'Train'))
-#                     if run_name not in done_trainings:
-#                         train_cmd = ['python', f'{yolov6_train_path}',
-#                                      f'--output-dir={results_path}/YOLOv6/{tested_dataset_name}/Train',
-#                                      f'--name={run_name}',
-#                                      f'--data-path={tested_dataset}',
-#                                      f'--epochs={epoch_size}',
-#                                      f'--batch-size={batch_size}',
-#                                      f'--img-size={image_size}',
-#                                      f'--conf-file=../external/YOLOv6/configs/{tested_model}.py']
-#                         subprocess.Popen(train_cmd, stdout=subprocess.PIPE).wait()
-#
-#                     if not os.path.exists(os.path.join(results_path, 'YOLOv6', tested_dataset_name, 'Test')):
-#                         os.makedirs(os.path.join(results_path, 'YOLOv6', tested_dataset_name, 'Test'))
-#                     done_tests = os.listdir(os.path.join(results_path, 'YOLOv6', tested_dataset_name, 'Test'))
-#                     if run_name not in done_tests:
-#                         best_model = os.path.join(results_path, 'YOLOv6', tested_dataset_name, 'Train', run_name,
-#                                                   'weights', 'best_ckpt.pt')
-#                         test_cmd = ['python',
-#                                     yolov6_val_path,
-#                                     f'--task=val',
-#                                     f'--save_dir={results_path}/YOLOv6/{tested_dataset_name}/Test',
-#                                     f'--name={run_name}',
-#                                     f'--data={tested_dataset}',
-#                                     f'--img={image_size}',
-#                                     f'--weights={best_model}',
-#                                     # '--save-txt'
-#                                     ]
-#                         subprocess.Popen(test_cmd, stdout=subprocess.PIPE).wait()
+                    # YOLOv6 does not support auto batch size
+                    if batch_size == -1:
+                        continue
+
+                    YOLOv6.conduct_experiments(tested_dataset,
+                                               tested_model,
+                                               image_size,
+                                               epoch_size,
+                                               batch_size,
+                                               results_path,
+                                               yolov6_train_path)
+
+                    YOLOv6.conduct_tests(tested_dataset,
+                                         tested_model,
+                                         image_size,
+                                         epoch_size,
+                                         batch_size,
+                                         results_path,
+                                         yolov6_val_path)
+
 
 # # YOLOv7 Experiments
 # v7_datasets_to_test = []

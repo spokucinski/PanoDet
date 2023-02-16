@@ -89,7 +89,8 @@ class ExperimentManager:
                                  batch_size)
 
         if self.run_name not in self.done_tests:
-            self.run_testing()
+            self.run_testing(tested_dataset,
+                             image_size)
 
     def prepare_for_experiment(self,
                                tested_dataset: str,
@@ -113,11 +114,11 @@ class ExperimentManager:
                             batch_size: int):
         self.tested_dataset = tested_dataset
         self.tested_dataset_name = Dataset.get_dataset_name(tested_dataset)
-        self.run_name = ExperimentManager.get_experiment_run_name(tested_model,
-                                                                  image_size,
-                                                                  epoch_size,
-                                                                  batch_size)
-        self.done_tests = ExperimentManager.get_done_experiments('Test')
+        self.run_name = get_experiment_run_name(tested_model,
+                                                image_size,
+                                                epoch_size,
+                                                batch_size)
+        self.done_tests = self.get_done_experiments('Test')
 
     @abstractmethod
     def run_training(self,

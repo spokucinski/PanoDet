@@ -1,19 +1,16 @@
-import os
-import subprocess
 import Dataset
 
 from YOLOv5 import YOLOv5ExperimentManager
-import YOLOv6
-import YOLOv7
-import YOLOv8
-
-
+from YOLOv6 import YOLOv6ExperimentManager
+from YOLOv7 import YOLOv7ExperimentManager
+from YOLOv8 import YOLOv8ExperimentManager
 
 # Initial notes
 # Main development tool is PyCharm
 # Project should be configured with the "src" folder marked as the Source Root Folder
 # Any paths are relative to this source root
-# Datasets are expected to be provided with a yaml file describing the datasets content and its paths to train/val/test subsets
+# Datasets are expected to be provided with a yaml file
+# describing the datasets content and its paths to train/val/test subsets
 
 # Manual configuration part
 project_name = 'SimPanoDet'
@@ -37,130 +34,108 @@ v7_datasets_path = '../datasets/YOLOv7'
 yolov7_train_path = '../external/YOLOv7/train.py'
 yolov7_train_aux_path = '../external/YOLOv7/train_aux.py'
 yolov7_val_path = '../external/YOLOv7/test.py'
-tested_yolov7_models = ['yolov7'] #['yolov7', 'yolov7x', 'yolov7-w6', 'yolov7-e6', 'yolov7-d6', 'yolov7-e6e']
+tested_yolov7_models = ['yolov7', 'yolov7x'] #['yolov7', 'yolov7x', 'yolov7-w6', 'yolov7-e6', 'yolov7-d6', 'yolov7-e6e']
 
 v8_datasets_path = '../datasets/YOLOv8'
-tested_yolov8_models = ['yolov8n'] #['yolov8n', 'yolov8s', 'yolov8m', 'yolov8l', 'yolov8x']
+tested_yolov8_models = ['yolov8n', 'yolov8s'] #['yolov8n', 'yolov8s', 'yolov8m', 'yolov8l', 'yolov8x']
 
-# YOLOv5 Experiments
-v5_datasets_to_test = Dataset.get_dataset_file_paths(v5_datasets_path, dataset_file_extension)
 yolov5 = YOLOv5ExperimentManager(results_path,
                                  yolov5_train_path,
                                  None,
                                  yolov5_val_path)
+yolov6 = YOLOv6ExperimentManager(results_path,
+                                 yolov6_train_path,
+                                 None,
+                                 yolov6_val_path)
 
-for tested_dataset in v5_datasets_to_test:
-    for tested_model in tested_yolov5_models:
-        for image_size in image_sizes:
-            for epoch_size in epochs:
-                for batch_size in batch_sizes:
+yolov7 = YOLOv7ExperimentManager(results_path,
+                                 yolov7_train_path,
+                                 yolov7_train_aux_path,
+                                 yolov7_val_path)
 
+yolov8 = YOLOv8ExperimentManager(results_path,
+                                 None,
+                                 None,
+                                 None)
+
+
+for image_size in image_sizes:
+    for epoch_size in epochs:
+        for batch_size in batch_sizes:
+
+            # YOLO V5
+            v5_datasets_to_test = Dataset.get_dataset_file_paths(v5_datasets_path, dataset_file_extension)
+            for tested_dataset in v5_datasets_to_test:
+                for tested_model in tested_yolov5_models:
                     yolov5.conduct_experiments(tested_dataset,
                                                tested_model,
                                                image_size,
                                                epoch_size,
                                                batch_size)
 
-                    yolov5.run_testing(tested_dataset,
-                                       image_size)
-
-                    # YOLOv5.conduct_experiments(tested_dataset,
-                    #                            tested_model,
-                    #                            image_size,
-                    #                            epoch_size,
-                    #                            batch_size,
-                    #                            results_path,
-                    #                            yolov5_train_path)
-                    #
-                    # YOLOv5.conduct_tests(tested_dataset,
-                    #                      tested_model,
-                    #                      image_size,
-                    #                      epoch_size,
-                    #                      batch_size,
-                    #                      results_path,
-                    #                      yolov5_val_path)
-
-# YOLOv6 Experiments
-v6_datasets_to_test = Dataset.get_dataset_file_paths(v6_datasets_path, dataset_file_extension)
-for tested_dataset in v6_datasets_to_test:
-    for tested_model in tested_yolov6_models:
-        for image_size in image_sizes:
-            for epoch_size in epochs:
-                for batch_size in batch_sizes:
+                    yolov5.conduct_testing(tested_dataset,
+                                           tested_model,
+                                           image_size,
+                                           epoch_size,
+                                           batch_size)
+            # YOLO V6
+            v6_datasets_to_test = Dataset.get_dataset_file_paths(v6_datasets_path, dataset_file_extension)
+            for tested_dataset in v6_datasets_to_test:
+                for tested_model in tested_yolov6_models:
 
                     # YOLOv6 does not support auto batch size
                     if batch_size == -1:
                         continue
 
-                    YOLOv6.conduct_experiments(tested_dataset,
+                    yolov6.conduct_experiments(tested_dataset,
                                                tested_model,
                                                image_size,
                                                epoch_size,
-                                               batch_size,
-                                               results_path,
-                                               yolov6_train_path)
+                                               batch_size)
 
-                    YOLOv6.conduct_tests(tested_dataset,
-                                         tested_model,
-                                         image_size,
-                                         epoch_size,
-                                         batch_size,
-                                         results_path,
-                                         yolov6_val_path)
+                    yolov6.conduct_testing(tested_dataset,
+                                           tested_model,
+                                           image_size,
+                                           epoch_size,
+                                           batch_size)
 
-
-# YOLOv7 Experiments
-v7_datasets_to_test = Dataset.get_dataset_file_paths(v7_datasets_path, dataset_file_extension)
-for tested_dataset in v7_datasets_to_test:
-    for tested_model in tested_yolov7_models:
-        for image_size in image_sizes:
-            for epoch_size in epochs:
-                for batch_size in batch_sizes:
+            # YOLO V7
+            v7_datasets_to_test = Dataset.get_dataset_file_paths(v7_datasets_path, dataset_file_extension)
+            for tested_dataset in v7_datasets_to_test:
+                for tested_model in tested_yolov7_models:
 
                     # YOLOv7 does not support auto batch size
                     if batch_size == -1:
                         continue
 
-                    YOLOv7.conduct_experiments(tested_dataset,
+                    yolov7.conduct_experiments(tested_dataset,
                                                tested_model,
                                                image_size,
                                                epoch_size,
-                                               batch_size,
-                                               results_path,
-                                               yolov7_train_path,
-                                               yolov7_train_aux_path)
+                                               batch_size)
 
-                    YOLOv7.conduct_tests(tested_dataset,
-                                         tested_model,
-                                         image_size,
-                                         epoch_size,
-                                         batch_size,
-                                         results_path,
-                                         yolov7_val_path)
+                    yolov7.conduct_testing(tested_dataset,
+                                           tested_model,
+                                           image_size,
+                                           epoch_size,
+                                           batch_size)
 
+            # YOLO V8
+            v8_datasets_to_test = Dataset.get_dataset_file_paths(v8_datasets_path, dataset_file_extension)
+            for tested_dataset in v8_datasets_to_test:
+                for tested_model in tested_yolov8_models:
 
-# YOLOv8 Experiments
-v8_datasets_to_test = Dataset.get_dataset_file_paths(v8_datasets_path, dataset_file_extension)
-for tested_dataset in v8_datasets_to_test:
-    for tested_model in tested_yolov8_models:
-        for image_size in image_sizes:
-            for epoch_size in epochs:
-                for batch_size in batch_sizes:
-
-                    YOLOv8.conduct_experiments(tested_dataset,
+                    yolov8.conduct_experiments(tested_dataset,
                                                tested_model,
                                                image_size,
                                                epoch_size,
-                                               batch_size,
-                                               results_path)
+                                               batch_size)
 
-                    YOLOv8.conduct_tests(tested_dataset,
-                                         tested_model,
-                                         image_size,
-                                         epoch_size,
-                                         batch_size,
-                                         results_path)
-
+                    yolov8.conduct_testing(tested_dataset,
+                                           tested_model,
+                                           image_size,
+                                           epoch_size,
+                                           batch_size)
 
 # Uncomment if you want to shut down the computer after experiments
 # os.system('shutdown now -h')

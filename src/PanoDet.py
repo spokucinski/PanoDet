@@ -1,9 +1,8 @@
 import os
 import subprocess
-import DatasetManager
-import ExperimentManager
+import Dataset
 
-import YOLOv5
+from YOLOv5 import YOLOv5ExperimentManager
 import YOLOv6
 import YOLOv7
 import YOLOv8
@@ -44,31 +43,45 @@ v8_datasets_path = '../datasets/YOLOv8'
 tested_yolov8_models = ['yolov8n'] #['yolov8n', 'yolov8s', 'yolov8m', 'yolov8l', 'yolov8x']
 
 # YOLOv5 Experiments
-v5_datasets_to_test = DatasetManager.get_dataset_file_paths(v5_datasets_path, dataset_file_extension)
+v5_datasets_to_test = Dataset.get_dataset_file_paths(v5_datasets_path, dataset_file_extension)
+yolov5 = YOLOv5ExperimentManager(results_path,
+                                 yolov5_train_path,
+                                 None,
+                                 yolov5_val_path)
 
 for tested_dataset in v5_datasets_to_test:
     for tested_model in tested_yolov5_models:
         for image_size in image_sizes:
             for epoch_size in epochs:
                 for batch_size in batch_sizes:
-                    YOLOv5.conduct_experiments(tested_dataset,
+
+                    yolov5.conduct_experiments(tested_dataset,
                                                tested_model,
                                                image_size,
                                                epoch_size,
-                                               batch_size,
-                                               results_path,
-                                               yolov5_train_path)
+                                               batch_size)
 
-                    YOLOv5.conduct_tests(tested_dataset,
-                                         tested_model,
-                                         image_size,
-                                         epoch_size,
-                                         batch_size,
-                                         results_path,
-                                         yolov5_val_path)
+                    yolov5.run_testing(tested_dataset,
+                                       image_size)
+
+                    # YOLOv5.conduct_experiments(tested_dataset,
+                    #                            tested_model,
+                    #                            image_size,
+                    #                            epoch_size,
+                    #                            batch_size,
+                    #                            results_path,
+                    #                            yolov5_train_path)
+                    #
+                    # YOLOv5.conduct_tests(tested_dataset,
+                    #                      tested_model,
+                    #                      image_size,
+                    #                      epoch_size,
+                    #                      batch_size,
+                    #                      results_path,
+                    #                      yolov5_val_path)
 
 # YOLOv6 Experiments
-v6_datasets_to_test = DatasetManager.get_dataset_file_paths(v6_datasets_path, dataset_file_extension)
+v6_datasets_to_test = Dataset.get_dataset_file_paths(v6_datasets_path, dataset_file_extension)
 for tested_dataset in v6_datasets_to_test:
     for tested_model in tested_yolov6_models:
         for image_size in image_sizes:
@@ -97,7 +110,7 @@ for tested_dataset in v6_datasets_to_test:
 
 
 # YOLOv7 Experiments
-v7_datasets_to_test = DatasetManager.get_dataset_file_paths(v7_datasets_path, dataset_file_extension)
+v7_datasets_to_test = Dataset.get_dataset_file_paths(v7_datasets_path, dataset_file_extension)
 for tested_dataset in v7_datasets_to_test:
     for tested_model in tested_yolov7_models:
         for image_size in image_sizes:
@@ -127,7 +140,7 @@ for tested_dataset in v7_datasets_to_test:
 
 
 # YOLOv8 Experiments
-v8_datasets_to_test = DatasetManager.get_dataset_file_paths(v8_datasets_path, dataset_file_extension)
+v8_datasets_to_test = Dataset.get_dataset_file_paths(v8_datasets_path, dataset_file_extension)
 for tested_dataset in v8_datasets_to_test:
     for tested_model in tested_yolov8_models:
         for image_size in image_sizes:

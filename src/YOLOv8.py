@@ -1,6 +1,6 @@
 from ultralytics import YOLO
-import ExperimentManager
-import DatasetManager
+import Experiment
+import Dataset
 import os
 
 

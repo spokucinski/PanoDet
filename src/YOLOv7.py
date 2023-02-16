@@ -1,6 +1,6 @@
 import subprocess
-import ExperimentManager
-import DatasetManager
+import Experiment
+import Dataset
 import os
 
 

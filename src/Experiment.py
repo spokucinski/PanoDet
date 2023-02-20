@@ -1,6 +1,8 @@
 import os
-from abc import abstractmethod
 import Dataset
+
+from abc import abstractmethod
+
 
 
 def get_experiment_run_name(tested_model: str,
@@ -31,6 +33,7 @@ class ExperimentManager:
                  test_script_path: str):
 
         # Fields statically the same during whole training / testing
+        self.exists = True
         self.results_path = results_path
         self.model_family = model_family
         self.base_train_script_path = base_train_script_path

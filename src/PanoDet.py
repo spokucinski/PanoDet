@@ -1,4 +1,5 @@
 import Dataset
+import logging
 
 from YOLOv5 import YOLOv5ExperimentManager
 from YOLOv6 import YOLOv6ExperimentManager
@@ -12,59 +13,91 @@ from YOLOv8 import YOLOv8ExperimentManager
 # Datasets are expected to be provided with a yaml file
 # describing the datasets content and its paths to train/val/test subsets
 
+logging.basicConfig(level=logging.INFO, filename='../results/log.log', filemode='a',
+                    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+
+logger = logging.getLogger(__name__)
+logger.info("Starting experiments!")
+logger.info("Reading start parameters...")
+
+logger.info("Requested experiment parameters:")
 # Manual configuration part
-project_name = 'SimPanoDet'
+project_name = 'PanoDet'
+logger.info(f'Project name: {project_name}')
+
 dataset_file_extension = '.yaml'
+logger.info(f'Dataset file extension: {dataset_file_extension}')
+
 results_path = '../results'
-epochs = [1]  # [50, 100, 150, 200, 300]
-image_sizes = [1024]  # [1024, 512, 256]
-batch_sizes = [1]  # [96, 64, 32, -1]
+logger.info(f'Results saved to: {results_path}')
 
-v5_datasets_path = '../datasets/YOLOv5'
-yolov5_train_path = '../external/YOLOv5/train.py'
-yolov5_val_path = '../external/YOLOv5/val.py'
-tested_yolov5_models = ['yolov5n', 'yolov5s'] #['yolov5n', 'yolov5s', 'yolov5m', 'yolov5l', 'yolov5x']
+datasets_path = '../datasets'
+logger.info(f'Datasets will be searched for in: {datasets_path}')
 
-v6_datasets_path = '../datasets/YOLOv6'
-yolov6_train_path = '../external/YOLOv6/tools/train.py'
-yolov6_val_path = '../external/YOLOv6/tools/eval.py'
-tested_yolov6_models = ['yolov6n', 'yolov6n6']#['yolov6n', 'yolov6n6', 'yolov6s', 'yolov6s6', 'yolov6m', 'yolov6m6', 'yolov6l', 'yolov6l6']
 
-v7_datasets_path = '../datasets/YOLOv7'
-yolov7_train_path = '../external/YOLOv7/train.py'
-yolov7_train_aux_path = '../external/YOLOv7/train_aux.py'
-yolov7_val_path = '../external/YOLOv7/test.py'
-tested_yolov7_models = ['yolov7', 'yolov7x'] #['yolov7', 'yolov7x', 'yolov7-w6', 'yolov7-e6', 'yolov7-d6', 'yolov7-e6e']
+epochs = [50, 100, 200, 300]
+logger.info(f'Epochs: {epochs}')
 
-v8_datasets_path = '../datasets/YOLOv8'
-tested_yolov8_models = ['yolov8n', 'yolov8s'] #['yolov8n', 'yolov8s', 'yolov8m', 'yolov8l', 'yolov8x']
+image_sizes = [256, 512, 1024]
+logger.info(f'Image sizes: {image_sizes}')
+
+batch_sizes = [-1, 8, 16, 32, 64]
+logger.info(f'Batch sizes: {batch_sizes}')
+
+tested_yolov5_models = ['yolov5n', 'yolov5s', 'yolov5m', 'yolov5l', 'yolov5x']
+logger.info(f'YOLOv5 models: {tested_yolov5_models}')
+
+tested_yolov6_models = ['yolov6n', 'yolov6n6', 'yolov6s', 'yolov6s6', 'yolov6m', 'yolov6m6', 'yolov6l', 'yolov6l6']
+logger.info(f'YOLOv6 models: {tested_yolov6_models}')
+
+tested_yolov7_models = ['yolov7', 'yolov7x', 'yolov7-w6', 'yolov7-e6', 'yolov7-d6', 'yolov7-e6e']
+logger.info(f'YOLOv7 models: {tested_yolov7_models}')
+
+tested_yolov8_models = ['yolov8n', 'yolov8s', 'yolov8m', 'yolov8l', 'yolov8x']
+logger.info(f'YOLOv8 models: {tested_yolov8_models}')
+
+logger.info("Parameters reading complete!")
+logger.info("Initializing experiment managers started...")
 
 yolov5 = YOLOv5ExperimentManager(results_path,
-                                 yolov5_train_path,
+                                 '../external/YOLOv5/train.py',
                                  None,
-                                 yolov5_val_path)
+                                 '../external/YOLOv5/val.py')
+
 yolov6 = YOLOv6ExperimentManager(results_path,
-                                 yolov6_train_path,
+                                 '../external/YOLOv6/tools/train.py',
                                  None,
-                                 yolov6_val_path)
+                                 '../external/YOLOv6/tools/eval.py')
 
 yolov7 = YOLOv7ExperimentManager(results_path,
-                                 yolov7_train_path,
-                                 yolov7_train_aux_path,
-                                 yolov7_val_path)
+                                 '../external/YOLOv7/train.py',
+                                 '../external/YOLOv7/train_aux.py',
+                                 '../external/YOLOv7/test.py')
 
 yolov8 = YOLOv8ExperimentManager(results_path,
                                  None,
                                  None,
                                  None)
 
+logger.info("Experiment managers initialization ended!")
+
+v5_datasets_to_test = Dataset.get_dataset_file_paths(f"{datasets_path}/YOLOv5", dataset_file_extension)
+logger.info(f"{len(v5_datasets_to_test)} YOLOv5 datasets found: {v5_datasets_to_test}")
+
+v6_datasets_to_test = Dataset.get_dataset_file_paths(f"{datasets_path}/YOLOv6", dataset_file_extension)
+logger.info(f"{len(v6_datasets_to_test)} YOLOv6 datasets found: {v6_datasets_to_test}")
+
+v7_datasets_to_test = Dataset.get_dataset_file_paths(f"{datasets_path}/YOLOv7", dataset_file_extension)
+logger.info(f"{len(v7_datasets_to_test)} YOLOv7 datasets found: {v7_datasets_to_test}")
+
+v8_datasets_to_test = Dataset.get_dataset_file_paths(f"{datasets_path}/YOLOv8", dataset_file_extension)
+logger.info(f"{len(v8_datasets_to_test)} YOLOv8 datasets found: {v8_datasets_to_test}")
 
 for image_size in image_sizes:
     for epoch_size in epochs:
         for batch_size in batch_sizes:
 
             # YOLO V5
-            v5_datasets_to_test = Dataset.get_dataset_file_paths(v5_datasets_path, dataset_file_extension)
             for tested_dataset in v5_datasets_to_test:
                 for tested_model in tested_yolov5_models:
                     yolov5.conduct_experiments(tested_dataset,
@@ -79,7 +112,6 @@ for image_size in image_sizes:
                                            epoch_size,
                                            batch_size)
             # YOLO V6
-            v6_datasets_to_test = Dataset.get_dataset_file_paths(v6_datasets_path, dataset_file_extension)
             for tested_dataset in v6_datasets_to_test:
                 for tested_model in tested_yolov6_models:
 
@@ -100,7 +132,6 @@ for image_size in image_sizes:
                                            batch_size)
 
             # YOLO V7
-            v7_datasets_to_test = Dataset.get_dataset_file_paths(v7_datasets_path, dataset_file_extension)
             for tested_dataset in v7_datasets_to_test:
                 for tested_model in tested_yolov7_models:
 
@@ -121,7 +152,6 @@ for image_size in image_sizes:
                                            batch_size)
 
             # YOLO V8
-            v8_datasets_to_test = Dataset.get_dataset_file_paths(v8_datasets_path, dataset_file_extension)
             for tested_dataset in v8_datasets_to_test:
                 for tested_model in tested_yolov8_models:
 

@@ -62,7 +62,7 @@ class YOLOv5ExperimentManager(ExperimentManager):
                         f'--img={image_size}',
                         f'--weights={best_model}',
                         ]
-            subprocess.Popen(test_cmd, stdout=subprocess.PIPE).wait()
+            subprocess.Popen(test_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).wait()
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error(f"Exception during YOLOv5 testing! Run command: {test_cmd}")
@@ -84,7 +84,7 @@ class YOLOv5ExperimentManager(ExperimentManager):
                          f'--img={image_size}',
                          f'--weights={tested_model}.pt']
 
-            subprocess.Popen(train_cmd, stdout=subprocess.PIPE).wait()
+            subprocess.Popen(train_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).wait()
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error(f"Exception during YOLOv5 training! Run command: {train_cmd}")

@@ -70,7 +70,7 @@ class YOLOv7ExperimentManager(ExperimentManager):
                         f'--weights={best_model}',
                         f'--task=test',
                         ]
-            subprocess.Popen(test_cmd, stdout=subprocess.PIPE).wait()
+            subprocess.Popen(test_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).wait()
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error(f"Exception during YOLOv7 testing! Run command: {test_cmd}")
@@ -106,7 +106,7 @@ class YOLOv7ExperimentManager(ExperimentManager):
                              f'--img-size={image_size}',
                              f'--hyp=../external/YOLOv7/data/hyp.scratch.p5.yaml',
                              f'--cfg=../external/YOLOv7/cfg/training/{tested_model}.yaml']
-            subprocess.Popen(train_cmd, stdout=subprocess.PIPE).wait()
+            subprocess.Popen(train_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).wait()
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error(f"Exception during YOLOv7 training! Run command: {train_cmd}")

@@ -57,12 +57,46 @@ class YOLOv8ExperimentManager(ExperimentManager):
                      image_size: int,
                      tested_model: str):
         try:
-            model = YOLO(model=f'{tested_model}.yaml')
-            model.train(project=f'{self.results_path}/YOLOv8/{self.tested_dataset_name}/Train',
-                        name=self.run_name,
-                        data=tested_dataset,
-                        epochs=epoch_size,
-                        batch=batch_size)
+
+            previous_epoch_size = 0
+            if epoch_size == 100:
+                previous_epoch_size = 50
+                epoch_size = 50
+            if epoch_size == 200:
+                previous_epoch_size = 100
+                epoch_size = 100
+            if epoch_size == 300:
+                previous_epoch_size = 200
+                epoch_size = 100
+
+            splitted_run_name = self.run_name.split('_')
+            splitted_run_name[2] = str(previous_epoch_size)
+            previous_run_name = '_'.join(splitted_run_name)
+
+            best_previous_model_path = os.path.join(self.results_path,
+                                                    'YOLOv8',
+                                                    self.tested_dataset_name,
+                                                    'Train',
+                                                    previous_run_name,
+                                                    'weights',
+                                                    'best.pt')
+
+            old_path_exists = os.path.exists(best_previous_model_path)
+
+            if old_path_exists:
+                model = YOLO(model=f'{best_previous_model_path}')
+                model.train(project=f'{self.results_path}/YOLOv8/{self.tested_dataset_name}/Train',
+                            name=self.run_name,
+                            data=tested_dataset,
+                            epochs=epoch_size,
+                            batch=batch_size)
+            else:
+                model = YOLO(model=f'{tested_model}.yaml')
+                model.train(project=f'{self.results_path}/YOLOv8/{self.tested_dataset_name}/Train',
+                            name=self.run_name,
+                            data=tested_dataset,
+                            epochs=epoch_size,
+                            batch=batch_size)
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error(f"Exception during YOLOv8 training! "

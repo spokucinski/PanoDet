@@ -81,7 +81,43 @@ class YOLOv5ExperimentManager(ExperimentManager):
                      tested_model: str):
 
         try:
-            train_cmd = ['python', f'{self.base_train_script_path}',
+
+            previous_epoch_size = 0
+            if epoch_size == 100:
+                previous_epoch_size = 50
+                epoch_size = 50
+            if epoch_size == 200:
+                previous_epoch_size = 100
+                epoch_size = 100
+            if epoch_size == 300:
+                previous_epoch_size = 200
+                epoch_size = 100
+
+            splitted_run_name = self.run_name.split('_')
+            splitted_run_name[2] = str(previous_epoch_size)
+            previous_run_name = '_'.join(splitted_run_name)
+
+            best_previous_model_path = os.path.join(self.results_path,
+                                                    'YOLOv5',
+                                                    self.tested_dataset_name,
+                                                    'Train',
+                                                    previous_run_name,
+                                                    'weights',
+                                                    'best.pt')
+
+            old_path_exists = os.path.exists(best_previous_model_path)
+
+            if old_path_exists:
+                train_cmd = ['python', f'{self.base_train_script_path}',
+                         f'--project={self.results_path}/YOLOv5/{self.tested_dataset_name}/Train',
+                         f'--name={self.run_name}',
+                         f'--data={tested_dataset}',
+                         f'--epochs={epoch_size}',
+                         f'--batch-size={batch_size}',
+                         f'--img={image_size}',
+                         f'--weights={best_previous_model_path}']
+            else:
+                train_cmd = ['python', f'{self.base_train_script_path}',
                          f'--project={self.results_path}/YOLOv5/{self.tested_dataset_name}/Train',
                          f'--name={self.run_name}',
                          f'--data={tested_dataset}',

@@ -1,8 +1,10 @@
 import os
 import subprocess
 import logging
+import signal
 
 from Experiment import ExperimentManager
+from subprocess import STDOUT, check_output
 
 
 class YOLOv5ExperimentManager(ExperimentManager):
@@ -62,10 +64,14 @@ class YOLOv5ExperimentManager(ExperimentManager):
                         f'--img={image_size}',
                         f'--weights={best_model}',
                         ]
-            subprocess.Popen(test_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).wait()
+            p = subprocess.Popen(test_cmd, start_new_session=True)
+            p.wait(timeout=14400)
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error(f"Exception during YOLOv5 testing! Run command: {test_cmd}")
+            logger.error(f"Killing YOLOv5 testing!")
+            os.killpg(os.getpgid(p.pid), signal.SIGTERM)
+            logger.error("YOLOv5 testing killed!")
 
     def run_training(self,
                      tested_dataset: str,
@@ -84,7 +90,11 @@ class YOLOv5ExperimentManager(ExperimentManager):
                          f'--img={image_size}',
                          f'--weights={tested_model}.pt']
 
-            subprocess.Popen(train_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).wait()
+            p = subprocess.Popen(train_cmd, start_new_session=True)
+            p.wait(timeout=14400)
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error(f"Exception during YOLOv5 training! Run command: {train_cmd}")
+            logger.error(f"Killing YOLOv5 training!")
+            os.killpg(os.getpgid(p.pid), signal.SIGTERM)
+            logger.error("YOLOv5 training killed!")

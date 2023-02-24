@@ -1,5 +1,6 @@
 import os
 import logging
+import signal
 import subprocess
 
 from Experiment import ExperimentManager
@@ -70,10 +71,15 @@ class YOLOv7ExperimentManager(ExperimentManager):
                         f'--weights={best_model}',
                         f'--task=test',
                         ]
-            subprocess.Popen(test_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).wait()
+            p = subprocess.Popen(test_cmd, start_new_session=True)
+            p.wait(timeout=14400)
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error(f"Exception during YOLOv7 testing! Run command: {test_cmd}")
+            logger.error(f"Killing YOLOv7 testing!")
+            os.killpg(os.getpgid(p.pid), signal.SIGTERM)
+            logger.error("YOLOv7 testing killed!")
+
     def run_training(self,
                      tested_dataset: str,
                      epoch_size: int,
@@ -91,7 +97,7 @@ class YOLOv7ExperimentManager(ExperimentManager):
                              f'--data={tested_dataset}',
                              f'--epochs={epoch_size}',
                              f'--batch-size={batch_size}',
-                             f'--img-size="{image_size}',
+                             f'--img-size={image_size}',
                              f'--hyp=../external/YOLOv7/data/hyp.scratch.p6.yaml',
                              f'--cfg=../external/YOLOv7/cfg/training/{tested_model}.yaml']
             else:
@@ -106,7 +112,11 @@ class YOLOv7ExperimentManager(ExperimentManager):
                              f'--img-size={image_size}',
                              f'--hyp=../external/YOLOv7/data/hyp.scratch.p5.yaml',
                              f'--cfg=../external/YOLOv7/cfg/training/{tested_model}.yaml']
-            subprocess.Popen(train_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).wait()
+            p = subprocess.Popen(train_cmd, start_new_session=True)
+            p.wait(timeout=14400)
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error(f"Exception during YOLOv7 training! Run command: {train_cmd}")
+            logger.error(f"Killing YOLOv7 training!")
+            os.killpg(os.getpgid(p.pid), signal.SIGTERM)
+            logger.error("YOLOv7 training killed!")

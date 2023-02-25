@@ -61,6 +61,7 @@ class YOLOv6ExperimentManager(ExperimentManager):
                         f'--save_dir={self.results_path}/YOLOv6/{self.tested_dataset_name}/Test',
                         f'--name={self.run_name}',
                         f'--data={tested_dataset}',
+                        f'--device=cpu', # Testing intentionally run on CPU - as it was done on a terminal device without GPU
                         f'--img={image_size}',
                         f'--weights={best_model}',
                         ]
@@ -118,7 +119,7 @@ class YOLOv6ExperimentManager(ExperimentManager):
                                                     'YOLOv6',
                                                     self.tested_dataset_name,
                                                     'Train',
-                                                    self.run_name,
+                                                    previous_run_name,
                                                     'weights',
                                                     'best_ckpt.pt')
 

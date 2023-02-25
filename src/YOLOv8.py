@@ -1,5 +1,6 @@
 import os
 import logging
+import subprocess
 
 from ultralytics import YOLO
 from Experiment import ExperimentManager
@@ -35,12 +36,29 @@ class YOLOv8ExperimentManager(ExperimentManager):
                                       self.run_name,
                                       'weights',
                                       'best.pt')
-            model = YOLO(model=best_model)
-            model.val(task='val',
-                      project=f'{self.results_path}/YOLOv8/{self.tested_dataset_name}/Test',
-                      name=self.run_name,
-                      data=tested_dataset,
-                      imgsz=image_size)
+
+            test_cmd = [f'yolo',
+                        f'detect',
+                        f'val',
+                        f'split=test',
+                        f'device=cpu',
+                        # Testing intentionally run on CPU - as it was done on a terminal device without GPU
+                        f'project={self.results_path}/YOLOv8/{self.tested_dataset_name}/Test',
+                        f'name={self.run_name}',
+                        f'data={tested_dataset}',
+                        f'imgsz={image_size}',
+                        f'model={best_model}']
+
+            test_path = f'{self.results_path}/YOLOv8/{self.tested_dataset_name}/TestLog/{self.run_name}'
+            if not os.path.exists(test_path):
+                os.makedirs(test_path)
+            test_log = open(
+                f'{self.results_path}/YOLOv8/{self.tested_dataset_name}/TestLog/{self.run_name}/run_log.txt', 'a')
+            test_log.write(f'TESTING LOG OF: {self.run_name}')
+            test_log.flush()
+            p = subprocess.Popen(test_cmd, stdout=test_log, stderr=test_log, start_new_session=True)
+            p.wait(timeout=14400)
+
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error(f"Exception during YOLOv8 testing! "
@@ -84,19 +102,38 @@ class YOLOv8ExperimentManager(ExperimentManager):
             old_path_exists = os.path.exists(best_previous_model_path)
 
             if old_path_exists:
-                model = YOLO(model=f'{best_previous_model_path}')
-                model.train(project=f'{self.results_path}/YOLOv8/{self.tested_dataset_name}/Train',
-                            name=self.run_name,
-                            data=tested_dataset,
-                            epochs=epoch_size,
-                            batch=batch_size)
+                train_cmd = [f'yolo',
+                            f'detect',
+                            f'train',
+                            f'project={self.results_path}/YOLOv8/{self.tested_dataset_name}/Train',
+                            f'name={self.run_name}',
+                            f'data={tested_dataset}',
+                            f'imgsz={image_size}',
+                            f'epochs={epoch_size}',
+                            f'batch={batch_size}',
+                            f'model={best_previous_model_path}']
             else:
-                model = YOLO(model=f'{tested_model}.yaml')
-                model.train(project=f'{self.results_path}/YOLOv8/{self.tested_dataset_name}/Train',
-                            name=self.run_name,
-                            data=tested_dataset,
-                            epochs=epoch_size,
-                            batch=batch_size)
+                train_cmd = [f'yolo',
+                            f'detect',
+                            f'train',
+                            f'project={self.results_path}/YOLOv8/{self.tested_dataset_name}/Train',
+                            f'name={self.run_name}',
+                            f'data={tested_dataset}',
+                            f'imgsz={image_size}',
+                            f'epochs={epoch_size}',
+                            f'batch={batch_size}',
+                            f'model={tested_model}.yaml']
+
+            train_path = f'{self.results_path}/YOLOv8/{self.tested_dataset_name}/TrainLog/{self.run_name}'
+            if not os.path.exists(train_path):
+                os.makedirs(train_path)
+            train_log = open(
+                f'{self.results_path}/YOLOv8/{self.tested_dataset_name}/TrainLog/{self.run_name}/run_log.txt', 'a')
+            train_log.write(f'TRAINING LOG OF: {self.run_name}')
+            train_log.flush()
+            p = subprocess.Popen(train_cmd, stdout=train_log, stderr=train_log, start_new_session=True)
+            p.wait(timeout=14400)
+
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error(f"Exception during YOLOv8 training! "

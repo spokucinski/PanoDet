@@ -4,7 +4,6 @@ import logging
 import signal
 
 from Experiment import ExperimentManager
-from subprocess import STDOUT, check_output
 
 
 class YOLOv5ExperimentManager(ExperimentManager):
@@ -58,13 +57,20 @@ class YOLOv5ExperimentManager(ExperimentManager):
             test_cmd = ['python',
                         self.test_script_path,
                         f'--task=test',
+                        f'--device=cpu', # Testing intentionally run on CPU - as it was done on a terminal device without GPU
                         f'--project={self.results_path}/YOLOv5/{self.tested_dataset_name}/Test',
                         f'--name={self.run_name}',
                         f'--data={tested_dataset}',
                         f'--img={image_size}',
-                        f'--weights={best_model}',
-                        ]
-            p = subprocess.Popen(test_cmd, start_new_session=True)
+                        f'--weights={best_model}']
+
+            test_path = f'{self.results_path}/YOLOv5/{self.tested_dataset_name}/TestLog/{self.run_name}'
+            if not os.path.exists(test_path):
+                os.makedirs(test_path)
+            test_log = open(f'{self.results_path}/YOLOv5/{self.tested_dataset_name}/TestLog/{self.run_name}/run_log.txt', 'a')
+            test_log.write(f'TESTING LOG OF: {self.run_name}')
+            test_log.flush()
+            p = subprocess.Popen(test_cmd, stdout=test_log, stderr=test_log, start_new_session=True)
             p.wait(timeout=14400)
         except Exception as e:
             logger = logging.getLogger(__name__)
@@ -126,8 +132,16 @@ class YOLOv5ExperimentManager(ExperimentManager):
                          f'--img={image_size}',
                          f'--weights={tested_model}.pt']
 
-            p = subprocess.Popen(train_cmd, start_new_session=True)
+            train_path = f'{self.results_path}/YOLOv5/{self.tested_dataset_name}/TrainLog/{self.run_name}'
+            if not os.path.exists(train_path):
+                os.makedirs(train_path)
+            train_log = open(
+                f'{self.results_path}/YOLOv5/{self.tested_dataset_name}/TrainLog/{self.run_name}/run_log.txt', 'a')
+            train_log.write(f'TRAINING LOG OF: {self.run_name}')
+            train_log.flush()
+            p = subprocess.Popen(train_cmd, stdout=train_log, stderr=train_log, start_new_session=True)
             p.wait(timeout=14400)
+
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error(f"Exception during YOLOv5 training! Run command: {train_cmd}")

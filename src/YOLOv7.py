@@ -71,7 +71,16 @@ class YOLOv7ExperimentManager(ExperimentManager):
                         f'--weights={best_model}',
                         f'--task=test',
                         ]
-            p = subprocess.Popen(test_cmd, start_new_session=True)
+
+            test_path = f'{self.results_path}/YOLOv7/{self.tested_dataset_name}/TestLog/{self.run_name}'
+            if not os.path.exists(test_path):
+                os.makedirs(test_path)
+            test_log = open(
+                f'{self.results_path}/YOLOv7/{self.tested_dataset_name}/TestLog/{self.run_name}/run_log.txt', 'a')
+            test_log.write(f'TESTING LOG OF: {self.run_name}')
+            test_log.flush()
+
+            p = subprocess.Popen(test_cmd, stdout=test_log, stderr=test_log, start_new_session=True)
             p.wait(timeout=14400)
         except Exception as e:
             logger = logging.getLogger(__name__)

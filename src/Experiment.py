@@ -71,8 +71,8 @@ class ExperimentManager:
                                     epoch_size,
                                     batch_size)
 
-        if self.run_name not in self.done_trainings:
-            self.run_training(tested_dataset,
+        #if self.run_name not in self.done_trainings:
+        self.run_training(tested_dataset,
                               epoch_size,
                               batch_size,
                               image_size,

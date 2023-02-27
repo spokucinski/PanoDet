@@ -101,13 +101,16 @@ class YOLOv6ExperimentManager(ExperimentManager):
             train_log.flush()
 
             previous_epoch_size = 0
-            if epoch_size == 100:
+            if epoch_size == 50:
+                previous_epoch_size = 0
+                epoch_size = 50
+            elif epoch_size == 100:
                 previous_epoch_size = 50
                 epoch_size = 50
-            if epoch_size == 200:
+            elif epoch_size == 200:
                 previous_epoch_size = 100
                 epoch_size = 100
-            if epoch_size == 300:
+            elif epoch_size == 300:
                 previous_epoch_size = 200
                 epoch_size = 100
 
@@ -145,6 +148,18 @@ class YOLOv6ExperimentManager(ExperimentManager):
                              f'--img-size={image_size}',
                              f'--conf-file={self.results_path}/YOLOv6/{self.tested_dataset_name}/TrainLog/{self.run_name}/conf.py']
             else:
+
+                if previous_epoch_size == 0:
+                    epoch_size = 50
+                elif previous_epoch_size == 50:
+                    epoch_size = 100
+                elif previous_epoch_size == 100:
+                    epoch_size = 200
+                elif previous_epoch_size == 200:
+                    epoch_size = 300
+                elif previous_epoch_size == 300:
+                    epoch_size = 500
+
                 train_cmd = ['python', f'{self.base_train_script_path}',
                              f'--output-dir={self.results_path}/YOLOv6/{self.tested_dataset_name}/Train',
                              f'--name={self.run_name}',

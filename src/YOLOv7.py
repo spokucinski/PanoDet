@@ -101,10 +101,10 @@ class YOLOv7ExperimentManager(ExperimentManager):
             if epoch_size == 100:
                 previous_epoch_size = 50
                 epoch_size = 50
-            if epoch_size == 200:
+            elif epoch_size == 200:
                 previous_epoch_size = 100
                 epoch_size = 100
-            if epoch_size == 300:
+            elif epoch_size == 300:
                 previous_epoch_size = 200
                 epoch_size = 100
 
@@ -137,6 +137,18 @@ class YOLOv7ExperimentManager(ExperimentManager):
                                  f'--hyp=../external/YOLOv7/data/hyp.scratch.p6.yaml',
                                  f'--cfg=../external/YOLOv7/cfg/training/{tested_model}.yaml']
                 else:
+
+                    if previous_epoch_size == 0:
+                        epoch_size = 50
+                    elif previous_epoch_size == 50:
+                        epoch_size = 100
+                    elif previous_epoch_size == 100:
+                        epoch_size = 200
+                    elif previous_epoch_size == 200:
+                        epoch_size = 300
+                    elif previous_epoch_size == 300:
+                        epoch_size = 500
+
                     train_cmd = ['python', f'{self.aux_train_script_path}',
                                  f'--device=0',
                                  f'--weights=""',
@@ -162,6 +174,18 @@ class YOLOv7ExperimentManager(ExperimentManager):
                                  f'--hyp=../external/YOLOv7/data/hyp.scratch.p5.yaml',
                                  f'--cfg=../external/YOLOv7/cfg/training/{tested_model}.yaml']
                 else:
+
+                    if previous_epoch_size == 0:
+                        epoch_size = 50
+                    elif previous_epoch_size == 50:
+                        epoch_size = 100
+                    elif previous_epoch_size == 100:
+                        epoch_size = 200
+                    elif previous_epoch_size == 200:
+                        epoch_size = 300
+                    elif previous_epoch_size == 300:
+                        epoch_size = 500
+
                     train_cmd = ['python', f'{self.base_train_script_path}',
                                  f'--device=0',
                                  f'--weights=""',

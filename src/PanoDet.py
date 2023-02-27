@@ -144,6 +144,55 @@ for image_size in image_sizes:
                         except Exception:
                             logger.exception("Unknown error during yolov5 processing!")
 
+            if yolov8.exists:
+                # YOLO V8
+                for tested_dataset in v8_datasets_to_test:
+                    for tested_model in tested_yolov8_models:
+
+                        try:
+                            logger.info(f"YOLOv8 training starting for: "
+                                        f"Image size: {image_size}, "
+                                        f"Epoch size: {epoch_size}, "
+                                        f"Batch size: {batch_size}, "
+                                        f"Dataset: {tested_dataset}, "
+                                        f"Model: {tested_model}")
+
+                            yolov8.conduct_experiments(tested_dataset,
+                                                       tested_model,
+                                                       image_size,
+                                                       epoch_size,
+                                                       batch_size)
+
+                            logger.info(f"YOLOv8 training successfully ended for: "
+                                        f"Image size: {image_size}, "
+                                        f"Epoch size: {epoch_size}, "
+                                        f"Batch size: {batch_size}, "
+                                        f"Dataset: {tested_dataset}, "
+                                        f"Model: {tested_model}")
+
+                            logger.info(f"YOLOv8 testing starting for: "
+                                        f"Image size: {image_size}, "
+                                        f"Epoch size: {epoch_size}, "
+                                        f"Batch size: {batch_size}, "
+                                        f"Dataset: {tested_dataset}, "
+                                        f"Model: {tested_model}")
+
+                            # yolov8.conduct_testing(tested_dataset,
+                            #                        tested_model,
+                            #                        image_size,
+                            #                        epoch_size,
+                            #                        batch_size)
+
+                            logger.info(f"YOLOv8 testing successfully ended for: "
+                                        f"Image size: {image_size}, "
+                                        f"Epoch size: {epoch_size}, "
+                                        f"Batch size: {batch_size}, "
+                                        f"Dataset: {tested_dataset}, "
+                                        f"Model: {tested_model}")
+
+                        except Exception:
+                            logger.exception("Unknown error during yolov8 processing!")
+
             if yolov6.exists:
                 # YOLO V6
                 for tested_dataset in v6_datasets_to_test:
@@ -181,11 +230,11 @@ for image_size in image_sizes:
                                         f"Dataset: {tested_dataset}, "
                                         f"Model: {tested_model}")
 
-                            # yolov6.conduct_testing(tested_dataset,
-                            #                        tested_model,
-                            #                        image_size,
-                            #                        epoch_size,
-                            #                        batch_size)
+                            yolov6.conduct_testing(tested_dataset,
+                                                   tested_model,
+                                                   image_size,
+                                                   epoch_size,
+                                                   batch_size)
 
                             logger.info(f"YOLOv6 testing successfully ended for: "
                                         f"Image size: {image_size}, "
@@ -248,54 +297,5 @@ for image_size in image_sizes:
                         except Exception:
                             logger.exception("Unknown error during yolov7 processing!")
 
-            if yolov8.exists:
-                # YOLO V8
-                for tested_dataset in v8_datasets_to_test:
-                    for tested_model in tested_yolov8_models:
-
-                        try:
-                            logger.info(f"YOLOv8 training starting for: "
-                                        f"Image size: {image_size}, "
-                                        f"Epoch size: {epoch_size}, "
-                                        f"Batch size: {batch_size}, "
-                                        f"Dataset: {tested_dataset}, "
-                                        f"Model: {tested_model}")
-
-                            yolov8.conduct_experiments(tested_dataset,
-                                                       tested_model,
-                                                       image_size,
-                                                       epoch_size,
-                                                       batch_size)
-
-                            logger.info(f"YOLOv8 training successfully ended for: "
-                                        f"Image size: {image_size}, "
-                                        f"Epoch size: {epoch_size}, "
-                                        f"Batch size: {batch_size}, "
-                                        f"Dataset: {tested_dataset}, "
-                                        f"Model: {tested_model}")
-
-                            logger.info(f"YOLOv8 testing starting for: "
-                                        f"Image size: {image_size}, "
-                                        f"Epoch size: {epoch_size}, "
-                                        f"Batch size: {batch_size}, "
-                                        f"Dataset: {tested_dataset}, "
-                                        f"Model: {tested_model}")
-
-                            # yolov8.conduct_testing(tested_dataset,
-                            #                        tested_model,
-                            #                        image_size,
-                            #                        epoch_size,
-                            #                        batch_size)
-
-                            logger.info(f"YOLOv8 testing successfully ended for: "
-                                        f"Image size: {image_size}, "
-                                        f"Epoch size: {epoch_size}, "
-                                        f"Batch size: {batch_size}, "
-                                        f"Dataset: {tested_dataset}, "
-                                        f"Model: {tested_model}")
-
-                        except Exception:
-                            logger.exception("Unknown error during yolov8 processing!")
-
 # Uncomment if you want to shut down the computer after experiments
-# os.system('shutdown now -h')
+#os.system('shutdown now -h')

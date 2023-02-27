@@ -80,12 +80,15 @@ class YOLOv8ExperimentManager(ExperimentManager):
             if epoch_size == 100:
                 previous_epoch_size = 50
                 epoch_size = 50
-            if epoch_size == 200:
+            elif epoch_size == 200:
                 previous_epoch_size = 100
                 epoch_size = 100
-            if epoch_size == 300:
+            elif epoch_size == 300:
                 previous_epoch_size = 200
                 epoch_size = 100
+            elif epoch_size == 500:
+                previous_epoch_size = 300
+                epoch_size = 200
 
             splitted_run_name = self.run_name.split('_')
             splitted_run_name[2] = str(previous_epoch_size)
@@ -113,6 +116,16 @@ class YOLOv8ExperimentManager(ExperimentManager):
                             f'batch={batch_size}',
                             f'model={best_previous_model_path}']
             else:
+
+                if epoch_size == 50:
+                    epoch_size = 100
+                elif epoch_size == 100:
+                    epoch_size = 200
+                elif epoch_size == 200:
+                    epoch_size = 300
+                elif epoch_size == 300:
+                    epoch_size = 500
+
                 train_cmd = [f'yolo',
                             f'detect',
                             f'train',

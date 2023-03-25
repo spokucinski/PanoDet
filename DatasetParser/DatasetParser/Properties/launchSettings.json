@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "DatasetParser": {
+      "commandName": "Project",
+      "commandLineArgs": "\"C:\\Users\\Sebastian\\source\\repos\\WimrToCocoParser\\DatasetParser\\Input\" \"C:\\Users\\Sebastian\\source\\repos\\WimrToCocoParser\\DatasetParser\\Output\""
+    }
+  }
+}

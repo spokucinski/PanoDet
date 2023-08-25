@@ -22,7 +22,18 @@ class ModelBuilder:
                 return keras.applications.vgg19.VGG19(weights=weights, 
                                                       include_top=include_top, 
                                                       input_shape=input_shape)
-            case "efficientNetV2L":
+            
+            case "NASNetLarge":
+                return keras.applications.NASNetLarge(weights=weights,
+                                                      include_top=include_top,
+                                                      input_shape=input_shape)
+            
+            case "EfficientNetB7":
+                return keras.applications.EfficientNetB7(weights=weights,
+                                                         include_top=include_top,
+                                                         input_shape=input_shape)
+
+            case "EfficientNetV2L":
                 return keras.applications.EfficientNetV2L(weights=weights,
                                                           include_top=include_top,
                                                           input_shape=input_shape)
@@ -31,6 +42,11 @@ class ModelBuilder:
                 return keras.applications.ConvNeXtXLarge(weights=weights,
                                                         include_top=include_top,
                                                         input_shape=input_shape)
+            
+            case "MobileNetV2":
+                return keras.applications.MobileNetV2(weights=weights,
+                                                      include_top=include_top,
+                                                      input_shape=input_shape)
 
             case "custom":
                 result = layers.Rescaling(1./255)(inputs)
@@ -52,5 +68,17 @@ class ModelBuilder:
             case "vgg19":
                 return keras.applications.vgg19.preprocess_input(input)
             
-            case "efficientNetV2L":
+            case "NASNetLarge":
+                return keras.applications.nasnet.preprocess_input(input)
+            
+            case "EfficientNetV2L":
                 return keras.applications.efficientnet_v2.preprocess_input(input)
+            
+            case "EfficientNetB7":
+                return keras.applications.efficientnet.preprocess_input(input)
+            
+            case "ConvNeXtXLarge":
+                return input
+            
+            case "MobileNetV2":
+                return keras.applications.mobilenet_v2.preprocess_input(input)

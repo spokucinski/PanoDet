@@ -1,0 +1,3 @@
+[submodule "SAM_Dataset_Improver/external/SAM"]
+	path = SAM_Dataset_Improver/external/SAM
+	url = https://github.com/facebookresearch/segment-anything.git

@@ -29,7 +29,7 @@ if RUN_FO_SESSION:
     session = fo.launch_app(dataset)
     session.wait()
 
-four.random_split(dataset, {"train": 0.9, "val": 0, "test": 0.1})
+four.random_split(dataset, {"train": 0.7, "val": 0.15, "test": 0.15})
 print(dataset.count_sample_tags())
 
 train_dataset = dataset.match_tags("train")

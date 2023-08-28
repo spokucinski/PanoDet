@@ -4,9 +4,9 @@ import os
 import tensorflow as tf
 from Visualizer import Visualizer
 
-TRAIN_DATASET_PATH = 'data\\CODE\\train'
-VAL_DATASET_PATH = 'data\\CODE\\val'
-TEST_DATASET_PATH = 'data\\CODE\\test'
+TRAIN_DATASET_PATH = 'C:\\CODE\\Dataset\\Export\\train'
+VAL_DATASET_PATH = 'C:\\CODE\\Dataset\\Export\\val'
+TEST_DATASET_PATH = 'C:\\CODE\\Dataset\\Export\\test'
 
 # IMG_SIZE = (1920, 960)
 IMG_SIZE = (224, 224)

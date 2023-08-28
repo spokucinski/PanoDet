@@ -13,11 +13,12 @@ from datetime import datetime
 
 os.chdir('CODE_MTNN')
 
-MODELS = ['EfficientNetB7', 'EfficientNetV2L', 'ConvNeXtXLarge', 'MobileNetV2'] #['vgg16', 'vgg19', 'NASNetLarge', 'EfficientNetB7', 'EfficientNetV2L', 'ConvNeXtXLarge', 'MobileNetV2']
+MODELS = ['vgg19'] #['vgg16', 'vgg19', 'NASNetLarge', 'EfficientNetB7', 'EfficientNetV2L', 'ConvNeXtXLarge', 'MobileNetV2']
 WEIGHTS = 'imagenet'
 
-EPOCHS = 10
-BATCH_SIZE = 16
+BATCH_SIZE : int = 8
+NUM_CLASSES : int = 10
+EPOCHS : int = 10
 
 TRAIN_DATASET_PATH = 'data\\CODE\\train'
 VAL_DATASET_PATH = 'data\\CODE\\val'
@@ -27,13 +28,10 @@ NUM_CHANNELS = (3,)
 IMG_SIZE = (960, 1920)
 HALF_IMG_SIZE = (480, 960)
 THIRD_IMG_SIZE = (320, 640)
-IMG_SIZE = THIRD_IMG_SIZE
+IMG_SIZE = IMG_SIZE
 IMG_SIZE_DIM = IMG_SIZE + NUM_CHANNELS
 
-BATCH_SIZE : int = 24
-NUM_CLASSES : int = 17
-
-USE_DATA_AUG : bool = False
+USE_DATA_AUG : bool = True
 SHOW_DATASET_PREVIEW = False
 VISUALIZE_RESULTS : bool = False
 
@@ -77,8 +75,10 @@ for MODEL in MODELS:
         data_augmentation = keras.Sequential(
         [
             layers.RandomTranslation(height_factor=0, 
-                                    width_factor=0.5, 
-                                    fill_mode="wrap")
+                                     width_factor=1, 
+                                     fill_mode="wrap"),
+            layers.RandomContrast(0.25),
+            tf.keras.layers.experimental.preprocessing.RandomBrightness(0.25)
         ])
         Visualizer.present_data_augmentation(data_augmentation, train_dataset)
         x = data_augmentation(inputs)
@@ -100,20 +100,20 @@ for MODEL in MODELS:
     model = keras.Model(inputs=inputs, outputs=outputs)
     model.summary()
 
-    model.compile(optimizer="rmsprop",
-                loss="sparse_categorical_crossentropy",
-                metrics=["accuracy"])
+    model.compile(optimizer="adam",
+                  loss="sparse_categorical_crossentropy",
+                  metrics=["accuracy"])
 
     callbacks = [
-                    keras.callbacks.ModelCheckpoint(filepath="models/trainedVGG16.keras", 
+                    keras.callbacks.ModelCheckpoint(filepath=f"models/{MODEL}.keras", 
                                                     save_best_only=True, 
                                                     monitor="val_loss"),
                     keras.callbacks.TensorBoard(log_dir="logs"),
                     keras.callbacks.EarlyStopping(monitor='loss', patience=3),
                     WandbMetricsLogger(),
-                    # WandbModelCheckpoint(filepath="wandbModels", 
-                    #                      monitor="val_accuracy", 
-                    #                      save_freq="epoch")
+                    WandbModelCheckpoint(filepath="wandbModels", 
+                                         monitor="val_accuracy", 
+                                         save_freq="epoch")
                 ]
 
     history = model.fit(train_dataset, 

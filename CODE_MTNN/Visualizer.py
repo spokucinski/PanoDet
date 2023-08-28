@@ -19,6 +19,9 @@ class Visualizer:
     @staticmethod
     def present_data_augmentation(augmentation: tf.keras.Sequential,
                                   dataset: tf.data.Dataset):
+        
+        plt.ion()
+        plt.show()
         for image, _ in dataset.take(1):
             plt.figure(figsize=(10, 10))
             first_image = image[0]
@@ -27,6 +30,7 @@ class Visualizer:
                 augmented_image = augmentation(tf.expand_dims(first_image, 0))
                 plt.imshow(augmented_image[0] / 255)
                 plt.axis('off')
+                
 
     @staticmethod
     def present_training_history(history: tf.keras.callbacks.History):

@@ -27,13 +27,12 @@ def show_box(box, ax):
     w, h = box[2] - box[0], box[3] - box[1]
     ax.add_patch(plt.Rectangle((x0, y0), w, h, edgecolor='green', facecolor=(0,0,0,0), lw=2))    
 
-os.chdir("SAM_Dataset_Improver")
-
 print("PyTorch version:", torch.__version__)
 print("Torchvision version:", torchvision.__version__)
 print("CUDA is available:", torch.cuda.is_available())
 
-SAMPLE_IMAGE_PATH = "data/Pano1.jpg"
+SAMPLE_IMAGE_PATH = "data/input/Pano1.jpg"
+SAMPLE_OUT_PATH = "data/output/Pano1.jpg"
 SAM_CHECKPOINT_PATH = "models/sam_vit_h_4b8939.pth"
 MODEL_TYPE = "vit_h"
 DEVICE = "cuda"
@@ -66,5 +65,6 @@ show_mask(masks[0], plt.gca())
 show_box(input_box, plt.gca())
 plt.axis('off')
 plt.show()
+plt.savefig(SAMPLE_OUT_PATH)
 
 print("Ended demo!")

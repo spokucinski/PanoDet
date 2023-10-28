@@ -4,6 +4,7 @@ import torchvision
 import numpy as np
 import matplotlib.pyplot as plt
 import cv2
+from pathlib import Path
 
 from segment_anything import SamPredictor, sam_model_registry
 
@@ -31,8 +32,13 @@ print("PyTorch version:", torch.__version__)
 print("Torchvision version:", torchvision.__version__)
 print("CUDA is available:", torch.cuda.is_available())
 
-SAMPLE_IMAGE_PATH = "data/input/Pano1.jpg"
-SAMPLE_OUT_PATH = "data/output/Pano1.jpg"
+SAMPLE_IMAGE_PATH = "data/input/samples/Pano1.jpg"
+SAMPLE_OUT_DIR = "data/output"
+SAMPLE_OUT_PATH = os.path.join(SAMPLE_OUT_DIR, "Pano1.jpg")
+
+if not os.path.exists(SAMPLE_OUT_DIR):
+    os.mkdir(SAMPLE_OUT_DIR)
+
 SAM_CHECKPOINT_PATH = "models/sam_vit_h_4b8939.pth"
 MODEL_TYPE = "vit_h"
 DEVICE = "cuda"

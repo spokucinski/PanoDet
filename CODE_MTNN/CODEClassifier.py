@@ -17,8 +17,8 @@ MODELS = ['vgg19'] #['vgg16', 'vgg19', 'NASNetLarge', 'EfficientNetB7', 'Efficie
 WEIGHTS = 'imagenet'
 
 BATCH_SIZE : int = 8
-NUM_CLASSES : int = 10
-EPOCHS : int = 10
+NUM_CLASSES : int = 5
+EPOCHS : int = 25
 
 TRAIN_DATASET_PATH = 'data\\CODE\\train'
 VAL_DATASET_PATH = 'data\\CODE\\val'
@@ -31,13 +31,13 @@ THIRD_IMG_SIZE = (320, 640)
 IMG_SIZE = IMG_SIZE
 IMG_SIZE_DIM = IMG_SIZE + NUM_CHANNELS
 
-USE_DATA_AUG : bool = True
+USE_DATA_AUG : bool = False
 SHOW_DATASET_PREVIEW = False
 VISUALIZE_RESULTS : bool = False
 
 for MODEL in MODELS:
     exp_name = f'{MODEL}_{WEIGHTS}_{EPOCHS}_{BATCH_SIZE}_{datetime.utcnow().isoformat()}'
-    wandb.init(project="CODE_Object_Detection",
+    wandb.init(project="CODE_5C_Classifier",
             name=exp_name
             )
 
@@ -77,8 +77,8 @@ for MODEL in MODELS:
             layers.RandomTranslation(height_factor=0, 
                                      width_factor=1, 
                                      fill_mode="wrap"),
-            layers.RandomContrast(0.25),
-            tf.keras.layers.experimental.preprocessing.RandomBrightness(0.25)
+            #layers.RandomContrast(0.25),
+            #tf.keras.layers.experimental.preprocessing.RandomBrightness(0.25)
         ])
         Visualizer.present_data_augmentation(data_augmentation, train_dataset)
         x = data_augmentation(inputs)
@@ -105,7 +105,7 @@ for MODEL in MODELS:
                   metrics=["accuracy"])
 
     callbacks = [
-                    keras.callbacks.ModelCheckpoint(filepath=f"models/{MODEL}.keras", 
+                    keras.callbacks.ModelCheckpoint(filepath=f"models/{MODEL}", 
                                                     save_best_only=True, 
                                                     monitor="val_loss"),
                     keras.callbacks.TensorBoard(log_dir="logs"),
@@ -122,8 +122,26 @@ for MODEL in MODELS:
                         validation_data=val_dataset, 
                         callbacks=callbacks)
 
+
+
     if VISUALIZE_RESULTS:
         Visualizer.present_training_history(history=history)
+
+    # get the labels 
+    predictions = np.array([])
+    labels =  np.array([])
+    for x, y in val_dataset:
+        predictions = np.concatenate([predictions, np.argmax(model.predict(x), axis=-1)])
+        labels = np.concatenate([labels, y.numpy()])
+
+    predictions[:10]
+    #array([0., 4., 3., 0., 3., 4., 2., 4., 4., 0.])
+
+    labels[:10]
+    #array([0., 4., 3., 0., 3., 4., 1., 2., 4., 0.])
+    m = tf.keras.metrics.Accuracy()
+    m(labels, predictions).numpy()
+
 
     test_loss, test_acc = model.evaluate(test_dataset)
     print(f"Test accuracy: {test_acc:.3f}")

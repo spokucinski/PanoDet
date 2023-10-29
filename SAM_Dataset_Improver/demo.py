@@ -4,6 +4,13 @@ import torchvision
 import numpy as np
 import matplotlib.pyplot as plt
 import cv2
+
+# Line introduced to make the externally loaded SAM repository available.
+# The same can be achieved with specification of PYTHONPATH, but this way 
+# it is easier to monitor via GIT
+import sys
+sys.path.append('external/SAM')
+
 from pathlib import Path
 
 from segment_anything import SamPredictor, sam_model_registry

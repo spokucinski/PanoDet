@@ -1,3 +1,5 @@
 /models
 /external
 /data/output
+/data/input
+!/data/input/samples

@@ -6,4 +6,7 @@ RUN apt-get update && \
 
 RUN pip install --upgrade pip && \
     pip install matplotlib && \
-    pip install opencv-python
+    pip install opencv-python && \
+    pip install scipy
+
+ADD https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth ../workspaces/PanoDet/SAM_Dataset_Improver/models/sam_vit_h_4b8939.pth

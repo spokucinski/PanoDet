@@ -7,9 +7,13 @@ import cv2
 
 # Line introduced to make the externally loaded SAM repository available.
 # The same can be achieved with specification of PYTHONPATH, but this way 
-# it is easier to monitor via GIT
+# it is easier to monitor via GIT.
+# WARNING: runtime add of module requires the VSCode to be set 
+# with additional extraPath (see: .vscode -> settings.json)
+
 import sys
 sys.path.append('external/SAM')
+sys.path.append('external/SphericalObjectDetection')
 
 from pathlib import Path
 

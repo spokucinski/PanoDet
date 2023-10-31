@@ -1,5 +1,7 @@
 {
     "python.analysis.extraPaths": [
-        "./external/SAM"
+        "./external/SAM",
+        "./external/SphericalObjectDetection",
+        "./external/SphericalObjectDetection/PRDA"
     ]
 }

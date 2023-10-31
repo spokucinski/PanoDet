@@ -3,4 +3,4 @@
 	url = https://github.com/facebookresearch/segment-anything.git
 [submodule "SAM_Dataset_Improver/external/SphericalObjectDetection"]
 	path = SAM_Dataset_Improver/external/SphericalObjectDetection
-	url = https://github.com/tdsuper/SphericalObjectDetection.git
+url=https://github.com/spokucinski/SphericalObjectDetection.git

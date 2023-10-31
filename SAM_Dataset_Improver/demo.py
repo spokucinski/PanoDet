@@ -13,7 +13,6 @@ import cv2
 
 import sys
 sys.path.append('external/SAM')
-sys.path.append('external/SphericalObjectDetection')
 
 from pathlib import Path
 

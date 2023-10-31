@@ -21,10 +21,3 @@ with open('data/input/PANDORA/annotations/test.json') as f:
     for ann in cor_ann:
         PRDA.visualization(img, np.array([ann["bbox"]]), erp_w=erp_w, erp_h=erp_h)
         cv2.imwrite('data/output/test1.jpg', img)
-gt = np.array([[-2.9321531433504737, -0.18171150631480926, 7, 8, 0]])
-
-
-# Visualization results
-PRDA.visualization(img, gt, erp_w=erp_w, erp_h=erp_h)
-
-cv2.imwrite('data/output/test1upd2.jpg', img)

@@ -2,7 +2,7 @@ FROM pytorch/pytorch:2.1.0-cuda12.1-cudnn8-devel
 
 RUN apt-get update && \
     apt-get -y upgrade && \
-    DEBIAN_FRONTEND=noninteractive apt-get -qq install ffmpeg libsm6 libxext6 -y
+    DEBIAN_FRONTEND=noninteractive apt-get -qq install ffmpeg libsm6 libxext6 x11-xserver-utils -y
 
 RUN pip install --upgrade pip && \
     pip install matplotlib && \

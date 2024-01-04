@@ -9,6 +9,6 @@ class PanoScrollerArgs():
         
         self.mode = mode
         self.inputPath = inputPath
-        self.mainWindow = mainWindowName
-        self.previewWindow = previewWindowName
+        self.mainWindowName = mainWindowName
+        self.previewWindowName = previewWindowName
         self.imageFormats = imageFormats

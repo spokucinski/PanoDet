@@ -1,23 +1,11 @@
 import cv2
 import numpy as np
-import glob
 import os
 import argparse
-import PanoScrollerArgs
+from PanoScrollerArgs import PanoScrollerArgs
+from ProcessMonitoring import SplitProgressMonitor
 
-original_img = None
-marked_img = None
-last_known_x = 0
-loaded_image_index = 0
-original_img_path : str = ""
-processing = True
-scrolled_img = None
-line_thickness = 3
-images = []
-max_image_index = 0
-previewWindow : str = ""
-
-def loadArgs():
+def loadArgs() -> PanoScrollerArgs:
     parser = argparse.ArgumentParser()
     parser.add_argument("--mode", default="manual")
     parser.add_argument("--inputPath", default="input")
@@ -25,57 +13,22 @@ def loadArgs():
     parser.add_argument("--previewWindowName", default="Preview")
     parser.add_argument("--imageFormats", nargs='+', default=[".jpg", ".png"])
 
-    return parser.parse_args()
-
-def split_image(event, x, y, flags, param):
-        global original_img, marked_img, last_known_x, loaded_image_index, original_img_path, processing, scrolled_img, line_thickness, images, max_image_index, previewWindow
-
-        if event == cv2.EVENT_MOUSEMOVE:
-            marked_img[:, last_known_x-line_thickness:last_known_x+line_thickness] = original_img[:, last_known_x-line_thickness:last_known_x+line_thickness]
-            last_known_x = x
-            cv2.line(marked_img, (x, 0), (x, marked_img.shape[0]), (0, 0, 255), line_thickness)
-
-        elif event == cv2.EVENT_LBUTTONDOWN:
-            marked_img = original_img.copy()
-            left_part = marked_img[0:marked_img.shape[0], 0:x]
-            right_part = marked_img[0:marked_img.shape[0], x:marked_img.shape[1]]
-            scrolled_img = np.concatenate((right_part, left_part), axis=1)
-            cv2.namedWindow(previewWindow, cv2.WINDOW_NORMAL)
-            cv2.resizeWindow(previewWindow, 1800, 900)
-            cv2.imshow(previewWindow, scrolled_img)
-
-        elif event == cv2.EVENT_RBUTTONDOWN:
-            original_img_path = images[loaded_image_index]
-            updated_file_path = original_img_path.replace("input", "output")
-            os.makedirs(os.path.dirname(updated_file_path), exist_ok=True)
-            cv2.imwrite(updated_file_path, scrolled_img)
-
-            if loaded_image_index >= max_image_index:
-                processing = False
-            else:
-                loaded_image_index = loaded_image_index + 1
-                original_img = cv2.imread(images[loaded_image_index])
-                marked_img = original_img.copy()
-                scrolled_img = original_img.copy()
-                cv2.imshow(previewWindow, scrolled_img)
-
-def main():
-    global original_img, marked_img, last_known_x, loaded_image_index, original_img_path, processing, scrolled_img, line_thickness, images, max_image_index, previewWindow
-
-    print("Starting PanoScroller!")
     print("\nLoading program parameters...")
-    cmdArgs = loadArgs()
-    args: PanoScrollerArgs.PanoScrollerArgs = PanoScrollerArgs.PanoScrollerArgs(cmdArgs.mode, cmdArgs.inputPath, cmdArgs.mainWindowName, cmdArgs.previewWindowName, cmdArgs.imageFormats)
-    previewWindow = args.previewWindow
+    cmdArgs = parser.parse_args()
+    args: PanoScrollerArgs = PanoScrollerArgs(cmdArgs.mode, cmdArgs.inputPath, cmdArgs.mainWindowName, cmdArgs.previewWindowName, cmdArgs.imageFormats)
     print("Parameters loaded, listing:")
     print(', '.join("%s: %s" % item for item in vars(args).items()))
 
+    return args
+
+def loadImages(inputPath: str, imageFormats: [str]) -> list[str]:
     print("\nLoading input files...")
-    print(f"Searched path: {args.inputPath}")
+    print(f"Searched path: {inputPath}")
+    
     images = []
-    for root, dirs, files in os.walk(args.inputPath):
+    for root, _, files in os.walk(inputPath):
         for file in files:
-            if file.lower().endswith(tuple(args.imageFormats)):
+            if file.lower().endswith(tuple(imageFormats)):
                 images.append(os.path.join(root, file))
     foundImagesCount: int = len(images)
     print(f"Found: {foundImagesCount} images!")
@@ -89,26 +42,73 @@ def main():
     else:
         print("Found over 100 images, skipping listing.")
 
-    loaded_image_index = 0
-    max_image_index = len(images) - 1
+    return images
 
-    original_img = cv2.imread(images[loaded_image_index])
-    original_img_path = ""
-    marked_img = original_img.copy()
-    scrolled_img = original_img.copy()
-    last_known_x = 0
-    line_thickness = 3
-    processing = True
+def initializeWindows(processParams: SplitProgressMonitor, mainWinName: str, previewWinName: str):  
+    cv2.namedWindow(mainWinName, cv2.WINDOW_NORMAL)
+    cv2.resizeWindow(mainWinName, 1800, 900)
+    cv2.setMouseCallback(mainWinName, split_image, processParams)
 
-    cv2.namedWindow(args.mainWindow, cv2.WINDOW_NORMAL)
-    cv2.resizeWindow(args.mainWindow, 1800, 900)
-    cv2.setMouseCallback(args.mainWindow, split_image)
+    cv2.namedWindow(previewWinName, cv2.WINDOW_NORMAL)
+    cv2.resizeWindow(previewWinName, 1800, 900)
 
-    while (processing):
-        cv2.imshow(args.mainWindow, marked_img)
+def split_image(event, x, y, flags, param):
+        if event == cv2.EVENT_MOUSEMOVE:
+            param.marked_img[:, param.last_known_x-param.line_thickness:param.last_known_x+param.line_thickness] = param.original_img[:, param.last_known_x-param.line_thickness:param.last_known_x+param.line_thickness]
+            param.last_known_x = x
+            cv2.line(param.marked_img, (x, 0), (x, param.marked_img.shape[0]), (0, 0, 255), param.line_thickness)
+            cv2.putText(img=param.marked_img, text=f"X = {x}, Image: {param.loaded_image_index} / {param.max_image_index}", org=(100, 100), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=2, color=(0, 0, 255), thickness=3, lineType=cv2.LINE_AA)
+
+        elif event == cv2.EVENT_LBUTTONDOWN:
+            param.marked_img = param.original_img.copy()
+            left_part = param.marked_img[0:param.marked_img.shape[0], 0:x]
+            right_part = param.marked_img[0:param.marked_img.shape[0], x:param.marked_img.shape[1]]
+            param.scrolled_img = np.concatenate((right_part, left_part), axis=1)    
+            cv2.imshow(param.previewWindowName, param.scrolled_img)
+
+        elif event == cv2.EVENT_RBUTTONDOWN:
+            param.original_img_path = param.images[param.loaded_image_index]
+            updated_file_path = param.original_img_path.replace("input", "output")
+            os.makedirs(os.path.dirname(updated_file_path), exist_ok=True)
+            cv2.imwrite(updated_file_path, param.scrolled_img)
+
+            if param.loaded_image_index >= param.max_image_index:
+                param.processing = False
+            else:
+                param.loaded_image_index = param.loaded_image_index + 1
+                param.original_img = cv2.imread(param.images[param.loaded_image_index])
+                param.marked_img = param.original_img.copy()
+                param.scrolled_img = param.original_img.copy()
+                cv2.imshow(param.previewWindowName, param.scrolled_img)
+
+def main():
+    print("Starting PanoScroller!")
+
+    args: PanoScrollerArgs = loadArgs() 
+    images: list[str] = loadImages(args.inputPath, args.imageFormats)
+        
+    processParams = SplitProgressMonitor(images,
+                                         args.previewWindowName, 
+                                         0, 
+                                         len(images) - 1, 
+                                         cv2.imread(images[0]), 
+                                         cv2.imread(images[0]), 
+                                         cv2.imread(images[0]), 
+                                         0, 
+                                         3, 
+                                         True)
+
+    initializeWindows(processParams, args.mainWindowName, args.previewWindowName)
+
+    while (processParams.processing):
+        cv2.imshow(args.mainWindowName, processParams.marked_img)
+        cv2.imshow(args.previewWindowName, processParams.scrolled_img)
+        
         k = cv2.waitKey(20) & 0xFF
         if k == 27:
             break
+
+    print("Ending PanoScroller!")
 
 if __name__ == '__main___':
     main()

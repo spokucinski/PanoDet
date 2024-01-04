@@ -87,6 +87,7 @@ def split_image(event, x, y, flags, param):
                 param.original_img = cv2.imread(param.images[param.loaded_image_index])
                 param.marked_img = param.original_img.copy()
                 param.scrolled_img = param.original_img.copy()
+                param.last_scroll = 0.0
                 cv2.imshow(param.previewWindowName, param.scrolled_img)
 
 def main():

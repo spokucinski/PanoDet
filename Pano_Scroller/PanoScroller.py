@@ -4,6 +4,7 @@ import os
 import argparse
 from PanoScrollerArgs import PanoScrollerArgs
 from ProcessMonitoring import SplitProgressMonitor
+from pathlib import Path
 
 def loadArgs() -> PanoScrollerArgs:
     parser = argparse.ArgumentParser()
@@ -34,7 +35,7 @@ def loadImages(inputPath: str, imageFormats: [str]) -> list[str]:
     print(f"Found: {foundImagesCount} images!")
 
     if foundImagesCount == 0:
-        print("No images found! Ending PanoScroller.")
+        print("No images found!")
         return
     elif foundImagesCount < 100:
         print("Listing:")
@@ -63,7 +64,8 @@ def split_image(event, x, y, flags, param):
             param.marked_img = param.original_img.copy()
             left_part = param.marked_img[0:param.marked_img.shape[0], 0:x]
             right_part = param.marked_img[0:param.marked_img.shape[0], x:param.marked_img.shape[1]]
-            param.scrolled_img = np.concatenate((right_part, left_part), axis=1)    
+            param.scrolled_img = np.concatenate((right_part, left_part), axis=1)
+            param.last_scroll = x/param.marked_img.shape[1]
             cv2.imshow(param.previewWindowName, param.scrolled_img)
 
         elif event == cv2.EVENT_RBUTTONDOWN:
@@ -71,6 +73,12 @@ def split_image(event, x, y, flags, param):
             updated_file_path = param.original_img_path.replace("input", "output")
             os.makedirs(os.path.dirname(updated_file_path), exist_ok=True)
             cv2.imwrite(updated_file_path, param.scrolled_img)
+            
+            filename = Path(updated_file_path)
+            filename = filename.with_suffix('')
+            filename = str(filename) + "_scroll.txt"
+            with open(filename, 'w') as writer:
+                writer.write(str(param.last_scroll))
 
             if param.loaded_image_index >= param.max_image_index:
                 param.processing = False
@@ -86,29 +94,33 @@ def main():
 
     args: PanoScrollerArgs = loadArgs() 
     images: list[str] = loadImages(args.inputPath, args.imageFormats)
-        
-    processParams = SplitProgressMonitor(images,
-                                         args.previewWindowName, 
-                                         0, 
-                                         len(images) - 1, 
-                                         cv2.imread(images[0]), 
-                                         cv2.imread(images[0]), 
-                                         cv2.imread(images[0]), 
-                                         0, 
-                                         3, 
-                                         True)
 
-    initializeWindows(processParams, args.mainWindowName, args.previewWindowName)
+    if not images or len(images) == 0:
+        print("No input files detected, ending processing")
+    else:
+        processParams = SplitProgressMonitor(images,
+                                            args.previewWindowName, 
+                                            0, 
+                                            len(images) - 1, 
+                                            cv2.imread(images[0]), 
+                                            cv2.imread(images[0]), 
+                                            cv2.imread(images[0]), 
+                                            0, 
+                                            3, 
+                                            True,
+                                            0.0)
 
-    while (processParams.processing):
-        cv2.imshow(args.mainWindowName, processParams.marked_img)
-        cv2.imshow(args.previewWindowName, processParams.scrolled_img)
-        
-        k = cv2.waitKey(20) & 0xFF
-        if k == 27:
-            break
+        initializeWindows(processParams, args.mainWindowName, args.previewWindowName)
 
-    print("Ending PanoScroller!")
+        while (processParams.processing):
+            cv2.imshow(args.mainWindowName, processParams.marked_img)
+            cv2.imshow(args.previewWindowName, processParams.scrolled_img)
+            
+            k = cv2.waitKey(20) & 0xFF
+            if k == 27:
+                break
+
+    print("Ending PanoScroller, closing the app!")
 
 if __name__ == '__main___':
     main()

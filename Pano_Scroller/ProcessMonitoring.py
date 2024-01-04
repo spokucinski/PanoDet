@@ -12,7 +12,8 @@ class SplitProgressMonitor():
                  scrolled_img: cv2.typing.MatLike,
                  last_known_x: int,
                  line_thickness: int,
-                 processing: bool):
+                 processing: bool,
+                 last_scroll: float):
         
         self.images = images
         self.previewWindowName = previewWindowName
@@ -24,3 +25,4 @@ class SplitProgressMonitor():
         self.last_known_x = last_known_x
         self.line_thickness = line_thickness
         self.processing = processing
+        self.last_scroll = last_scroll

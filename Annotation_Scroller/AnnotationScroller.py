@@ -57,11 +57,13 @@ def main():
                         parsedX = parsedX - scroll + 1
                         writer.writelines(f"{type} {parsedX} {y} {parsedWidth} {height}")
                     else:
-                        width1 = scroll - parsedX
-                        width2 = parsedX + (parsedWidth/2) - scroll
-                        x1 = parsedX - (parsedWidth/2) + (width1/2)
-                        x2 = scroll + (width2/2)
-                        writer.writelines(f"{type} {x1} {y} {width1} {height}")
+                        width1 = (scroll) - (parsedX - (parsedWidth/2)) 
+                        width2 = (parsedX + (parsedWidth/2)) - (scroll) 
+                        
+                        x1 = 1 - (width1/2) #(parsedX - (parsedWidth/2)) + (width1/2) - scroll
+                        x2 = (width2/2)
+
+                        writer.writelines(f"{type} {x1} {y} {width1} {height}\n")
                         writer.writelines(f"{type} {x2} {y} {width2} {height}")
 
 if __name__ == '__main___':

@@ -80,14 +80,14 @@ def scrollAnnotations(originalAnnotations: list[Annotation], scroll: float) -> l
 
 def mergeAdjacentObjects(originalAnnotations: list[Annotation], scrolledAnnotations: list[Annotation]) -> list[Annotation]:
     
-    leftEdgeObjects = list(filter(lambda annotation: (annotation.xCenter - (annotation.width/2)) == 0, originalAnnotations))
-    rightEdgeObjects = list(filter(lambda annotation: (annotation.xCenter + (annotation.width/2)) == 1, originalAnnotations))
+    #leftEdgeObjects = list(filter(lambda annotation: (annotation.xCenter - (annotation.width/2)) == 0, originalAnnotations))
+    #rightEdgeObjects = list(filter(lambda annotation: (annotation.xCenter + (annotation.width/2)) == 1, originalAnnotations))
     
     for scrolledAnnotation in scrolledAnnotations:
         adjacentAnnotations = list(
             filter(
-                lambda scrolledAnnotation: 
-                math.isclose((scrolledAnnotation.xCenter + (scrolledAnnotation.width/2)), (scrolledAnnotation.xCenter - (scrolledAnnotation.width/2)), rel_tol=0.0005), 
+                lambda analyzedAnnotation: 
+                math.isclose((scrolledAnnotation.xCenter + (scrolledAnnotation.width/2)), (analyzedAnnotation.xCenter - (analyzedAnnotation.width/2)), rel_tol=0.0005), 
                 scrolledAnnotations))
         
         adjacentAnnotationsOfSameType = list(
@@ -97,11 +97,21 @@ def mergeAdjacentObjects(originalAnnotations: list[Annotation], scrolledAnnotati
                 adjacentAnnotations))
         
         if len(adjacentAnnotationsOfSameType) > 0:
+            
             leftMin = min((scrolledAnnotation.xCenter - (scrolledAnnotation.width/2)), min((annotation.xCenter - (annotation.width/2)) for annotation in adjacentAnnotationsOfSameType))
             rightMax = max((scrolledAnnotation.xCenter + (scrolledAnnotation.width/2)), max((annotation.xCenter + (annotation.width/2)) for annotation in adjacentAnnotationsOfSameType))
-            width = rightMax - leftMin
-            newXCenter = leftMin + (width/2)
-            scrolledAnnotations.append(f"{scrolledAnnotation.objectType} {newXCenter} {scrolledAnnotation.yCenter} {width} {scrolledAnnotation.height}\n")
+            
+            # Watch-out for different xy axis direction!
+            topMin = min((scrolledAnnotation.yCenter - (scrolledAnnotation.height/2)), min((annotation.yCenter - (annotation.height/2)) for annotation in adjacentAnnotationsOfSameType))
+            bottomMax = max((scrolledAnnotation.yCenter + (scrolledAnnotation.height/2)), max((annotation.yCenter + (annotation.height/2)) for annotation in adjacentAnnotationsOfSameType))
+
+            newWidth = rightMax - leftMin
+            newHeight = bottomMax - topMin
+
+            newXCenter = leftMin + (newWidth/2)
+            newYCenter = topMin + (newHeight/2)
+
+            scrolledAnnotations.append(Annotation(scrolledAnnotation.objectType, newXCenter, newYCenter, newWidth, newHeight))
 
     return scrolledAnnotations
 

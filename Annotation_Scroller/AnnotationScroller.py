@@ -137,7 +137,7 @@ def main():
         scrolledAnnotations = scrollAnnotations(originalAnnotations, scroll)
         postProcessedAnnotations = mergeAdjacentObjects(scrolledAnnotations, scroll)
 
-        resultsAnnotationFile = annotationFilePath.replace("input", "output")
+        resultsAnnotationFile = annotationFilePath.replace("input", "output").replace("\\original_annotations", "")
         os.makedirs(os.path.dirname(resultsAnnotationFile), exist_ok=True)
         with open(resultsAnnotationFile, "w") as writer:
             writer.writelines(

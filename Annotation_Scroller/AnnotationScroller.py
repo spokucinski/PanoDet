@@ -3,6 +3,8 @@ import numpy as np
 import os
 import argparse
 from pathlib import Path
+from Scroller import Annotation
+import math
 
 def loadAnnotationFiles(inputPath: str) -> list[str]:
     print("\nLoading input files...")
@@ -39,32 +41,53 @@ def main():
         with open(filename, 'r') as scrollReader:
             scroll = float(scrollReader.readline())
         with open(annotationFile, 'r') as reader:
-            annotations = reader.readlines()
+            rawAnnotations = reader.readlines()
+            
+            parsedAnnotations: [] = []
+            for annotation in rawAnnotations:
+                type, x, y, width, height = annotation.split(' ')
+                parsedAnnotations.append(Annotation(int(type), float(x), float(y), float(width), float(height)))
+
+            leftEdgeObjects = list(filter(lambda annotation: (annotation.xCenter - (annotation.width/2)) == 0, parsedAnnotations))
+            rightEdgeObjects = list(filter(lambda annotation: (annotation.xCenter + (annotation.width/2)) == 1, parsedAnnotations))
+
+            scrolledAnnotations = []
+            for parsedAnnotation in parsedAnnotations:                
+                if parsedAnnotation.xCenter - (parsedAnnotation.width/2) >= scroll:
+                    parsedAnnotation.xCenter = parsedAnnotation.xCenter - scroll
+                    scrolledAnnotations.append(f"{parsedAnnotation.objectType} {parsedAnnotation.xCenter} {parsedAnnotation.yCenter} {parsedAnnotation.width} {parsedAnnotation.height}\n")
+                elif parsedAnnotation.xCenter + (parsedAnnotation.width/2) <= scroll:
+                    parsedAnnotation.xCenter = parsedAnnotation.xCenter - scroll + 1
+                    scrolledAnnotations.append(f"{parsedAnnotation.objectType} {parsedAnnotation.xCenter} {parsedAnnotation.yCenter} {parsedAnnotation.width} {parsedAnnotation.height}\n")
+                else:
+                    width1 = (scroll) - (parsedAnnotation.xCenter - (parsedAnnotation.width/2)) 
+                    width2 = (parsedAnnotation.xCenter + (parsedAnnotation.width/2)) - (scroll) 
+                    
+                    x1 = 1 - (width1/2)
+                    x2 = (width2/2)
+
+                    scrolledAnnotations.append(f"{parsedAnnotation.objectType} {x1} {parsedAnnotation.yCenter} {width1} {parsedAnnotation.height}\n")
+                    scrolledAnnotations.append(f"{parsedAnnotation.objectType} {x2} {parsedAnnotation.yCenter} {width2} {parsedAnnotation.height}\n")
+            
+            scrolledAnnotationsObjects = []
+            for scrolledAnnotation in scrolledAnnotations:
+                params = scrolledAnnotation.split(' ')
+                scrolledAnnotationsObjects.append(Annotation(int(params[0]), float(params[1]), float(params[2]), float(params[3]), float(params[4])))
+
+            for scrolledAnnotationObject in scrolledAnnotationsObjects:
+                adjucentAnnotations = list(filter(lambda scrolledAnnotation: math.isclose((scrolledAnnotation.xCenter + (scrolledAnnotation.width/2)), (scrolledAnnotationObject.xCenter - (scrolledAnnotationObject.width/2)), rel_tol=0.0005), scrolledAnnotationsObjects))
+                adjucentAnnotationsOfSameType = list(filter(lambda adjucentAnnotation: adjucentAnnotation.objectType == scrolledAnnotationObject.objectType, adjucentAnnotations))
+                if len(adjucentAnnotationsOfSameType) > 0:
+                    leftMin = min((scrolledAnnotationObject.xCenter - (scrolledAnnotationObject.width/2)), min((annotation.xCenter - (annotation.width/2)) for annotation in adjucentAnnotationsOfSameType))
+                    rightMax = max((scrolledAnnotationObject.xCenter + (scrolledAnnotationObject.width/2)), max((annotation.xCenter + (annotation.width/2)) for annotation in adjucentAnnotationsOfSameType))
+                    width = rightMax - leftMin
+                    newXCenter = leftMin + (width/2)
+                    scrolledAnnotations.append(f"{parsedAnnotation.objectType} {newXCenter} {parsedAnnotation.yCenter} {width} {parsedAnnotation.height}\n")
 
             resultsAnnotationFile = annotationFile.replace("input", "output")
             os.makedirs(os.path.dirname(resultsAnnotationFile), exist_ok=True)
             with open(resultsAnnotationFile, "w") as writer:
-                for annotation in annotations:
-                    type, x, y, width, height = annotation.split(' ')
-
-                    parsedX = float(x)
-                    parsedWidth = float(width)
-
-                    if parsedX - (parsedWidth/2) >= scroll:
-                        parsedX = parsedX - scroll
-                        writer.writelines(f"{type} {parsedX} {y} {parsedWidth} {height}")
-                    elif parsedX + (parsedWidth/2) <= scroll:
-                        parsedX = parsedX - scroll + 1
-                        writer.writelines(f"{type} {parsedX} {y} {parsedWidth} {height}")
-                    else:
-                        width1 = (scroll) - (parsedX - (parsedWidth/2)) 
-                        width2 = (parsedX + (parsedWidth/2)) - (scroll) 
-                        
-                        x1 = 1 - (width1/2) #(parsedX - (parsedWidth/2)) + (width1/2) - scroll
-                        x2 = (width2/2)
-
-                        writer.writelines(f"{type} {x1} {y} {width1} {height}\n")
-                        writer.writelines(f"{type} {x2} {y} {width2} {height}")
+                writer.writelines(scrolledAnnotations)            
 
 if __name__ == '__main___':
     main()

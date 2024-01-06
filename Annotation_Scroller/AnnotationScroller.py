@@ -3,6 +3,13 @@ from pathlib import Path
 from Scroller import Annotation
 import math
 
+def experiment():
+    # https://stackoverflow.com/questions/43741885/how-to-convert-spherical-coordinates-to-equirectangular-projection-coordinates
+    img_h_px = 2048
+    img_h_deg = 180
+    for i in (0, 512, 1024, 1536, 2048):
+        test = math.cos(-(i - img_h_px / 2.0) / img_h_px * img_h_deg / 180.0 * math.pi)
+
 def getAnnotationFilePaths(inputPath: str) -> list[str]:
     
     print("\nLoading input files...")

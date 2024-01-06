@@ -1,7 +1,4 @@
-import cv2
-import numpy as np
 import os
-import argparse
 from pathlib import Path
 from Scroller import Annotation
 import math
@@ -78,16 +75,17 @@ def scrollAnnotations(originalAnnotations: list[Annotation], scroll: float) -> l
     
     return scrolledAnnotations
 
-def mergeAdjacentObjects(scrolledAnnotations: list[Annotation], scroll: float) -> list[Annotation]:
-    
-    #leftEdgeObjects = list(filter(lambda annotation: math.isclose((annotation.xCenter - (annotation.width/2)), 0, rel_tol=0.005), originalAnnotations))
-    #rightEdgeObjects = list(filter(lambda annotation: (annotation.xCenter + (annotation.width/2)) == 1, originalAnnotations))
-    
+def mergeAdjacentObjects(scrolledAnnotations: list[Annotation], scroll: float) -> list[Annotation]: 
+    mergingResult: list[Annotation] = scrolledAnnotations
     for scrolledAnnotation in scrolledAnnotations:
         adjacentAnnotations = list(
             filter(
                 lambda analyzedAnnotation: 
-                math.isclose((scrolledAnnotation.xCenter + (scrolledAnnotation.width/2)), (analyzedAnnotation.xCenter - (analyzedAnnotation.width/2)), rel_tol=0.0005), 
+                math.isclose((scrolledAnnotation.xCenter + (scrolledAnnotation.width/2)), (analyzedAnnotation.xCenter - (analyzedAnnotation.width/2)), rel_tol=0.0005) 
+                and
+                    ((scrolledAnnotation.yCenter - (scrolledAnnotation.height/2)) < (analyzedAnnotation.yCenter + (analyzedAnnotation.height/2))) 
+                    and 
+                    ((scrolledAnnotation.yCenter + (scrolledAnnotation.height/2)) > (analyzedAnnotation.yCenter - (analyzedAnnotation.height/2))), 
                 scrolledAnnotations))
     
         adjacentAnnotationsOfSameType = list(
@@ -96,8 +94,7 @@ def mergeAdjacentObjects(scrolledAnnotations: list[Annotation], scroll: float) -
                 adjacentAnnotation.objectType == scrolledAnnotation.objectType, 
                 adjacentAnnotations))
         
-        if len(adjacentAnnotationsOfSameType) > 0:
-            
+        if len(adjacentAnnotationsOfSameType) > 0:         
             adjacentAnnotationOfSameTypeOriginallyOnTheEdge = []
             for annotation in adjacentAnnotationsOfSameType:
                 leftEdge: float = annotation.xCenter - (annotation.width/2)
@@ -119,12 +116,11 @@ def mergeAdjacentObjects(scrolledAnnotations: list[Annotation], scroll: float) -
                 newXCenter = leftMin + (newWidth/2)
                 newYCenter = topMin + (newHeight/2)
 
-                scrolledAnnotations.append(Annotation(scrolledAnnotation.objectType, newXCenter, newYCenter, newWidth, newHeight))
-                scrolledAnnotations.remove(scrolledAnnotation)
-                result = list(filter(lambda i: i not in adjacentAnnotationOfSameTypeOriginallyOnTheEdge, scrolledAnnotations))
-                return result
+                mergingResult.append(Annotation(scrolledAnnotation.objectType, newXCenter, newYCenter, newWidth, newHeight))
+                mergingResult.remove(scrolledAnnotation)
+                mergingResult = list(filter(lambda i: i not in adjacentAnnotationOfSameTypeOriginallyOnTheEdge, mergingResult))
             
-    return scrolledAnnotations
+    return mergingResult
 
 def main():
     inputPath: str = "input\original_annotations"

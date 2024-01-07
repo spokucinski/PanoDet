@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from Scroller import Annotation
+from Scroller import Annotation, getFileAnnotations
 import math
 
 def experiment():
@@ -43,15 +43,6 @@ def getScrollValue(annotationFilePath: str) -> float:
         with open(filename, 'r') as scrollReader:
             scroll = float(scrollReader.readline())
             return scroll
-
-def getFileAnnotations(annotationsFilePath: str) -> list[Annotation]:
-    with open(annotationsFilePath, 'r') as reader:      
-        annotations: list[Annotation] = []      
-        for annotation in reader.readlines():
-            objectType, xCenter, yCenter, width, height = annotation.split(' ')
-            annotations.append(Annotation(int(objectType), float(xCenter), float(yCenter), float(width), float(height)))
-        
-        return annotations 
 
 def scrollAnnotations(originalAnnotations: list[Annotation], scroll: float) -> list[Annotation]: 
     scrolledAnnotations: list[Annotation] = []      

@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import os
 import argparse
+from Scroller import Annotation, getFileAnnotations
 from PanoScrollerArgs import PanoScrollerArgs
 from ProcessMonitoring import SplitProgressMonitor
 from pathlib import Path
@@ -9,7 +10,7 @@ from pathlib import Path
 def loadArgs() -> PanoScrollerArgs:
     parser = argparse.ArgumentParser()
     parser.add_argument("--mode", default="manual")
-    parser.add_argument("--inputPath", default="input")
+    parser.add_argument("--inputPath", default="input\\original_images")
     parser.add_argument("--mainWindowName", default="Source image")
     parser.add_argument("--previewWindowName", default="Preview")
     parser.add_argument("--imageFormats", nargs='+', default=[".jpg", ".png"])
@@ -22,28 +23,38 @@ def loadArgs() -> PanoScrollerArgs:
 
     return args
 
-def loadImages(inputPath: str, imageFormats: [str]) -> list[str]:
+def loadInput(inputPath: str, imageFormats: [str]) -> (list[str], list[str]):
     print("\nLoading input files...")
     print(f"Searched path: {inputPath}")
     
-    images = []
+    imagePaths: list[str] = []
     for root, _, files in os.walk(inputPath):
         for file in files:
             if file.lower().endswith(tuple(imageFormats)):
-                images.append(os.path.join(root, file))
-    foundImagesCount: int = len(images)
+                imagePaths.append(os.path.join(root, file))
+    foundImagesCount: int = len(imagePaths)
     print(f"Found: {foundImagesCount} images!")
+
+    annotationPaths: list[Annotation] = []
+    for imagePath in imagePaths:
+        annotationPath = imagePath.replace("original_images", "original_annotations")
+        for imageFormat in imageFormats:
+            annotationPath = annotationPath.replace(imageFormat, ".txt")
+        if os.path.exists(annotationPath):
+            annotationPaths.append(annotationPath)
+    foundAnnotationsCount = len(annotationPaths)
+    print(f"Found: {foundAnnotationsCount} according annotation files!")
 
     if foundImagesCount == 0:
         print("No images found!")
         return
     elif foundImagesCount < 100:
         print("Listing:")
-        print('\n '.join("%s" % image for image in images))
+        print('\n '.join("%s" % image for image in imagePaths))
     else:
         print("Found over 100 images, skipping listing.")
 
-    return images
+    return imagePaths, annotationPaths
 
 def initializeWindows(processParams: SplitProgressMonitor, mainWinName: str, previewWinName: str):  
     cv2.namedWindow(mainWinName, cv2.WINDOW_NORMAL)
@@ -52,6 +63,13 @@ def initializeWindows(processParams: SplitProgressMonitor, mainWinName: str, pre
 
     cv2.namedWindow(previewWinName, cv2.WINDOW_NORMAL)
     cv2.resizeWindow(previewWinName, 1800, 900)
+
+def suggestSplitCos(splitProgressMonitor: SplitProgressMonitor):
+
+    return
+
+def suggestSplitStd(splitProgressMonitor: SplitProgressMonitor):
+    return
 
 def split_image(event, x, y, flags, param):
         if event == cv2.EVENT_MOUSEMOVE:
@@ -94,22 +112,24 @@ def main():
     print("Starting PanoScroller!")
 
     args: PanoScrollerArgs = loadArgs() 
-    images: list[str] = loadImages(args.inputPath, args.imageFormats)
+    imagePaths, annotationPaths = loadInput(args.inputPath, args.imageFormats)
 
-    if not images or len(images) == 0:
+    if not imagePaths or len(imagePaths) == 0:
         print("No input files detected, ending processing")
     else:
-        processParams = SplitProgressMonitor(images,
-                                            args.previewWindowName, 
-                                            0, 
-                                            len(images) - 1, 
-                                            cv2.imread(images[0]), 
-                                            cv2.imread(images[0]), 
-                                            cv2.imread(images[0]), 
-                                            0, 
-                                            3, 
-                                            True,
-                                            0.0)
+        processParams = SplitProgressMonitor(imagePaths,
+                                             annotationPaths,
+                                             args.previewWindowName, 
+                                             0, 
+                                             len(imagePaths) - 1, 
+                                             cv2.imread(imagePaths[0]),
+                                             getFileAnnotations(annotationPaths[0]), 
+                                             cv2.imread(imagePaths[0]), 
+                                             cv2.imread(imagePaths[0]), 
+                                             0, 
+                                             3, 
+                                             True,
+                                             0.0)
 
         initializeWindows(processParams, args.mainWindowName, args.previewWindowName)
 
@@ -118,6 +138,14 @@ def main():
             cv2.imshow(args.previewWindowName, processParams.scrolled_img)
             
             k = cv2.waitKey(20) & 0xFF
+            # C suggests split point with COS(f)
+            if k == 99:
+                suggestSplitCos(processParams)
+
+            if k == 115:
+                suggestSplitStd(processParams)
+
+            # ESC escapes
             if k == 27:
                 break
 

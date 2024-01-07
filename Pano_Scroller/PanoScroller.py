@@ -6,6 +6,7 @@ from Scroller import Annotation, getFileAnnotations
 from PanoScrollerArgs import PanoScrollerArgs
 from ProcessMonitoring import SplitProgressMonitor
 from pathlib import Path
+import math
 
 def loadArgs() -> PanoScrollerArgs:
     parser = argparse.ArgumentParser()
@@ -64,7 +65,27 @@ def initializeWindows(processParams: SplitProgressMonitor, mainWinName: str, pre
     cv2.namedWindow(previewWinName, cv2.WINDOW_NORMAL)
     cv2.resizeWindow(previewWinName, 1800, 900)
 
-def suggestSplitCos(splitProgressMonitor: SplitProgressMonitor):
+def suggestSplitCos(image: cv2.typing.MatLike, annotations: list[Annotation], lastSuggestedSplit: int): 
+
+    imageHeightInPixels = image.shape[0]
+    imageWidthInPixels = image.shape[1]
+
+    annotationsMatrix = np.zeros((imageHeightInPixels, imageWidthInPixels), dtype=float)
+    weightsMatrix = np.zeros((imageHeightInPixels, imageWidthInPixels), dtype=float)
+
+    for annotation in annotations:
+        (x1, y1), (x2, y2) = denormalizeAnnotation(annotation, imageHeightInPixels, imageWidthInPixels)
+        annotationsMatrix[y1:y2+1, x1:x2+1] += 1
+
+    for h in range(imageHeightInPixels):
+        for w in range(imageWidthInPixels):
+            pixelWeight = math.cos(-(h - imageHeightInPixels / 2.0) / imageHeightInPixels * math.pi)
+            weightsMatrix[h, w] = pixelWeight
+    
+    cv2.imwrite('test.png', weightsMatrix)
+    # https://stackoverflow.com/questions/43741885/how-to-convert-spherical-coordinates-to-equirectangular-projection-coordinates
+
+
 
     return
 
@@ -110,23 +131,26 @@ def split_image(event, x, y, flags, param):
                 param.last_scroll = 0.0
                 cv2.imshow(param.previewWindowName, param.scrolled_img)
 
+def denormalizeAnnotation(annotation: Annotation, imageHeight: int, imageWidth: int) -> ((int, int), (int, int)):
+    # Recalculate annotation from normalized
+    xCenter = annotation.xCenter * imageWidth
+    yCenter = annotation.yCenter * imageHeight
+    width = annotation.width * imageWidth
+    height = annotation.height * imageHeight
+
+    x1 = int(xCenter - (width/2))
+    y1 = int(yCenter - (height/2))
+
+    x2 = int(xCenter + (width/2))
+    y2 = int(yCenter + (height/2))
+
+    return (x1, y1), (x2, y2)
+
 def addAnnotations(image: cv2.typing.MatLike, annotations: list[Annotation]):
     image_width, image_height = image.shape[1], image.shape[0]
 
     for annotation in annotations:
-        
-        # Recalculate annotation from normalized
-        xCenter = annotation.xCenter * image_width
-        yCenter = annotation.yCenter * image_height
-        width = annotation.width * image_width
-        height = annotation.height * image_height
-
-        x1 = int(xCenter - (width/2))
-        y1 = int(yCenter - (height/2))
-
-        x2 = int(xCenter + (width/2))
-        y2 = int(yCenter + (height/2))
-
+        (x1, y1), (x2, y2) = denormalizeAnnotation(annotation, image_height, image_width)
         cv2.rectangle(image, (x1, y1), (x2, y2), (0, 0, 255), 3)
    
 def main():
@@ -155,7 +179,9 @@ def main():
                                              0, 
                                              3, 
                                              True,
-                                             0.0)
+                                             0.0, 
+                                             0, 
+                                             0)
 
         initializeWindows(processParams, args.mainWindowName, args.previewWindowName)
 
@@ -166,7 +192,7 @@ def main():
             k = cv2.waitKey(20) & 0xFF
             # C suggests split point with COS(f)
             if k == 99:
-                suggestSplitCos(processParams)
+                suggestSplitCos(processParams.original_img, processParams.original_img_annotations, processParams.last_suggested_c_split)
 
             if k == 115:
                 suggestSplitStd(processParams)

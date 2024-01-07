@@ -7,6 +7,9 @@ from PanoScrollerArgs import PanoScrollerArgs
 from ProcessMonitoring import SplitProgressMonitor
 from pathlib import Path
 import math
+from PIL import Image
+from sklearn.preprocessing import Binarizer
+import matplotlib.pyplot as plt
 
 def loadArgs() -> PanoScrollerArgs:
     parser = argparse.ArgumentParser()
@@ -71,21 +74,63 @@ def suggestSplitCos(image: cv2.typing.MatLike, annotations: list[Annotation], la
     imageWidthInPixels = image.shape[1]
 
     annotationsMatrix = np.zeros((imageHeightInPixels, imageWidthInPixels), dtype=float)
-    weightsMatrix = np.zeros((imageHeightInPixels, imageWidthInPixels), dtype=float)
-
     for annotation in annotations:
         (x1, y1), (x2, y2) = denormalizeAnnotation(annotation, imageHeightInPixels, imageWidthInPixels)
         annotationsMatrix[y1:y2+1, x1:x2+1] += 1
 
-    for h in range(imageHeightInPixels):
-        for w in range(imageWidthInPixels):
-            pixelWeight = math.cos(-(h - imageHeightInPixels / 2.0) / imageHeightInPixels * math.pi)
-            weightsMatrix[h, w] = pixelWeight
+    colorMap = {
+        0: [0, 0, 0],      # Black
+        1: [0, 255, 0],    # Green
+        2: [255, 255, 0],  # Yellow
+        3: [255, 0, 0],    # Red
+        4: [128, 0, 128],  # Purple
+        5: [150, 75, 0]    # Brown
+    }
+    controlImage = np.zeros((annotationsMatrix.shape[0], annotationsMatrix.shape[1], 3), dtype=np.uint8)
+    for value, color in colorMap.items():
+        controlImage[annotationsMatrix == value] = color
+    pil_image = Image.fromarray(controlImage)
+    pil_image.save('output_image.png')
     
-    cv2.imwrite('test.png', weightsMatrix)
     # https://stackoverflow.com/questions/43741885/how-to-convert-spherical-coordinates-to-equirectangular-projection-coordinates
 
+    weightsMatrix = np.zeros((imageHeightInPixels, imageWidthInPixels), dtype=float)
+    for h in range(imageHeightInPixels):
+        pixelsWeight = math.cos(-(h - imageHeightInPixels / 2.0) / imageHeightInPixels * math.pi)
+        weightsMatrix[h, :] = pixelsWeight
+    weightsMatrixControl = weightsMatrix.copy()
+    weightsMatrixControl = (weightsMatrixControl * 255).astype(np.uint8)
+    weightsMatrixControlImage = Image.fromarray(weightsMatrixControl)
+    weightsMatrixControlImage.save("weights_control.png")
 
+    weightedAnnotations = annotationsMatrix * weightsMatrix
+    weightedAnnotationsControl = np.zeros((weightedAnnotations.shape[0], weightedAnnotations.shape[1], 3), dtype=np.uint8)
+
+    weightsColorMap = {
+        0: [255, 0, 0],         # Red
+        0.1: [0, 255, 0],       # Green
+        0.2: [0, 0, 255],       # Blue
+        0.3: [255, 255, 0],     # Yellow
+        0.4: [0, 255, 255],     # Cyan
+        0.5: [255, 0, 255],     # Magenta
+        0.6: [128, 0, 0],       # Dark Red
+        0.7: [0, 128, 0],       # Dark Green
+        0.8: [0, 0, 128],       # Dark Blue
+        0.9: [128, 128, 128]    # Grey
+    }
+    for threshold, color in weightsColorMap.items():
+        weightedAnnotationsControl[weightedAnnotations > threshold] = color 
+    weightedAnnotationsControlImage = Image.fromarray(weightedAnnotationsControl)
+    weightedAnnotationsControlImage.save('weightedAnnotationsControl.png')
+
+    weightedColumns = np.sum(weightedAnnotations, axis=0)
+    xAxis = np.arange(len(weightedColumns))
+
+    plt.figure(figsize=(10, 6))  # You can adjust the size of the figure
+    plt.plot(xAxis, weightedColumns)
+    plt.xlim(min(xAxis), max(xAxis))
+    plt.title('Weight plot')
+    plt.savefig('weightedColumnsPlot.png')
 
     return
 

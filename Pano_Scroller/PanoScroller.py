@@ -74,8 +74,9 @@ def suggestSplitStd(splitProgressMonitor: SplitProgressMonitor):
 def split_image(event, x, y, flags, param):
         if event == cv2.EVENT_MOUSEMOVE:
             param.marked_img[:, param.last_known_x-param.line_thickness:param.last_known_x+param.line_thickness] = param.original_img[:, param.last_known_x-param.line_thickness:param.last_known_x+param.line_thickness]
+            addAnnotations(param.marked_img, param.original_img_annotations)
             param.last_known_x = x
-            cv2.line(param.marked_img, (x, 0), (x, param.marked_img.shape[0]), (0, 0, 255), param.line_thickness)
+            cv2.line(param.marked_img, (x, 0), (x, param.marked_img.shape[0]), (255, 0, 0), param.line_thickness)
             cv2.putText(img=param.marked_img, text=f"X = {x}, Image: {param.loaded_image_index} / {param.max_image_index}", org=(100, 100), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=2, color=(0, 0, 255), thickness=3, lineType=cv2.LINE_AA)
 
         elif event == cv2.EVENT_LBUTTONDOWN:
@@ -87,7 +88,7 @@ def split_image(event, x, y, flags, param):
             cv2.imshow(param.previewWindowName, param.scrolled_img)
 
         elif event == cv2.EVENT_RBUTTONDOWN:
-            param.original_img_path = param.images[param.loaded_image_index]
+            param.original_img_path = param.imagePaths[param.loaded_image_index]
             updated_file_path = param.original_img_path.replace("input", "output")
             os.makedirs(os.path.dirname(updated_file_path), exist_ok=True)
             cv2.imwrite(updated_file_path, param.scrolled_img)
@@ -102,17 +103,42 @@ def split_image(event, x, y, flags, param):
                 param.processing = False
             else:
                 param.loaded_image_index = param.loaded_image_index + 1
-                param.original_img = cv2.imread(param.images[param.loaded_image_index])
+                param.original_img = cv2.imread(param.imagePaths[param.loaded_image_index])
+                param.original_img_annotations = getFileAnnotations(param.annotationPaths[param.loaded_image_index])
                 param.marked_img = param.original_img.copy()
                 param.scrolled_img = param.original_img.copy()
                 param.last_scroll = 0.0
                 cv2.imshow(param.previewWindowName, param.scrolled_img)
 
+def addAnnotations(image: cv2.typing.MatLike, annotations: list[Annotation]):
+    image_width, image_height = image.shape[1], image.shape[0]
+
+    for annotation in annotations:
+        
+        # Recalculate annotation from normalized
+        xCenter = annotation.xCenter * image_width
+        yCenter = annotation.yCenter * image_height
+        width = annotation.width * image_width
+        height = annotation.height * image_height
+
+        x1 = int(xCenter - (width/2))
+        y1 = int(yCenter - (height/2))
+
+        x2 = int(xCenter + (width/2))
+        y2 = int(yCenter + (height/2))
+
+        cv2.rectangle(image, (x1, y1), (x2, y2), (0, 0, 255), 3)
+   
 def main():
     print("Starting PanoScroller!")
 
     args: PanoScrollerArgs = loadArgs() 
     imagePaths, annotationPaths = loadInput(args.inputPath, args.imageFormats)
+
+    original_first_image = cv2.imread(imagePaths[0])
+    marked_first_image = original_first_image.copy()
+    first_image_annotations = getFileAnnotations(annotationPaths[0])
+    addAnnotations(marked_first_image, first_image_annotations)
 
     if not imagePaths or len(imagePaths) == 0:
         print("No input files detected, ending processing")
@@ -122,9 +148,9 @@ def main():
                                              args.previewWindowName, 
                                              0, 
                                              len(imagePaths) - 1, 
-                                             cv2.imread(imagePaths[0]),
-                                             getFileAnnotations(annotationPaths[0]), 
-                                             cv2.imread(imagePaths[0]), 
+                                             original_first_image,
+                                             first_image_annotations,
+                                             marked_first_image, 
                                              cv2.imread(imagePaths[0]), 
                                              0, 
                                              3, 

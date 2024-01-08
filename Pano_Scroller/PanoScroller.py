@@ -8,7 +8,6 @@ from ProcessMonitoring import SplitProgressMonitor
 from pathlib import Path
 import math
 from PIL import Image
-from sklearn.preprocessing import Binarizer
 import matplotlib.pyplot as plt
 
 def loadArgs() -> PanoScrollerArgs:
@@ -68,6 +67,35 @@ def initializeWindows(processParams: SplitProgressMonitor, mainWinName: str, pre
     cv2.namedWindow(previewWinName, cv2.WINDOW_NORMAL)
     cv2.resizeWindow(previewWinName, 1800, 900)
 
+def showAnnotationControlView(annotationsMatrix: np.ndarray):
+    colorMap = {
+        0: [0, 0, 0],      # Black
+        1: [0, 255, 0],    # Green
+        2: [255, 255, 0],  # Yellow
+        3: [255, 0, 0],    # Red
+        4: [128, 0, 128],  # Purple
+        5: [150, 75, 0]    # Brown
+    }
+
+    controlImage = np.zeros((annotationsMatrix.shape[0], annotationsMatrix.shape[1], 3), dtype=np.uint8)
+    for value, color in colorMap.items():
+        controlImage[annotationsMatrix == value] = color
+
+    controlImage = cv2.cvtColor(controlImage, cv2.COLOR_RGB2BGR)
+    annotationsControlViewName = 'AnnotationsControlView'
+    cv2.namedWindow(annotationsControlViewName, cv2.WINDOW_NORMAL)
+    cv2.resizeWindow(annotationsControlViewName, 900, 450)
+    cv2.imshow(annotationsControlViewName, controlImage)
+
+def showWeightsControlView(weightsMatrix: np.ndarray):
+
+    weightsMatrixCopy = weightsMatrix.copy()
+    weightsMatrixCopy = (weightsMatrixCopy * 255).astype(np.uint8)
+    weightsMatrixImage = cv2.cvtColor(controlImage, cv2.COLOR_RGB2BGR)
+
+    weightsMatrixControlImage = Image.fromarray(weightsMatrixCopy)
+    weightsMatrixControlImage.save("weights_control.png")
+
 def suggestSplitCos(image: cv2.typing.MatLike, annotations: list[Annotation], lastSuggestedSplit: int): 
 
     imageHeightInPixels = image.shape[0]
@@ -78,19 +106,7 @@ def suggestSplitCos(image: cv2.typing.MatLike, annotations: list[Annotation], la
         (x1, y1), (x2, y2) = denormalizeAnnotation(annotation, imageHeightInPixels, imageWidthInPixels)
         annotationsMatrix[y1:y2+1, x1:x2+1] += 1
 
-    colorMap = {
-        0: [0, 0, 0],      # Black
-        1: [0, 255, 0],    # Green
-        2: [255, 255, 0],  # Yellow
-        3: [255, 0, 0],    # Red
-        4: [128, 0, 128],  # Purple
-        5: [150, 75, 0]    # Brown
-    }
-    controlImage = np.zeros((annotationsMatrix.shape[0], annotationsMatrix.shape[1], 3), dtype=np.uint8)
-    for value, color in colorMap.items():
-        controlImage[annotationsMatrix == value] = color
-    pil_image = Image.fromarray(controlImage)
-    pil_image.save('output_image.png')
+    showAnnotationControlView(annotationsMatrix)
     
     # https://stackoverflow.com/questions/43741885/how-to-convert-spherical-coordinates-to-equirectangular-projection-coordinates
 
@@ -98,6 +114,8 @@ def suggestSplitCos(image: cv2.typing.MatLike, annotations: list[Annotation], la
     for h in range(imageHeightInPixels):
         pixelsWeight = math.cos(-(h - imageHeightInPixels / 2.0) / imageHeightInPixels * math.pi)
         weightsMatrix[h, :] = pixelsWeight
+    
+    
     weightsMatrixControl = weightsMatrix.copy()
     weightsMatrixControl = (weightsMatrixControl * 255).astype(np.uint8)
     weightsMatrixControlImage = Image.fromarray(weightsMatrixControl)

@@ -18,7 +18,7 @@ import random
 def loadArgs() -> PanoScrollerArgs:
     parser = argparse.ArgumentParser()
     parser.add_argument("--mode", default="manual")
-    parser.add_argument("--inputPath", default="input\\original_images")
+    parser.add_argument("--inputPath", default="data\\required_input\\original_images")
     parser.add_argument("--mainWindowName", default="Source image")
     parser.add_argument("--previewWindowName", default="Preview")
     parser.add_argument("--imageFormats", nargs='+', default=[".jpg", ".png"])
@@ -67,7 +67,7 @@ def loadInput(inputPath: str, imageFormats: [str]) -> (list[str], list[str]):
 def initializeBaseWindows(processParams: SplitProgressMonitor, mainWinName: str, previewWinName: str):  
     cv2.namedWindow(mainWinName, cv2.WINDOW_NORMAL)
     cv2.resizeWindow(mainWinName, 600, 300)
-    cv2.setMouseCallback(mainWinName, split_image, processParams)
+    cv2.setMouseCallback(mainWinName, processEvent, processParams)
 
     cv2.namedWindow(previewWinName, cv2.WINDOW_NORMAL)
     cv2.resizeWindow(previewWinName, 600, 300)
@@ -152,8 +152,8 @@ def showWeightedColumnsPlot(weightedColumns: np.ndarray, splitProcessMonitor: Sp
     x = np.arange(len(weightedColumns))
     splitProcessMonitor.controlPlottedLine.set_xdata(x)
     splitProcessMonitor.controlPlottedLine.set_ydata(weightedColumns)
-    splitProcessMonitor.controlAxes.set_xlim(min(x), max(x))
-    splitProcessMonitor.controlAxes.set_ylim(min(weightedColumns), 1.1*max(weightedColumns))
+    splitProcessMonitor.controlAxes.set_xlim(0, max(x))
+    splitProcessMonitor.controlAxes.set_ylim(0, 1.1*max(weightedColumns))
     splitProcessMonitor.controlAxes.autoscale_view()
     splitProcessMonitor.controlFigure.canvas.draw()
     splitProcessMonitor.controlFigure.canvas.flush_events()
@@ -203,7 +203,15 @@ def getCosSplits(image: cv2.typing.MatLike, annotations: list[Annotation], split
 def suggestSplitStd(splitProgressMonitor: SplitProgressMonitor):
     return
 
-def split_image(event, x, y, flags, param):
+def splitImage(processMonitor: SplitProgressMonitor, splitX: int):
+    processMonitor.marked_img = processMonitor.original_img.copy()
+    left_part = processMonitor.marked_img[0:processMonitor.marked_img.shape[0], 0:splitX]
+    right_part = processMonitor.marked_img[0:processMonitor.marked_img.shape[0], splitX:processMonitor.marked_img.shape[1]]
+    processMonitor.scrolled_img = np.concatenate((right_part, left_part), axis=1)
+    processMonitor.last_scroll = splitX/processMonitor.marked_img.shape[1]
+    cv2.imshow(processMonitor.previewWindowName, processMonitor.scrolled_img)
+
+def processEvent(event, x, y, flags, param):
         if event == cv2.EVENT_MOUSEMOVE:
             param.marked_img[:, param.last_known_x-param.line_thickness:param.last_known_x+param.line_thickness] = param.original_img[:, param.last_known_x-param.line_thickness:param.last_known_x+param.line_thickness]
             addAnnotations(param.marked_img, param.original_img_annotations)
@@ -212,22 +220,18 @@ def split_image(event, x, y, flags, param):
             cv2.putText(img=param.marked_img, text=f"X = {x}, Image: {param.loaded_image_index} / {param.max_image_index}", org=(100, 100), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=2, color=(0, 0, 255), thickness=3, lineType=cv2.LINE_AA)
 
         elif event == cv2.EVENT_LBUTTONDOWN:
-            param.marked_img = param.original_img.copy()
-            left_part = param.marked_img[0:param.marked_img.shape[0], 0:x]
-            right_part = param.marked_img[0:param.marked_img.shape[0], x:param.marked_img.shape[1]]
-            param.scrolled_img = np.concatenate((right_part, left_part), axis=1)
-            param.last_scroll = x/param.marked_img.shape[1]
-            cv2.imshow(param.previewWindowName, param.scrolled_img)
+            splitImage(param, x)
 
         elif event == cv2.EVENT_RBUTTONDOWN:
             param.original_img_path = param.imagePaths[param.loaded_image_index]
-            updated_file_path = param.original_img_path.replace("input", "output")
+            updated_file_path = param.original_img_path.replace("required_input", "scrolled_images").replace("original_images\\", "")
             os.makedirs(os.path.dirname(updated_file_path), exist_ok=True)
             cv2.imwrite(updated_file_path, param.scrolled_img)
             
             filename = Path(updated_file_path)
             filename = filename.with_suffix('')
             filename = str(filename) + "_scroll.txt"
+            filename = filename.replace("scrolled_images", "scroll_values")
             with open(filename, 'w') as writer:
                 writer.write(str(param.last_scroll))
 
@@ -241,6 +245,8 @@ def split_image(event, x, y, flags, param):
                 param.scrolled_img = param.original_img.copy()
                 param.last_scroll = 0.0
                 cv2.imshow(param.previewWindowName, param.scrolled_img)
+                param.last_suggested_c_split = 0
+                param.calculated_c_ranges = None
 
 def denormalizeAnnotation(annotation: Annotation, imageHeight: int, imageWidth: int) -> ((int, int), (int, int)):
     # Recalculate annotation from normalized
@@ -326,13 +332,7 @@ def main():
                 suggestedSplitX = random.randint(suggestedSplitGroup[1][0], suggestedSplitGroup[1][1])
                 print(suggestedSplitX)
                 processParams.last_suggested_c_split += 1
-
-                processParams.marked_img = processParams.original_img.copy()
-                left_part = processParams.marked_img[0:processParams.marked_img.shape[0], 0:suggestedSplitX]
-                right_part = processParams.marked_img[0:processParams.marked_img.shape[0], suggestedSplitX:processParams.marked_img.shape[1]]
-                processParams.scrolled_img = np.concatenate((right_part, left_part), axis=1)
-                processParams.last_scroll = suggestedSplitX/processParams.marked_img.shape[1]
-                cv2.imshow(processParams.previewWindowName, processParams.scrolled_img)
+                splitImage(processParams, suggestedSplitX)
 
             if k == 115:
                 suggestSplitStd(processParams)

@@ -18,7 +18,9 @@ class SplitProgressMonitor():
                  processing: bool,
                  last_scroll: float,
                  last_suggested_c_split: int,
-                 last_suggested_std_split: int):
+                 last_suggested_std_split: int,
+                 calculated_c_ranges,
+                 calculated_std_ranges):
         
         self.imagePaths = imagePaths
         self.annotationPaths = annotationPaths
@@ -35,3 +37,5 @@ class SplitProgressMonitor():
         self.last_scroll = last_scroll
         self.last_suggested_c_split = last_suggested_c_split
         self.last_suggested_std_split = last_suggested_std_split
+        self.calculated_c_ranges = calculated_c_ranges
+        self.calculated_std_ranges = calculated_std_ranges

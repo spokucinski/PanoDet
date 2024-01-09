@@ -9,6 +9,9 @@ from pathlib import Path
 import math
 from PIL import Image
 import matplotlib.pyplot as plt
+from itertools import groupby
+from operator import itemgetter
+import random
 
 def loadArgs() -> PanoScrollerArgs:
     parser = argparse.ArgumentParser()
@@ -61,11 +64,11 @@ def loadInput(inputPath: str, imageFormats: [str]) -> (list[str], list[str]):
 
 def initializeWindows(processParams: SplitProgressMonitor, mainWinName: str, previewWinName: str):  
     cv2.namedWindow(mainWinName, cv2.WINDOW_NORMAL)
-    cv2.resizeWindow(mainWinName, 1800, 900)
+    cv2.resizeWindow(mainWinName, 600, 300)
     cv2.setMouseCallback(mainWinName, split_image, processParams)
 
     cv2.namedWindow(previewWinName, cv2.WINDOW_NORMAL)
-    cv2.resizeWindow(previewWinName, 1800, 900)
+    cv2.resizeWindow(previewWinName, 600, 300)
 
 def showAnnotationControlView(annotationsMatrix: np.ndarray):
     colorMap = {
@@ -84,46 +87,33 @@ def showAnnotationControlView(annotationsMatrix: np.ndarray):
     controlImage = cv2.cvtColor(controlImage, cv2.COLOR_RGB2BGR)
     annotationsControlViewName = 'AnnotationsControlView'
     cv2.namedWindow(annotationsControlViewName, cv2.WINDOW_NORMAL)
-    cv2.resizeWindow(annotationsControlViewName, 900, 450)
+    cv2.resizeWindow(annotationsControlViewName, 400, 200)
     cv2.imshow(annotationsControlViewName, controlImage)
 
 def showWeightsControlView(weightsMatrix: np.ndarray):
 
     weightsMatrixCopy = weightsMatrix.copy()
     weightsMatrixCopy = (weightsMatrixCopy * 255).astype(np.uint8)
-    weightsMatrixImage = cv2.cvtColor(controlImage, cv2.COLOR_RGB2BGR)
 
-    weightsMatrixControlImage = Image.fromarray(weightsMatrixCopy)
-    weightsMatrixControlImage.save("weights_control.png")
+    weightsControlViewName = 'WeightsControlView'
+    cv2.namedWindow(weightsControlViewName, cv2.WINDOW_NORMAL)
+    cv2.resizeWindow(weightsControlViewName, 400, 200)
+    cv2.imshow(weightsControlViewName, weightsMatrixCopy)
 
-def suggestSplitCos(image: cv2.typing.MatLike, annotations: list[Annotation], lastSuggestedSplit: int): 
+def showWeightedAnnotationsControlView(weightedAnnotationsSource: np.ndarray):
 
-    imageHeightInPixels = image.shape[0]
-    imageWidthInPixels = image.shape[1]
+    weightedAnnotations = weightedAnnotationsSource.copy()
+    weightedAnnotations = (weightedAnnotations - np.min(weightedAnnotations)) / (np.max(weightedAnnotations) - np.min(weightedAnnotations))
+    weightedAnnotations = (weightedAnnotations * 255).astype(np.uint8)
 
-    annotationsMatrix = np.zeros((imageHeightInPixels, imageWidthInPixels), dtype=float)
-    for annotation in annotations:
-        (x1, y1), (x2, y2) = denormalizeAnnotation(annotation, imageHeightInPixels, imageWidthInPixels)
-        annotationsMatrix[y1:y2+1, x1:x2+1] += 1
+    viewName = 'WeightedAnnotationsControlView'
+    cv2.namedWindow(viewName, cv2.WINDOW_NORMAL)
+    cv2.resizeWindow(viewName, 400, 200)
+    cv2.imshow(viewName, weightedAnnotations)
 
-    showAnnotationControlView(annotationsMatrix)
+def showColoredWeightedAnnotationsControlView(weightedAnnotationsSource: np.ndarray):
+    weightedAnnotations = np.zeros((weightedAnnotationsSource.shape[0], weightedAnnotationsSource.shape[1], 3), dtype=np.uint8)
     
-    # https://stackoverflow.com/questions/43741885/how-to-convert-spherical-coordinates-to-equirectangular-projection-coordinates
-
-    weightsMatrix = np.zeros((imageHeightInPixels, imageWidthInPixels), dtype=float)
-    for h in range(imageHeightInPixels):
-        pixelsWeight = math.cos(-(h - imageHeightInPixels / 2.0) / imageHeightInPixels * math.pi)
-        weightsMatrix[h, :] = pixelsWeight
-    
-    
-    weightsMatrixControl = weightsMatrix.copy()
-    weightsMatrixControl = (weightsMatrixControl * 255).astype(np.uint8)
-    weightsMatrixControlImage = Image.fromarray(weightsMatrixControl)
-    weightsMatrixControlImage.save("weights_control.png")
-
-    weightedAnnotations = annotationsMatrix * weightsMatrix
-    weightedAnnotationsControl = np.zeros((weightedAnnotations.shape[0], weightedAnnotations.shape[1], 3), dtype=np.uint8)
-
     weightsColorMap = {
         0: [255, 0, 0],         # Red
         0.1: [0, 255, 0],       # Green
@@ -136,21 +126,65 @@ def suggestSplitCos(image: cv2.typing.MatLike, annotations: list[Annotation], la
         0.8: [0, 0, 128],       # Dark Blue
         0.9: [128, 128, 128]    # Grey
     }
+
     for threshold, color in weightsColorMap.items():
-        weightedAnnotationsControl[weightedAnnotations > threshold] = color 
-    weightedAnnotationsControlImage = Image.fromarray(weightedAnnotationsControl)
-    weightedAnnotationsControlImage.save('weightedAnnotationsControl.png')
+        weightedAnnotations[weightedAnnotationsSource > threshold] = color 
+    weightedAnnotations = cv2.cvtColor(weightedAnnotations, cv2.COLOR_RGB2BGR)
+    
+    viewName = 'ColoredWeightedAnnotationsControlView'
+    cv2.namedWindow(viewName, cv2.WINDOW_NORMAL)
+    cv2.resizeWindow(viewName, 400, 200)
+    cv2.imshow(viewName, weightedAnnotations)
 
-    weightedColumns = np.sum(weightedAnnotations, axis=0)
+def showWeightedColumnsPlot(weightedColumns: np.ndarray):
     xAxis = np.arange(len(weightedColumns))
-
     plt.figure(figsize=(10, 6))  # You can adjust the size of the figure
     plt.plot(xAxis, weightedColumns)
     plt.xlim(min(xAxis), max(xAxis))
-    plt.title('Weight plot')
-    plt.savefig('weightedColumnsPlot.png')
+    plt.title('Weights plot by column')
+    plt.show(block=False)
 
-    return
+def getCosSplits(image: cv2.typing.MatLike, annotations: list[Annotation]): 
+
+    imageHeightInPixels = image.shape[0]
+    imageWidthInPixels = image.shape[1]
+
+    annotationsMatrix = np.zeros((imageHeightInPixels, imageWidthInPixels), dtype=float)
+    for annotation in annotations:
+        (x1, y1), (x2, y2) = denormalizeAnnotation(annotation, imageHeightInPixels, imageWidthInPixels)
+        annotationsMatrix[y1:y2+1, x1:x2+1] += 1
+    showAnnotationControlView(annotationsMatrix)
+    
+    # https://stackoverflow.com/questions/43741885/how-to-convert-spherical-coordinates-to-equirectangular-projection-coordinates
+
+    weightsMatrix = np.zeros((imageHeightInPixels, imageWidthInPixels), dtype=float)
+    for h in range(imageHeightInPixels):
+        pixelsWeight = math.cos(-(h - imageHeightInPixels / 2.0) / imageHeightInPixels * math.pi)
+        weightsMatrix[h, :] = pixelsWeight
+    showWeightsControlView(weightsMatrix)
+
+    weightedAnnotations = annotationsMatrix * weightsMatrix
+    showWeightedAnnotationsControlView(weightedAnnotations)
+    showColoredWeightedAnnotationsControlView(weightedAnnotations)
+    
+    weightedColumns = np.sum(weightedAnnotations, axis=0)
+    showWeightedColumnsPlot(weightedColumns)
+    
+        # Group by value and find ranges
+    groups = []
+    for k, g in groupby(enumerate(weightedColumns), lambda x: x[1]):
+        group = list(map(itemgetter(0), g))
+        range_length = group[-1] - group[0]
+        groups.append((k, (group[0], group[-1]), range_length))
+
+    # Sort the groups by value
+    groups.sort(key=lambda x: (x[0], -x[2]))
+
+    # Print the value and the simplified range (lower and upper border)
+    for value, borders, range_length in groups:
+        print(f"Value: {value}, Range: {borders}, Actual Range: {range_length}")
+
+    return groups
 
 def suggestSplitStd(splitProgressMonitor: SplitProgressMonitor):
     return
@@ -244,7 +278,9 @@ def main():
                                              True,
                                              0.0, 
                                              0, 
-                                             0)
+                                             0,
+                                             None,
+                                             None)
 
         initializeWindows(processParams, args.mainWindowName, args.previewWindowName)
 
@@ -255,7 +291,11 @@ def main():
             k = cv2.waitKey(20) & 0xFF
             # C suggests split point with COS(f)
             if k == 99:
-                suggestSplitCos(processParams.original_img, processParams.original_img_annotations, processParams.last_suggested_c_split)
+                processParams.calculated_c_ranges = getCosSplits(processParams.original_img, processParams.original_img_annotations)
+                suggestedSplitGroup = processParams.calculated_c_ranges[processParams.last_suggested_c_split]
+                suggestedSplitX = random.randint(suggestedSplitGroup[1][0], suggestedSplitGroup[1][1])
+                print(suggestedSplitX)
+                processParams.last_suggested_c_split += 1
 
             if k == 115:
                 suggestSplitStd(processParams)
@@ -265,6 +305,9 @@ def main():
                 break
 
     print("Ending PanoScroller, closing the app!")
+
+    for value, borders, range_length in groups:
+        print(f"Value: {value}, Range: {borders}, Actual Range: {range_length}")
 
 if __name__ == '__main___':
     main()

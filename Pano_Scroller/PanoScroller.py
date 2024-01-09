@@ -13,6 +13,8 @@ from itertools import groupby
 from operator import itemgetter
 import random
 
+
+
 def loadArgs() -> PanoScrollerArgs:
     parser = argparse.ArgumentParser()
     parser.add_argument("--mode", default="manual")
@@ -62,13 +64,38 @@ def loadInput(inputPath: str, imageFormats: [str]) -> (list[str], list[str]):
 
     return imagePaths, annotationPaths
 
-def initializeWindows(processParams: SplitProgressMonitor, mainWinName: str, previewWinName: str):  
+def initializeBaseWindows(processParams: SplitProgressMonitor, mainWinName: str, previewWinName: str):  
     cv2.namedWindow(mainWinName, cv2.WINDOW_NORMAL)
     cv2.resizeWindow(mainWinName, 600, 300)
     cv2.setMouseCallback(mainWinName, split_image, processParams)
 
     cv2.namedWindow(previewWinName, cv2.WINDOW_NORMAL)
     cv2.resizeWindow(previewWinName, 600, 300)
+
+def initializeControlWindows(annotationsControlViewName = 'AnnotationsControlView', 
+                             weightsControlViewName = 'WeightsControlView', 
+                             weightedAnnotationsControlViewName = 'WeightedAnnotationsControlView',
+                             coloredWeightedAnnotationsControlViewName = 'ColoredWeightedAnnotationsControlView'):
+    
+    cv2.namedWindow(annotationsControlViewName, cv2.WINDOW_NORMAL)
+    cv2.resizeWindow(annotationsControlViewName, 400, 200)
+
+    cv2.namedWindow(weightsControlViewName, cv2.WINDOW_NORMAL)
+    cv2.resizeWindow(weightsControlViewName, 400, 200)
+
+    cv2.namedWindow(weightedAnnotationsControlViewName, cv2.WINDOW_NORMAL)
+    cv2.resizeWindow(weightedAnnotationsControlViewName, 400, 200)
+
+    cv2.namedWindow(coloredWeightedAnnotationsControlViewName, cv2.WINDOW_NORMAL)
+    cv2.resizeWindow(coloredWeightedAnnotationsControlViewName, 400, 200)
+
+    figure, axes = plt.subplots()
+    x = range(101)
+    plotedLine, = axes.plot(x, x)
+
+    plt.show(block=False)
+
+    return figure, axes, plotedLine
 
 def showAnnotationControlView(annotationsMatrix: np.ndarray):
     colorMap = {
@@ -85,31 +112,20 @@ def showAnnotationControlView(annotationsMatrix: np.ndarray):
         controlImage[annotationsMatrix == value] = color
 
     controlImage = cv2.cvtColor(controlImage, cv2.COLOR_RGB2BGR)
-    annotationsControlViewName = 'AnnotationsControlView'
-    cv2.namedWindow(annotationsControlViewName, cv2.WINDOW_NORMAL)
-    cv2.resizeWindow(annotationsControlViewName, 400, 200)
-    cv2.imshow(annotationsControlViewName, controlImage)
+    cv2.imshow('AnnotationsControlView', controlImage)
 
 def showWeightsControlView(weightsMatrix: np.ndarray):
 
     weightsMatrixCopy = weightsMatrix.copy()
     weightsMatrixCopy = (weightsMatrixCopy * 255).astype(np.uint8)
-
-    weightsControlViewName = 'WeightsControlView'
-    cv2.namedWindow(weightsControlViewName, cv2.WINDOW_NORMAL)
-    cv2.resizeWindow(weightsControlViewName, 400, 200)
-    cv2.imshow(weightsControlViewName, weightsMatrixCopy)
+    cv2.imshow('WeightsControlView', weightsMatrixCopy)
 
 def showWeightedAnnotationsControlView(weightedAnnotationsSource: np.ndarray):
 
     weightedAnnotations = weightedAnnotationsSource.copy()
     weightedAnnotations = (weightedAnnotations - np.min(weightedAnnotations)) / (np.max(weightedAnnotations) - np.min(weightedAnnotations))
     weightedAnnotations = (weightedAnnotations * 255).astype(np.uint8)
-
-    viewName = 'WeightedAnnotationsControlView'
-    cv2.namedWindow(viewName, cv2.WINDOW_NORMAL)
-    cv2.resizeWindow(viewName, 400, 200)
-    cv2.imshow(viewName, weightedAnnotations)
+    cv2.imshow('WeightedAnnotationsControlView', weightedAnnotations)
 
 def showColoredWeightedAnnotationsControlView(weightedAnnotationsSource: np.ndarray):
     weightedAnnotations = np.zeros((weightedAnnotationsSource.shape[0], weightedAnnotationsSource.shape[1], 3), dtype=np.uint8)
@@ -130,21 +146,19 @@ def showColoredWeightedAnnotationsControlView(weightedAnnotationsSource: np.ndar
     for threshold, color in weightsColorMap.items():
         weightedAnnotations[weightedAnnotationsSource > threshold] = color 
     weightedAnnotations = cv2.cvtColor(weightedAnnotations, cv2.COLOR_RGB2BGR)
-    
-    viewName = 'ColoredWeightedAnnotationsControlView'
-    cv2.namedWindow(viewName, cv2.WINDOW_NORMAL)
-    cv2.resizeWindow(viewName, 400, 200)
-    cv2.imshow(viewName, weightedAnnotations)
+    cv2.imshow('ColoredWeightedAnnotationsControlView', weightedAnnotations)
 
-def showWeightedColumnsPlot(weightedColumns: np.ndarray):
-    xAxis = np.arange(len(weightedColumns))
-    plt.figure(figsize=(10, 6))  # You can adjust the size of the figure
-    plt.plot(xAxis, weightedColumns)
-    plt.xlim(min(xAxis), max(xAxis))
-    plt.title('Weights plot by column')
-    plt.show(block=False)
+def showWeightedColumnsPlot(weightedColumns: np.ndarray, splitProcessMonitor: SplitProgressMonitor):
+    x = np.arange(len(weightedColumns))
+    splitProcessMonitor.controlPlottedLine.set_xdata(x)
+    splitProcessMonitor.controlPlottedLine.set_ydata(weightedColumns)
+    splitProcessMonitor.controlAxes.set_xlim(min(x), max(x))
+    splitProcessMonitor.controlAxes.set_ylim(min(weightedColumns), 1.1*max(weightedColumns))
+    splitProcessMonitor.controlAxes.autoscale_view()
+    splitProcessMonitor.controlFigure.canvas.draw()
+    splitProcessMonitor.controlFigure.canvas.flush_events()
 
-def getCosSplits(image: cv2.typing.MatLike, annotations: list[Annotation]): 
+def getCosSplits(image: cv2.typing.MatLike, annotations: list[Annotation], splitProcessMonitor: SplitProgressMonitor): 
 
     imageHeightInPixels = image.shape[0]
     imageWidthInPixels = image.shape[1]
@@ -168,7 +182,7 @@ def getCosSplits(image: cv2.typing.MatLike, annotations: list[Annotation]):
     showColoredWeightedAnnotationsControlView(weightedAnnotations)
     
     weightedColumns = np.sum(weightedAnnotations, axis=0)
-    showWeightedColumnsPlot(weightedColumns)
+    showWeightedColumnsPlot(weightedColumns, splitProcessMonitor)
     
         # Group by value and find ranges
     groups = []
@@ -280,9 +294,13 @@ def main():
                                              0, 
                                              0,
                                              None,
+                                             None,
+                                             False,
+                                             None,
+                                             None,
                                              None)
 
-        initializeWindows(processParams, args.mainWindowName, args.previewWindowName)
+        initializeBaseWindows(processParams, args.mainWindowName, args.previewWindowName)
 
         while (processParams.processing):
             cv2.imshow(args.mainWindowName, processParams.marked_img)
@@ -291,11 +309,30 @@ def main():
             k = cv2.waitKey(20) & 0xFF
             # C suggests split point with COS(f)
             if k == 99:
-                processParams.calculated_c_ranges = getCosSplits(processParams.original_img, processParams.original_img_annotations)
+                if not processParams.controlWindowsInitialized:
+                    processParams.controlWindowsInitialized = True
+                    figure, axes, plottedLine = initializeControlWindows()
+                    processParams.controlAxes = axes
+                    processParams.controlFigure = figure
+                    processParams.controlPlottedLine = plottedLine
+
+                if not processParams.calculated_c_ranges:
+                    processParams.calculated_c_ranges = getCosSplits(processParams.original_img, processParams.original_img_annotations, processParams)
+
+                if processParams.last_suggested_c_split >= len(processParams.calculated_c_ranges):
+                    processParams.last_suggested_c_split = 0
+                    
                 suggestedSplitGroup = processParams.calculated_c_ranges[processParams.last_suggested_c_split]
                 suggestedSplitX = random.randint(suggestedSplitGroup[1][0], suggestedSplitGroup[1][1])
                 print(suggestedSplitX)
                 processParams.last_suggested_c_split += 1
+
+                processParams.marked_img = processParams.original_img.copy()
+                left_part = processParams.marked_img[0:processParams.marked_img.shape[0], 0:suggestedSplitX]
+                right_part = processParams.marked_img[0:processParams.marked_img.shape[0], suggestedSplitX:processParams.marked_img.shape[1]]
+                processParams.scrolled_img = np.concatenate((right_part, left_part), axis=1)
+                processParams.last_scroll = suggestedSplitX/processParams.marked_img.shape[1]
+                cv2.imshow(processParams.previewWindowName, processParams.scrolled_img)
 
             if k == 115:
                 suggestSplitStd(processParams)
@@ -305,9 +342,6 @@ def main():
                 break
 
     print("Ending PanoScroller, closing the app!")
-
-    for value, borders, range_length in groups:
-        print(f"Value: {value}, Range: {borders}, Actual Range: {range_length}")
 
 if __name__ == '__main___':
     main()

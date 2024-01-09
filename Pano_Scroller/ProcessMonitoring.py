@@ -20,7 +20,11 @@ class SplitProgressMonitor():
                  last_suggested_c_split: int,
                  last_suggested_std_split: int,
                  calculated_c_ranges,
-                 calculated_std_ranges):
+                 calculated_std_ranges,
+                 controlWindowsInitialized: bool,
+                 controlFigure,
+                 controlAxes,
+                 controlPlottedLine):
         
         self.imagePaths = imagePaths
         self.annotationPaths = annotationPaths
@@ -39,3 +43,7 @@ class SplitProgressMonitor():
         self.last_suggested_std_split = last_suggested_std_split
         self.calculated_c_ranges = calculated_c_ranges
         self.calculated_std_ranges = calculated_std_ranges
+        self.controlWindowsInitialized = controlWindowsInitialized
+        self.controlFigure = controlFigure
+        self.controlAxes = controlAxes
+        self.controlPlottedLine = controlPlottedLine

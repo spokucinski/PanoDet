@@ -12,8 +12,8 @@ import matplotlib.pyplot as plt
 from itertools import groupby
 from operator import itemgetter
 import random
-
-
+import Consts as consts
+import WindowController
 
 def loadArgs() -> PanoScrollerArgs:
     parser = argparse.ArgumentParser()
@@ -63,39 +63,6 @@ def loadInput(inputPath: str, imageFormats: [str]) -> (list[str], list[str]):
         print("Found over 100 images, skipping listing.")
 
     return imagePaths, annotationPaths
-
-def initializeBaseWindows(processParams: SplitProgressMonitor, mainWinName: str, previewWinName: str):  
-    cv2.namedWindow(mainWinName, cv2.WINDOW_NORMAL)
-    cv2.resizeWindow(mainWinName, 600, 300)
-    cv2.setMouseCallback(mainWinName, processEvent, processParams)
-
-    cv2.namedWindow(previewWinName, cv2.WINDOW_NORMAL)
-    cv2.resizeWindow(previewWinName, 600, 300)
-
-def initializeControlWindows(annotationsControlViewName = 'AnnotationsControlView', 
-                             weightsControlViewName = 'WeightsControlView', 
-                             weightedAnnotationsControlViewName = 'WeightedAnnotationsControlView',
-                             coloredWeightedAnnotationsControlViewName = 'ColoredWeightedAnnotationsControlView'):
-    
-    cv2.namedWindow(annotationsControlViewName, cv2.WINDOW_NORMAL)
-    cv2.resizeWindow(annotationsControlViewName, 400, 200)
-
-    cv2.namedWindow(weightsControlViewName, cv2.WINDOW_NORMAL)
-    cv2.resizeWindow(weightsControlViewName, 400, 200)
-
-    cv2.namedWindow(weightedAnnotationsControlViewName, cv2.WINDOW_NORMAL)
-    cv2.resizeWindow(weightedAnnotationsControlViewName, 400, 200)
-
-    cv2.namedWindow(coloredWeightedAnnotationsControlViewName, cv2.WINDOW_NORMAL)
-    cv2.resizeWindow(coloredWeightedAnnotationsControlViewName, 400, 200)
-
-    figure, axes = plt.subplots()
-    x = range(101)
-    plotedLine, = axes.plot(x, x)
-
-    plt.show(block=False)
-
-    return figure, axes, plotedLine
 
 def showAnnotationControlView(annotationsMatrix: np.ndarray):
     colorMap = {
@@ -214,6 +181,7 @@ def splitImage(processMonitor: SplitProgressMonitor, splitX: int):
 def processEvent(event, x, y, flags, param):
         if event == cv2.EVENT_MOUSEMOVE:
             param.marked_img[:, param.last_known_x-param.line_thickness:param.last_known_x+param.line_thickness] = param.original_img[:, param.last_known_x-param.line_thickness:param.last_known_x+param.line_thickness]
+            param.marked_img[0:int(0.9*param.marked_img.shape[0]), 0:int(0.4*param.marked_img.shape[1])] = param.original_img[0:int(0.9*param.marked_img.shape[0]), 0:int(0.4*param.marked_img.shape[1])]
             addAnnotations(param.marked_img, param.original_img_annotations)
             param.last_known_x = x
             cv2.line(param.marked_img, (x, 0), (x, param.marked_img.shape[0]), (255, 0, 0), param.line_thickness)
@@ -306,7 +274,8 @@ def main():
                                              None,
                                              None)
 
-        initializeBaseWindows(processParams, args.mainWindowName, args.previewWindowName)
+        WindowController.initializeBaseWindows()
+        cv2.setMouseCallback(consts.WINDOW_MAIN, processEvent, processParams)
 
         while (processParams.processing):
             cv2.imshow(args.mainWindowName, processParams.marked_img)
@@ -317,7 +286,8 @@ def main():
             if k == 99:
                 if not processParams.controlWindowsInitialized:
                     processParams.controlWindowsInitialized = True
-                    figure, axes, plottedLine = initializeControlWindows()
+                    WindowController.initializeControlWindows()
+                    figure, axes, plottedLine = WindowController.initializeWeightsPlot()
                     processParams.controlAxes = axes
                     processParams.controlFigure = figure
                     processParams.controlPlottedLine = plottedLine

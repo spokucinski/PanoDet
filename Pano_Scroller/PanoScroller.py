@@ -12,15 +12,15 @@ import matplotlib.pyplot as plt
 from itertools import groupby
 from operator import itemgetter
 import random
-import Consts as consts
+import WindowNames as wns
 import WindowController
 
 def loadArgs() -> PanoScrollerArgs:
     parser = argparse.ArgumentParser()
     parser.add_argument("--mode", default="manual")
     parser.add_argument("--inputPath", default="data\\required_input\\original_images")
-    parser.add_argument("--mainWindowName", default="Source image")
-    parser.add_argument("--previewWindowName", default="Preview")
+    parser.add_argument("--mainWindowName", default=wns.WINDOW_MAIN)
+    parser.add_argument("--previewWindowName", default=wns.WINDOW_PREVIEW)
     parser.add_argument("--imageFormats", nargs='+', default=[".jpg", ".png"])
 
     print("\nLoading program parameters...")
@@ -79,20 +79,20 @@ def showAnnotationControlView(annotationsMatrix: np.ndarray):
         controlImage[annotationsMatrix == value] = color
 
     controlImage = cv2.cvtColor(controlImage, cv2.COLOR_RGB2BGR)
-    cv2.imshow('AnnotationsControlView', controlImage)
+    cv2.imshow(wns.WINDOW_ANN_CTR, controlImage)
 
 def showWeightsControlView(weightsMatrix: np.ndarray):
 
     weightsMatrixCopy = weightsMatrix.copy()
     weightsMatrixCopy = (weightsMatrixCopy * 255).astype(np.uint8)
-    cv2.imshow('WeightsControlView', weightsMatrixCopy)
+    cv2.imshow(wns.WINDOW_W_CTR, weightsMatrixCopy)
 
 def showWeightedAnnotationsControlView(weightedAnnotationsSource: np.ndarray):
 
     weightedAnnotations = weightedAnnotationsSource.copy()
     weightedAnnotations = (weightedAnnotations - np.min(weightedAnnotations)) / (np.max(weightedAnnotations) - np.min(weightedAnnotations))
     weightedAnnotations = (weightedAnnotations * 255).astype(np.uint8)
-    cv2.imshow('WeightedAnnotationsControlView', weightedAnnotations)
+    cv2.imshow(wns.WINDOW_W_ANN_CTR, weightedAnnotations)
 
 def showColoredWeightedAnnotationsControlView(weightedAnnotationsSource: np.ndarray):
     weightedAnnotations = np.zeros((weightedAnnotationsSource.shape[0], weightedAnnotationsSource.shape[1], 3), dtype=np.uint8)
@@ -113,7 +113,7 @@ def showColoredWeightedAnnotationsControlView(weightedAnnotationsSource: np.ndar
     for threshold, color in weightsColorMap.items():
         weightedAnnotations[weightedAnnotationsSource > threshold] = color 
     weightedAnnotations = cv2.cvtColor(weightedAnnotations, cv2.COLOR_RGB2BGR)
-    cv2.imshow('ColoredWeightedAnnotationsControlView', weightedAnnotations)
+    cv2.imshow(wns.WINDOW_C_W_ANN_CTR, weightedAnnotations)
 
 def showWeightedColumnsPlot(weightedColumns: np.ndarray, splitProcessMonitor: SplitProgressMonitor):
     x = np.arange(len(weightedColumns))
@@ -181,7 +181,7 @@ def splitImage(processMonitor: SplitProgressMonitor, splitX: int):
 def processEvent(event, x, y, flags, param):
         if event == cv2.EVENT_MOUSEMOVE:
             param.marked_img[:, param.last_known_x-param.line_thickness:param.last_known_x+param.line_thickness] = param.original_img[:, param.last_known_x-param.line_thickness:param.last_known_x+param.line_thickness]
-            param.marked_img[0:int(0.9*param.marked_img.shape[0]), 0:int(0.4*param.marked_img.shape[1])] = param.original_img[0:int(0.9*param.marked_img.shape[0]), 0:int(0.4*param.marked_img.shape[1])]
+            param.marked_img[0:int(0.1*param.marked_img.shape[0]), 0:int(0.25*param.marked_img.shape[1])] = param.original_img[0:int(0.1*param.marked_img.shape[0]), 0:int(0.25*param.marked_img.shape[1])]
             addAnnotations(param.marked_img, param.original_img_annotations)
             param.last_known_x = x
             cv2.line(param.marked_img, (x, 0), (x, param.marked_img.shape[0]), (255, 0, 0), param.line_thickness)
@@ -275,7 +275,7 @@ def main():
                                              None)
 
         WindowController.initializeBaseWindows()
-        cv2.setMouseCallback(consts.WINDOW_MAIN, processEvent, processParams)
+        cv2.setMouseCallback(wns.WINDOW_MAIN, processEvent, processParams)
 
         while (processParams.processing):
             cv2.imshow(args.mainWindowName, processParams.marked_img)

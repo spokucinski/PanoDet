@@ -1,85 +1,122 @@
 import cv2
-import Consts as consts
+import WindowNames as wns
 import numpy as np
 import matplotlib.pyplot as plt
 
 from screeninfo import get_monitors
 
 def initializeBaseWindows():
-    monitorParams = get_monitors()
-    if len(monitorParams) > 0:
-        monitorWidth = monitorParams[0].width
-        windowWidth: int = int(monitorWidth/2)
-        windowHeight: int = int(monitorWidth/4)
+    # Creates empty windows for base pano scrolling images
 
-        emptyMainWindowImage = np.zeros((windowHeight, windowWidth, 3), np.uint8)  
-        cv2.namedWindow(consts.WINDOW_MAIN, cv2.WINDOW_NORMAL)
-        cv2.resizeWindow(consts.WINDOW_MAIN, windowWidth, windowHeight)
-        cv2.moveWindow(consts.WINDOW_MAIN, 0, 0)
-        cv2.imshow(consts.WINDOW_MAIN, emptyMainWindowImage) 
-
-        emptyPreviewWindowImage = np.zeros((windowHeight, windowWidth, 3), np.uint8)
-        cv2.namedWindow(consts.WINDOW_PREVIEW, cv2.WINDOW_NORMAL)
-        cv2.resizeWindow(consts.WINDOW_PREVIEW, windowWidth, windowHeight)
-        cv2.moveWindow(consts.WINDOW_PREVIEW, windowWidth, 0)
-        cv2.imshow(consts.WINDOW_PREVIEW, emptyPreviewWindowImage)
-    
-    else:
+    # App is an UI-based app, so at least one screen is required
+    monitors = get_monitors()
+    if len(monitors) < 1:
         raise Exception("No available monitors detected! UI is required to use this app!")
 
-def initializeControlWindows(debugMode: bool = True):
-    monitorParams = get_monitors()
-    if len(monitorParams) > 1:
-        firstMonitorWidth: int = monitorParams[0].width
-        secondMonitorWidth: int = monitorParams[1].width
-        windowWidth: int = int(secondMonitorWidth/2)
-        windowHeight: int = int(secondMonitorWidth/4)
+    # Base windows are expected to be placed on the very first screen, on top
+    firstMonitorWidth = monitors[0].width
+    defaultWindowWidth: int = int(firstMonitorWidth/2)
+    defaultWindowHeight: int = int(firstMonitorWidth/4)
 
-        if debugMode:
-            emptyAnnotationImage = np.zeros((windowHeight, windowWidth, 3), np.uint8)
-            cv2.namedWindow(consts.WINDOW_ANN_CTR, cv2.WINDOW_NORMAL)
-            cv2.resizeWindow(consts.WINDOW_ANN_CTR, windowWidth, windowHeight)
-            cv2.moveWindow(consts.WINDOW_ANN_CTR, firstMonitorWidth + 0, 0)
-            cv2.imshow(consts.WINDOW_ANN_CTR, emptyAnnotationImage)
+    # Main window in the top-left corner
+    emptyMainWindowImage = np.zeros((defaultWindowHeight, defaultWindowWidth, 3), np.uint8)  
+    cv2.namedWindow(wns.WINDOW_MAIN, cv2.WINDOW_NORMAL)
+    cv2.resizeWindow(wns.WINDOW_MAIN, defaultWindowWidth, defaultWindowHeight)
+    cv2.moveWindow(wns.WINDOW_MAIN, 0, 0)
+    cv2.imshow(wns.WINDOW_MAIN, emptyMainWindowImage) 
 
-            emptyWeightsImage = np.zeros((windowHeight, windowWidth, 3), np.uint8)
-            cv2.namedWindow(consts.WINDOW_W_CTR, cv2.WINDOW_NORMAL)
-            cv2.resizeWindow(consts.WINDOW_W_CTR, windowWidth, windowHeight)
-            cv2.moveWindow(consts.WINDOW_W_CTR, firstMonitorWidth + windowWidth, 0)
-            cv2.imshow(consts.WINDOW_W_CTR, emptyWeightsImage)
+    # Preview window in the top-right corner
+    emptyPreviewWindowImage = np.zeros((defaultWindowHeight, defaultWindowWidth, 3), np.uint8)
+    cv2.namedWindow(wns.WINDOW_PREVIEW, cv2.WINDOW_NORMAL)
+    cv2.resizeWindow(wns.WINDOW_PREVIEW, defaultWindowWidth, defaultWindowHeight)
+    cv2.moveWindow(wns.WINDOW_PREVIEW, defaultWindowWidth, 0)
+    cv2.imshow(wns.WINDOW_PREVIEW, emptyPreviewWindowImage)
 
-            emptyWeightedAnnotationImage = np.zeros((windowHeight, windowWidth, 3), np.uint8)
-            cv2.namedWindow(consts.WINDOW_W_ANN_CTR, cv2.WINDOW_NORMAL)
-            cv2.resizeWindow(consts.WINDOW_W_ANN_CTR, windowWidth, windowHeight)
-            cv2.moveWindow(consts.WINDOW_W_ANN_CTR, firstMonitorWidth + 0, windowHeight)
-            cv2.imshow(consts.WINDOW_W_ANN_CTR, emptyWeightedAnnotationImage)
+def initializeControlWindows():
+    # Creates empty windows for pano scrolling overview monitoring.
 
-            emptyColoredWeightedAnnotationImage = np.zeros((windowHeight, windowWidth, 3), np.uint8)
-            cv2.namedWindow(consts.WINDOW_C_W_ANN_CTR, cv2.WINDOW_NORMAL)
-            cv2.resizeWindow(consts.WINDOW_C_W_ANN_CTR, windowWidth, windowHeight)
-            cv2.moveWindow(consts.WINDOW_C_W_ANN_CTR, firstMonitorWidth + windowWidth, windowHeight)
-            cv2.imshow(consts.WINDOW_C_W_ANN_CTR, emptyColoredWeightedAnnotationImage)
-        else:
-            emptyStatusMonitorImage = np.zeros((int(secondMonitorWidth/2), secondMonitorWidth, 3), np.uint8)
-            cv2.namedWindow(consts.WINDOW_CONTROL, cv2.WINDOW_NORMAL)
-            cv2.resizeWindow(consts.WINDOW_CONTROL, secondMonitorWidth, int(secondMonitorWidth/2))
-            cv2.moveWindow(consts.WINDOW_CONTROL, firstMonitorWidth, 0)
-            cv2.imshow(consts.WINDOW_CONTROL, emptyStatusMonitorImage)
+    # App is an UI-based app, so at least one screen is required
+    monitors = get_monitors()
+    if len(monitors) < 1:
+        raise Exception("No available monitors detected! UI is required to use this app!")
+    
+    # By default control windows are placed in the corners of screen.
+    # If only one screen is available - in the corners of the first screen
+    # If more screens are avaialable - in the corners of the second screen
+    firstMonitorWidth: int = monitors[0].width
+    defaultWindowWidth: int = int(firstMonitorWidth/2)
+    defaultWindowHeight: int = int(firstMonitorWidth/4)
 
+    # Initialize and move windows to the default position   
+    emptyAnnotationImage = np.zeros((defaultWindowHeight, defaultWindowWidth, 3), np.uint8)
+    cv2.namedWindow(wns.WINDOW_ANN_CTR, cv2.WINDOW_NORMAL)
+    cv2.resizeWindow(wns.WINDOW_ANN_CTR, defaultWindowWidth, defaultWindowHeight)
+    cv2.moveWindow(wns.WINDOW_ANN_CTR, 0, 0)
+    cv2.imshow(wns.WINDOW_ANN_CTR, emptyAnnotationImage)
+
+    emptyWeightsImage = np.zeros((defaultWindowHeight, defaultWindowWidth, 3), np.uint8)
+    cv2.namedWindow(wns.WINDOW_W_CTR, cv2.WINDOW_NORMAL)
+    cv2.resizeWindow(wns.WINDOW_W_CTR, defaultWindowWidth, defaultWindowHeight)
+    cv2.moveWindow(wns.WINDOW_W_CTR, defaultWindowWidth, 0)
+    cv2.imshow(wns.WINDOW_W_CTR, emptyWeightsImage)
+
+    emptyWeightedAnnotationImage = np.zeros((defaultWindowHeight, defaultWindowWidth, 3), np.uint8)
+    cv2.namedWindow(wns.WINDOW_W_ANN_CTR, cv2.WINDOW_NORMAL)
+    cv2.resizeWindow(wns.WINDOW_W_ANN_CTR, defaultWindowWidth, defaultWindowHeight)
+    cv2.moveWindow(wns.WINDOW_W_ANN_CTR, 0, defaultWindowHeight)
+    cv2.imshow(wns.WINDOW_W_ANN_CTR, emptyWeightedAnnotationImage)
+
+    emptyColoredWeightedAnnotationImage = np.zeros((defaultWindowHeight, defaultWindowWidth, 3), np.uint8)
+    cv2.namedWindow(wns.WINDOW_C_W_ANN_CTR, cv2.WINDOW_NORMAL)
+    cv2.resizeWindow(wns.WINDOW_C_W_ANN_CTR, defaultWindowWidth, defaultWindowHeight)
+    cv2.moveWindow(wns.WINDOW_C_W_ANN_CTR, defaultWindowWidth, defaultWindowHeight)
+    cv2.imshow(wns.WINDOW_C_W_ANN_CTR, emptyColoredWeightedAnnotationImage)
+    
+    if len(monitors) > 1:
+        # Just move the already initialized windows to an updated position
+        secondMonitorWidth: int = monitors[1].width
+        adjustedWindowWidth: int = int(secondMonitorWidth/2)
+        adjustedWindowHeight: int = int(secondMonitorWidth/4)
+
+        cv2.resizeWindow(wns.WINDOW_ANN_CTR, adjustedWindowWidth, adjustedWindowHeight)
+        cv2.moveWindow(wns.WINDOW_ANN_CTR, firstMonitorWidth + 0, 0)
+
+        cv2.resizeWindow(wns.WINDOW_W_CTR, adjustedWindowWidth, adjustedWindowHeight)
+        cv2.moveWindow(wns.WINDOW_W_CTR, firstMonitorWidth + adjustedWindowWidth, 0)
+
+        cv2.resizeWindow(wns.WINDOW_W_ANN_CTR, adjustedWindowWidth, adjustedWindowHeight)
+        cv2.moveWindow(wns.WINDOW_W_ANN_CTR, firstMonitorWidth + 0, adjustedWindowHeight)
+
+        cv2.resizeWindow(wns.WINDOW_C_W_ANN_CTR, adjustedWindowWidth, adjustedWindowHeight)
+        cv2.moveWindow(wns.WINDOW_C_W_ANN_CTR, firstMonitorWidth + adjustedWindowWidth, adjustedWindowHeight)
+
+    
 def initializeWeightsPlot():
+    # Initialize plot
     figure, axes = plt.subplots()
-    xAxis = range(10)
-    figure.set_label("Empty figure")
-    plotedLine, = axes.plot(xAxis, xAxis)
+    # Plot a placeholding function
+    plotedLine, = axes.plot(range(10), range(10))
+    # Unbound from the UI thread
     plt.show(block=False)
 
-    monitorParams = get_monitors()
-    if len(monitorParams) > 1:
-        addX: int = monitorParams[1].width    
-        mngr = plt.get_current_fig_manager()
-        geom = mngr.window.geometry()
-        x,y,dx,dy = geom.getRect()
-        mngr.window.setGeometry(x + addX, y, dx, dy)
-        
+    # App is an UI-based app, so at least one screen is required
+    monitors = get_monitors()
+    if len(monitors) < 1:
+        raise Exception("No available monitors detected! UI is required to use this app!")
 
+    # By default put the figure in the middle of the first screen
+    figureManager = plt.get_current_fig_manager()
+    windowGeometry = figureManager.window.geometry()
+    x, y, plotWindowWidth, plotWindowHeight = windowGeometry.getRect()
+
+    defaultPlotX: int = int(monitors[0].width/2) - int(plotWindowWidth/2)
+    defaultPlotY: int = int(monitors[0].height/2) - int(plotWindowHeight/2)
+    figureManager.window.setGeometry(defaultPlotX, defaultPlotY, plotWindowWidth, plotWindowHeight)
+    
+    if len(monitors) > 1:
+        # If more screens available - move the figure to the middle of the second screen
+        adjustedPlotX: int = int(monitors[1].width/2) - int(plotWindowWidth/2) + monitors[0].width
+        adjustedPlotY: int = int(monitors[1].height/2) - int(plotWindowHeight/2)
+        figureManager.window.setGeometry(adjustedPlotX, adjustedPlotY, plotWindowWidth, plotWindowHeight)
+        
     return figure, axes, plotedLine

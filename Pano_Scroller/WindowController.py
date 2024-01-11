@@ -120,3 +120,69 @@ def initializeWeightsPlot():
         figureManager.window.setGeometry(adjustedPlotX, adjustedPlotY, plotWindowWidth, plotWindowHeight)
         
     return figure, axes, plotedLine
+
+def updateAnnotationControlView(annotationsMatrix: np.ndarray):
+    colorMap = {
+        0: [0, 0, 0],      # Black
+        1: [0, 255, 0],    # Green
+        2: [255, 255, 0],  # Yellow
+        3: [255, 0, 0],    # Red
+        4: [128, 0, 128],  # Purple
+        5: [150, 75, 0]    # Brown
+    }
+
+    controlImage = np.zeros((annotationsMatrix.shape[0], annotationsMatrix.shape[1], 3), dtype=np.uint8)
+    for value, color in colorMap.items():
+        controlImage[annotationsMatrix == value] = color
+
+    controlImage = cv2.cvtColor(controlImage, cv2.COLOR_RGB2BGR)
+    cv2.imshow(wns.WINDOW_ANN_CTR, controlImage)
+
+def updateWeightsControlView(weightsMatrixSource: np.ndarray):
+    # Shows copied matrix as a black-white image
+    weightsMatrixCopy = np.copy(weightsMatrixSource)
+    weightsMatrixCopy = np.multiply(weightsMatrixCopy, 255)
+    cv2.imshow(wns.WINDOW_W_CTR, weightsMatrixCopy.astype(np.uint8))
+
+def updateWeightedAnnotationsControlView(weightedAnnotationsSource: np.ndarray):
+    # Shows copied matrix as a black-white image
+    weightedAnnotationsCopy = np.copy(weightedAnnotationsSource)
+
+    # Normalize to the range 0-1
+    weightedAnnotationsCopy = np.interp(weightedAnnotationsCopy, (weightedAnnotationsCopy.min(), weightedAnnotationsCopy.max()), (0, 1))
+    weightedAnnotationsCopy = np.multiply(weightedAnnotationsCopy, 255)
+    cv2.imshow(wns.WINDOW_W_ANN_CTR, weightedAnnotationsCopy.astype(np.uint8))
+
+def updateColoredWeightedAnnotationsControlView(weightedAnnotationsSource: np.ndarray):
+    weightedAnnotationsImage = np.zeros((weightedAnnotationsSource.shape[0], weightedAnnotationsSource.shape[1], 3), dtype=np.uint8)
+    
+    weightsColorMap = {
+        0: [255, 0, 0],         # Red
+        0.1: [0, 255, 0],       # Green
+        0.2: [0, 0, 255],       # Blue
+        0.3: [255, 255, 0],     # Yellow
+        0.4: [0, 255, 255],     # Cyan
+        0.5: [255, 0, 255],     # Magenta
+        0.6: [128, 0, 0],       # Dark Red
+        0.7: [0, 128, 0],       # Dark Green
+        0.8: [0, 0, 128],       # Dark Blue
+        0.9: [128, 128, 128]    # Grey
+    }
+    
+    for threshold, color in weightsColorMap.items():
+        weightedAnnotationsImage[weightedAnnotationsSource > threshold] = color 
+    weightedAnnotationsImage = cv2.cvtColor(weightedAnnotationsImage, cv2.COLOR_RGB2BGR)
+    cv2.imshow(wns.WINDOW_C_W_ANN_CTR, weightedAnnotationsImage)
+
+def updateWeightedColumnsPlot(weightedColumns: np.ndarray, figure, axes, line):
+    updatedValuesX = np.arange(len(weightedColumns))
+    
+    line.set_xdata(updatedValuesX)
+    line.set_ydata(weightedColumns)
+    
+    axes.set_xlim(0, max(updatedValuesX))
+    axes.set_ylim(0, max(weightedColumns))
+    axes.autoscale_view()
+
+    figure.canvas.draw()
+    figure.canvas.flush_events()

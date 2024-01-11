@@ -1,18 +1,18 @@
 import cv2
-from Scroller import Annotation
+from AnnotationManager import Annotation
 
 class SplitProgressMonitor():
 
     def __init__(self,
                  imagePaths: list[str],
                  annotationPaths: list[str],
-                 previewWindowName: str,
                  loaded_image_index: int,
                  max_image_index: int,
-                 original_img: cv2.typing.MatLike,
+                 original_unchanged_img: cv2.typing.MatLike,
                  original_img_annotations: list[Annotation],
-                 marked_img: cv2.typing.MatLike,
-                 scrolled_img: cv2.typing.MatLike,
+                 main_img: cv2.typing.MatLike,
+                 preview_img: cv2.typing.MatLike,
+                 scrolled_resulting_img: cv2.typing.MatLike,
                  last_known_x: int,
                  line_thickness: int,
                  processing: bool,
@@ -28,13 +28,13 @@ class SplitProgressMonitor():
         
         self.imagePaths = imagePaths
         self.annotationPaths = annotationPaths
-        self.previewWindowName = previewWindowName
         self.loaded_image_index = loaded_image_index
         self.max_image_index = max_image_index
-        self.original_img = original_img
+        self.original_unchanged_img = original_unchanged_img
         self.original_img_annotations = original_img_annotations
-        self.marked_img = marked_img
-        self.scrolled_img = scrolled_img
+        self.main_img = main_img
+        self.preview_img = preview_img
+        self.scrolled_resulting_img = scrolled_resulting_img
         self.last_known_x = last_known_x
         self.line_thickness = line_thickness
         self.processing = processing

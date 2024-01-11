@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from Scroller import Annotation, getFileAnnotations
+from AnnotationManager import Annotation, getFileAnnotations
 import math
 
 def getAnnotationFilePaths(inputPath: str) -> list[str]:

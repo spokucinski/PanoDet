@@ -1,11 +1,11 @@
 import cv2
-import WindowNames as wns
+import Consts
 import numpy as np
 import matplotlib.pyplot as plt
 
 from screeninfo import get_monitors
 
-def initializeBaseWindows():
+def initializeBaseWindows(processEvent, processParams):
     # Creates empty windows for base pano scrolling images
 
     # App is an UI-based app, so at least one screen is required
@@ -20,17 +20,19 @@ def initializeBaseWindows():
 
     # Main window in the top-left corner
     emptyMainWindowImage = np.zeros((defaultWindowHeight, defaultWindowWidth, 3), np.uint8)  
-    cv2.namedWindow(wns.WINDOW_MAIN, cv2.WINDOW_NORMAL)
-    cv2.resizeWindow(wns.WINDOW_MAIN, defaultWindowWidth, defaultWindowHeight)
-    cv2.moveWindow(wns.WINDOW_MAIN, 0, 0)
-    cv2.imshow(wns.WINDOW_MAIN, emptyMainWindowImage) 
+    cv2.namedWindow(Consts.WINDOW_MAIN, cv2.WINDOW_NORMAL)
+    cv2.resizeWindow(Consts.WINDOW_MAIN, defaultWindowWidth, defaultWindowHeight)
+    cv2.moveWindow(Consts.WINDOW_MAIN, 0, 0)
+    cv2.imshow(Consts.WINDOW_MAIN, emptyMainWindowImage) 
 
     # Preview window in the top-right corner
     emptyPreviewWindowImage = np.zeros((defaultWindowHeight, defaultWindowWidth, 3), np.uint8)
-    cv2.namedWindow(wns.WINDOW_PREVIEW, cv2.WINDOW_NORMAL)
-    cv2.resizeWindow(wns.WINDOW_PREVIEW, defaultWindowWidth, defaultWindowHeight)
-    cv2.moveWindow(wns.WINDOW_PREVIEW, defaultWindowWidth, 0)
-    cv2.imshow(wns.WINDOW_PREVIEW, emptyPreviewWindowImage)
+    cv2.namedWindow(Consts.WINDOW_PREVIEW, cv2.WINDOW_NORMAL)
+    cv2.resizeWindow(Consts.WINDOW_PREVIEW, defaultWindowWidth, defaultWindowHeight)
+    cv2.moveWindow(Consts.WINDOW_PREVIEW, defaultWindowWidth, 0)
+    cv2.imshow(Consts.WINDOW_PREVIEW, emptyPreviewWindowImage)
+
+    cv2.setMouseCallback(Consts.WINDOW_MAIN, processEvent, processParams)
 
 def initializeControlWindows():
     # Creates empty windows for pano scrolling overview monitoring.
@@ -49,28 +51,28 @@ def initializeControlWindows():
 
     # Initialize and move windows to the default position   
     emptyAnnotationImage = np.zeros((defaultWindowHeight, defaultWindowWidth, 3), np.uint8)
-    cv2.namedWindow(wns.WINDOW_ANN_CTR, cv2.WINDOW_NORMAL)
-    cv2.resizeWindow(wns.WINDOW_ANN_CTR, defaultWindowWidth, defaultWindowHeight)
-    cv2.moveWindow(wns.WINDOW_ANN_CTR, 0, 0)
-    cv2.imshow(wns.WINDOW_ANN_CTR, emptyAnnotationImage)
+    cv2.namedWindow(Consts.WINDOW_ANN_CTR, cv2.WINDOW_NORMAL)
+    cv2.resizeWindow(Consts.WINDOW_ANN_CTR, defaultWindowWidth, defaultWindowHeight)
+    cv2.moveWindow(Consts.WINDOW_ANN_CTR, 0, 0)
+    cv2.imshow(Consts.WINDOW_ANN_CTR, emptyAnnotationImage)
 
     emptyWeightsImage = np.zeros((defaultWindowHeight, defaultWindowWidth, 3), np.uint8)
-    cv2.namedWindow(wns.WINDOW_W_CTR, cv2.WINDOW_NORMAL)
-    cv2.resizeWindow(wns.WINDOW_W_CTR, defaultWindowWidth, defaultWindowHeight)
-    cv2.moveWindow(wns.WINDOW_W_CTR, defaultWindowWidth, 0)
-    cv2.imshow(wns.WINDOW_W_CTR, emptyWeightsImage)
+    cv2.namedWindow(Consts.WINDOW_W_CTR, cv2.WINDOW_NORMAL)
+    cv2.resizeWindow(Consts.WINDOW_W_CTR, defaultWindowWidth, defaultWindowHeight)
+    cv2.moveWindow(Consts.WINDOW_W_CTR, defaultWindowWidth, 0)
+    cv2.imshow(Consts.WINDOW_W_CTR, emptyWeightsImage)
 
     emptyWeightedAnnotationImage = np.zeros((defaultWindowHeight, defaultWindowWidth, 3), np.uint8)
-    cv2.namedWindow(wns.WINDOW_W_ANN_CTR, cv2.WINDOW_NORMAL)
-    cv2.resizeWindow(wns.WINDOW_W_ANN_CTR, defaultWindowWidth, defaultWindowHeight)
-    cv2.moveWindow(wns.WINDOW_W_ANN_CTR, 0, defaultWindowHeight)
-    cv2.imshow(wns.WINDOW_W_ANN_CTR, emptyWeightedAnnotationImage)
+    cv2.namedWindow(Consts.WINDOW_W_ANN_CTR, cv2.WINDOW_NORMAL)
+    cv2.resizeWindow(Consts.WINDOW_W_ANN_CTR, defaultWindowWidth, defaultWindowHeight)
+    cv2.moveWindow(Consts.WINDOW_W_ANN_CTR, 0, defaultWindowHeight)
+    cv2.imshow(Consts.WINDOW_W_ANN_CTR, emptyWeightedAnnotationImage)
 
     emptyColoredWeightedAnnotationImage = np.zeros((defaultWindowHeight, defaultWindowWidth, 3), np.uint8)
-    cv2.namedWindow(wns.WINDOW_C_W_ANN_CTR, cv2.WINDOW_NORMAL)
-    cv2.resizeWindow(wns.WINDOW_C_W_ANN_CTR, defaultWindowWidth, defaultWindowHeight)
-    cv2.moveWindow(wns.WINDOW_C_W_ANN_CTR, defaultWindowWidth, defaultWindowHeight)
-    cv2.imshow(wns.WINDOW_C_W_ANN_CTR, emptyColoredWeightedAnnotationImage)
+    cv2.namedWindow(Consts.WINDOW_C_W_ANN_CTR, cv2.WINDOW_NORMAL)
+    cv2.resizeWindow(Consts.WINDOW_C_W_ANN_CTR, defaultWindowWidth, defaultWindowHeight)
+    cv2.moveWindow(Consts.WINDOW_C_W_ANN_CTR, defaultWindowWidth, defaultWindowHeight)
+    cv2.imshow(Consts.WINDOW_C_W_ANN_CTR, emptyColoredWeightedAnnotationImage)
     
     if len(monitors) > 1:
         # Just move the already initialized windows to an updated position
@@ -78,17 +80,17 @@ def initializeControlWindows():
         adjustedWindowWidth: int = int(secondMonitorWidth/2)
         adjustedWindowHeight: int = int(secondMonitorWidth/4)
 
-        cv2.resizeWindow(wns.WINDOW_ANN_CTR, adjustedWindowWidth, adjustedWindowHeight)
-        cv2.moveWindow(wns.WINDOW_ANN_CTR, firstMonitorWidth + 0, 0)
+        cv2.resizeWindow(Consts.WINDOW_ANN_CTR, adjustedWindowWidth, adjustedWindowHeight)
+        cv2.moveWindow(Consts.WINDOW_ANN_CTR, firstMonitorWidth + 0, 0)
 
-        cv2.resizeWindow(wns.WINDOW_W_CTR, adjustedWindowWidth, adjustedWindowHeight)
-        cv2.moveWindow(wns.WINDOW_W_CTR, firstMonitorWidth + adjustedWindowWidth, 0)
+        cv2.resizeWindow(Consts.WINDOW_W_CTR, adjustedWindowWidth, adjustedWindowHeight)
+        cv2.moveWindow(Consts.WINDOW_W_CTR, firstMonitorWidth + adjustedWindowWidth, 0)
 
-        cv2.resizeWindow(wns.WINDOW_W_ANN_CTR, adjustedWindowWidth, adjustedWindowHeight)
-        cv2.moveWindow(wns.WINDOW_W_ANN_CTR, firstMonitorWidth + 0, adjustedWindowHeight)
+        cv2.resizeWindow(Consts.WINDOW_W_ANN_CTR, adjustedWindowWidth, adjustedWindowHeight)
+        cv2.moveWindow(Consts.WINDOW_W_ANN_CTR, firstMonitorWidth + 0, adjustedWindowHeight)
 
-        cv2.resizeWindow(wns.WINDOW_C_W_ANN_CTR, adjustedWindowWidth, adjustedWindowHeight)
-        cv2.moveWindow(wns.WINDOW_C_W_ANN_CTR, firstMonitorWidth + adjustedWindowWidth, adjustedWindowHeight)
+        cv2.resizeWindow(Consts.WINDOW_C_W_ANN_CTR, adjustedWindowWidth, adjustedWindowHeight)
+        cv2.moveWindow(Consts.WINDOW_C_W_ANN_CTR, firstMonitorWidth + adjustedWindowWidth, adjustedWindowHeight)
 
     
 def initializeWeightsPlot():
@@ -136,13 +138,13 @@ def updateAnnotationControlView(annotationsMatrix: np.ndarray):
         controlImage[annotationsMatrix == value] = color
 
     controlImage = cv2.cvtColor(controlImage, cv2.COLOR_RGB2BGR)
-    cv2.imshow(wns.WINDOW_ANN_CTR, controlImage)
+    cv2.imshow(Consts.WINDOW_ANN_CTR, controlImage)
 
 def updateWeightsControlView(weightsMatrixSource: np.ndarray):
     # Shows copied matrix as a black-white image
     weightsMatrixCopy = np.copy(weightsMatrixSource)
     weightsMatrixCopy = np.multiply(weightsMatrixCopy, 255)
-    cv2.imshow(wns.WINDOW_W_CTR, weightsMatrixCopy.astype(np.uint8))
+    cv2.imshow(Consts.WINDOW_W_CTR, weightsMatrixCopy.astype(np.uint8))
 
 def updateWeightedAnnotationsControlView(weightedAnnotationsSource: np.ndarray):
     # Shows copied matrix as a black-white image
@@ -151,7 +153,7 @@ def updateWeightedAnnotationsControlView(weightedAnnotationsSource: np.ndarray):
     # Normalize to the range 0-1
     weightedAnnotationsCopy = np.interp(weightedAnnotationsCopy, (weightedAnnotationsCopy.min(), weightedAnnotationsCopy.max()), (0, 1))
     weightedAnnotationsCopy = np.multiply(weightedAnnotationsCopy, 255)
-    cv2.imshow(wns.WINDOW_W_ANN_CTR, weightedAnnotationsCopy.astype(np.uint8))
+    cv2.imshow(Consts.WINDOW_W_ANN_CTR, weightedAnnotationsCopy.astype(np.uint8))
 
 def updateColoredWeightedAnnotationsControlView(weightedAnnotationsSource: np.ndarray):
     weightedAnnotationsImage = np.zeros((weightedAnnotationsSource.shape[0], weightedAnnotationsSource.shape[1], 3), dtype=np.uint8)
@@ -172,7 +174,7 @@ def updateColoredWeightedAnnotationsControlView(weightedAnnotationsSource: np.nd
     for threshold, color in weightsColorMap.items():
         weightedAnnotationsImage[weightedAnnotationsSource > threshold] = color 
     weightedAnnotationsImage = cv2.cvtColor(weightedAnnotationsImage, cv2.COLOR_RGB2BGR)
-    cv2.imshow(wns.WINDOW_C_W_ANN_CTR, weightedAnnotationsImage)
+    cv2.imshow(Consts.WINDOW_C_W_ANN_CTR, weightedAnnotationsImage)
 
 def updateWeightedColumnsPlot(weightedColumns: np.ndarray, figure, axes, line):
     updatedValuesX = np.arange(len(weightedColumns))

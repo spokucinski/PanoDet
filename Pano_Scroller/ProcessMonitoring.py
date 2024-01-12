@@ -1,49 +1,135 @@
 import cv2
-from AnnotationManager import Annotation
+import os
+import numpy as np
+import AnnotationManager
+import WindowManager
+import math
+import ImageManager
+import Consts
+from operator import itemgetter
+from itertools import groupby
 
-class SplitProgressMonitor():
+class ScrollingProcess:
 
     def __init__(self,
                  imagePaths: list[str],
-                 annotationPaths: list[str],
-                 loaded_image_index: int,
-                 max_image_index: int,
-                 original_unchanged_img: cv2.typing.MatLike,
-                 original_img_annotations: list[Annotation],
-                 main_img: cv2.typing.MatLike,
-                 preview_img: cv2.typing.MatLike,
-                 scrolled_resulting_img: cv2.typing.MatLike,
-                 last_known_x: int,
-                 line_thickness: int,
-                 processing: bool,
-                 last_scroll: float,
-                 last_suggested_c_split: int,
-                 last_suggested_std_split: int,
-                 calculated_c_ranges,
-                 calculated_std_ranges,
-                 controlWindowsInitialized: bool,
-                 controlFigure,
-                 controlAxes,
-                 controlPlottedLine):
+                 annotationPaths: list[str]):
         
         self.imagePaths = imagePaths
         self.annotationPaths = annotationPaths
-        self.loaded_image_index = loaded_image_index
-        self.max_image_index = max_image_index
-        self.original_unchanged_img = original_unchanged_img
-        self.original_img_annotations = original_img_annotations
-        self.main_img = main_img
-        self.preview_img = preview_img
-        self.scrolled_resulting_img = scrolled_resulting_img
-        self.last_known_x = last_known_x
-        self.line_thickness = line_thickness
-        self.processing = processing
-        self.last_scroll = last_scroll
-        self.last_suggested_c_split = last_suggested_c_split
-        self.last_suggested_std_split = last_suggested_std_split
-        self.calculated_c_ranges = calculated_c_ranges
-        self.calculated_std_ranges = calculated_std_ranges
-        self.controlWindowsInitialized = controlWindowsInitialized
-        self.controlFigure = controlFigure
-        self.controlAxes = controlAxes
-        self.controlPlottedLine = controlPlottedLine
+        self.loaded_image_index = -1 # -1 -> no image loaded
+        self.max_image_index = len(imagePaths) - 1
+        self.last_known_x = 0
+        self.line_thickness = 3
+        self.processing = True
+        self.last_scroll = 0.0
+        self.last_suggested_c_split = 0
+        self.last_suggested_c_split_x = 0
+        self.last_suggested_std_split = 0
+        self.calculated_c_ranges = None
+        self.calculated_std_ranges = None
+        self.controlWindowsInitialized = False
+        self.controlFigure = None
+        self.controlAxes = None
+        self.controlPlottedLine = None
+
+    def clearParameters(self):
+        self.last_scroll = 0.0
+        self.last_suggested_c_split = 0
+        self.calculated_c_ranges = None
+        self.last_known_x = 0
+
+    def loadNextImage(self):
+        self.loaded_image_index += 1           
+        self.original_unchanged_img = cv2.imread(self.imagePaths[self.loaded_image_index])
+        self.main_img = np.copy(self.original_unchanged_img)
+        self.preview_img = np.copy(self.original_unchanged_img)
+        self.scrolled_resulting_img = np.copy(self.original_unchanged_img)
+        self.clearParameters()
+        self.original_img_annotations = AnnotationManager.getFileAnnotations(self.annotationPaths[self.loaded_image_index])
+        AnnotationManager.addAnnotationsOverlay(self.main_img, self.last_known_x, self.original_img_annotations, self.loaded_image_index, self.max_image_index)
+
+    def initializeMainFlow(self, eventProcessingFunction):
+        WindowManager.initializeBaseWindows(eventProcessingFunction, self)
+
+    def initializeControlFlow(self):
+        self.controlWindowsInitialized = True
+        WindowManager.initializeControlWindows()
+        figure, axes, plottedLine = WindowManager.initializeWeightsPlot()
+        self.controlAxes = axes
+        self.controlFigure = figure
+        self.controlPlottedLine = plottedLine
+
+    def getCosSplits(self, image: cv2.typing.MatLike, annotations: list[AnnotationManager.Annotation]): 
+        imageHeightInPixels = image.shape[0]
+        imageWidthInPixels = image.shape[1]
+
+        annotationsMatrix = np.zeros((imageHeightInPixels, imageWidthInPixels), dtype=float)
+        for annotation in annotations:
+            (x1, y1), (x2, y2) = AnnotationManager.denormalizeAnnotation(annotation, imageHeightInPixels, imageWidthInPixels)
+            annotationsMatrix[y1:y2+1, x1:x2+1] += 1
+        WindowManager.updateAnnotationControlView(annotationsMatrix)
+        
+        # https://stackoverflow.com/questions/43741885/how-to-convert-spherical-coordinates-to-equirectangular-projection-coordinates
+
+        weightsMatrix = np.zeros((imageHeightInPixels, imageWidthInPixels), dtype=float)
+        for h in range(imageHeightInPixels):
+            pixelsWeight = math.cos(-(h - imageHeightInPixels / 2.0) / imageHeightInPixels * math.pi)
+            weightsMatrix[h, :] = pixelsWeight
+        WindowManager.updateWeightsControlView(weightsMatrix)
+
+        weightedAnnotations = annotationsMatrix * weightsMatrix
+        WindowManager.updateWeightedAnnotationsControlView(weightedAnnotations)
+        WindowManager.updateColoredWeightedAnnotationsControlView(weightedAnnotations)
+        
+        weightedColumns = np.sum(weightedAnnotations, axis=0)
+        WindowManager.updateWeightedColumnsPlot(weightedColumns, self.controlFigure, self.controlAxes, self.controlPlottedLine)
+        
+            # Group by value and find ranges
+        groups = []
+        for k, g in groupby(enumerate(weightedColumns), lambda x: x[1]):
+            group = list(map(itemgetter(0), g))
+            range_length = group[-1] - group[0]
+            groups.append((k, (group[0], group[-1]), range_length))
+
+        # Sort the groups by value
+        groups.sort(key=lambda x: (x[0], -x[2]))
+
+        # Print the value and the simplified range (lower and upper border)
+        for value, borders, range_length in groups:
+            print(f"Value: {value}, Range: {borders}, Actual Range: {range_length}")
+
+        return groups
+    
+    def calculateCosinusRanges(self):
+        self.calculated_c_ranges = self.getCosSplits(self.original_unchanged_img, self.original_img_annotations)
+
+    def scrollImage(self, requestedSplitX: int):
+        self.preview_img = np.copy(self.original_unchanged_img)      
+        ImageManager.scrollImage(self.preview_img, requestedSplitX)          
+        self.scrolled_resulting_img = np.copy(self.preview_img)
+        self.last_scroll = requestedSplitX/self.main_img.shape[1]
+        
+    def proposeNextCosinusSplit(self):
+        ImageManager.removeVerticalLine(self.main_img, self.last_suggested_c_split_x, self.original_unchanged_img)
+        value, borders, range_length = self.calculated_c_ranges[self.last_suggested_c_split]
+        suggestedSplitX = int((borders[0] + borders[1]) / 2)
+        self.last_suggested_c_split += 1
+        ImageManager.addVerticalLine(self.main_img, suggestedSplitX, (0, 255, 0))
+        self.last_suggested_c_split_x = suggestedSplitX
+        self.scrollImage(suggestedSplitX)
+
+    def saveProcessedImage(self):
+        pathToProcessedImage = self.imagePaths[self.loaded_image_index]
+        scrolledImgOutPath = pathToProcessedImage.replace(Consts.IMAGES_PATH, Consts.SCROLLED_IMAGES_PATH)
+        os.makedirs(os.path.dirname(scrolledImgOutPath), exist_ok=True)
+        cv2.imwrite(scrolledImgOutPath, self.scrolled_resulting_img)
+
+    def saveScrollValue(self):
+        pathToProcessedImage = self.imagePaths[self.loaded_image_index]
+        scrolledImgOutPath = pathToProcessedImage.replace(Consts.IMAGES_PATH, Consts.SCROLLED_IMAGES_PATH)
+        scrollValOutPath = scrolledImgOutPath.replace(Consts.SCROLLED_IMAGES_PATH, Consts.SCROLL_VALUES_PATH)
+        for acceptedImageFormat in Consts.ACCEPTED_IMAGE_FORMATS:
+            scrollValOutPath = scrollValOutPath.replace(acceptedImageFormat, "_scroll.txt")
+        with open(scrollValOutPath, 'w') as writer:
+            writer.write(str(self.last_scroll))

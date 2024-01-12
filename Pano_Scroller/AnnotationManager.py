@@ -1,4 +1,5 @@
 import cv2
+import ImageManager
 
 class Annotation():
 
@@ -46,3 +47,8 @@ def getFileAnnotations(annotationsFilePath: str) -> list[Annotation]:
                 annotations.append(Annotation(int(objectType), float(xCenter), float(yCenter), float(width), float(height)))
     finally:
         return annotations
+    
+def addAnnotationsOverlay(image: cv2.typing.MatLike, x: int, annotations: list[Annotation], currentImageIndex: int, maxImageIndex: int):
+    addAnnotationsToImage(image, annotations) 
+    ImageManager.addVerticalLine(image, x)
+    ImageManager.addStatusInfo(image, x, currentImageIndex, maxImageIndex)

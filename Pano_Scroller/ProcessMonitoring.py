@@ -49,6 +49,7 @@ class ScrollingProcess:
         self.scrolled_resulting_img = np.copy(self.original_unchanged_img)
         self.clearParameters()
         self.original_img_annotations = AnnotationManager.getFileAnnotations(self.annotationPaths[self.loaded_image_index])
+        self.scrolledAnnotations = self.original_img_annotations.copy()
 
         AnnotationManager.addAnnotationsToImage(self.main_img, self.original_img_annotations)        
         ImageManager.addVerticalLine(self.main_img, self.last_known_x)

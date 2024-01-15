@@ -8,16 +8,25 @@ import Consts
 def mainWindowCallback(event, x, y, flags, scrollingProcess):
         if event == cv2.EVENT_MOUSEMOVE:
             ImageManager.removeVerticalLine(scrollingProcess.main_img, scrollingProcess.last_known_x, scrollingProcess.original_unchanged_img)
-            ImageManager.removeStatusInfo(scrollingProcess.main_img, scrollingProcess.original_unchanged_img)            
-            AnnotationManager.addAnnotationsOverlay(scrollingProcess.main_img, x, scrollingProcess.original_img_annotations, scrollingProcess.loaded_image_index, scrollingProcess.max_image_index) 
+            ImageManager.removeStatusInfo(scrollingProcess.main_img, scrollingProcess.original_unchanged_img)
+            
+            AnnotationManager.addAnnotationsToImage(scrollingProcess.main_img, scrollingProcess.original_img_annotations)
+            
+            ImageManager.addVerticalLine(scrollingProcess.main_img, x)
+            ImageManager.addStatusInfo(scrollingProcess.main_img, x, scrollingProcess.loaded_image_index, scrollingProcess.max_image_index)
+           
             scrollingProcess.last_known_x = x 
 
         elif event == cv2.EVENT_LBUTTONDOWN:
             scrollingProcess.scrollImage(x)
+            scrollingProcess.scrolledAnnotations = AnnotationManager.scrollAnnotations(scrollingProcess.original_img_annotations, scrollingProcess.last_scroll)
+            scrollingProcess.scrollAnnotations = AnnotationManager.mergeAdjacentObjects(scrollingProcess.scrolledAnnotations, scrollingProcess.last_scroll)
+            AnnotationManager.addAnnotationsToImage(scrollingProcess.preview_img, scrollingProcess.scrolledAnnotations, annotationColor=(0, 255, 0))
 
         elif event == cv2.EVENT_RBUTTONDOWN:
             scrollingProcess.saveProcessedImage()           
             scrollingProcess.saveScrollValue()
+            scrollingProcess.saveScrolledAnnotations()
 
             if scrollingProcess.loaded_image_index >= scrollingProcess.max_image_index:
                 scrollingProcess.processing = False
@@ -53,10 +62,7 @@ def main():
                 scrollingProcess.last_suggested_c_split = 0
 
             scrollingProcess.proposeNextCosinusSplit()
-            
-        # if k == 115:
-        #     suggestSplitStd(scrollingProcess)
-
+        
         # ESC escapes
         if k == 27:
             break

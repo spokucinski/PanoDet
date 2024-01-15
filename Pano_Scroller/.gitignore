@@ -1,8 +1,8 @@
-data/required_input/original_annotations/*
-!data/required_input/original_annotations/.gitkeep
+data/original_annotations/*
+!data/original_annotations/.gitkeep
 
-data/required_input/original_images/*
-!data/required_input/original_images/.gitkeep
+data/original_images/*
+!data/original_images/.gitkeep
 
 data/scroll_values/*
 !data/scroll_values/.gitkeep

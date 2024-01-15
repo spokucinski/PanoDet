@@ -1,8 +1,9 @@
-IMAGES_PATH = "data\\required_input\\original_images"
-ANNOTATIONS_PATH = "data\\required_input\\original_annotations"
+IMAGES_PATH = "data\\original_images"
+ANNOTATIONS_PATH = "data\\original_annotations"
 
 SCROLLED_IMAGES_PATH = "data\\scrolled_images"
 SCROLL_VALUES_PATH = "data\\scroll_values"
+SCROLLED_ANNOTATIONS_PATH = "data\\scrolled_annotations"
 
 ACCEPTED_IMAGE_FORMATS = [".jpg", ".png"]
 

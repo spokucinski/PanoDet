@@ -32,6 +32,8 @@ class ScrollingProcess:
         self.controlFigure = None
         self.controlAxes = None
         self.controlPlottedLine = None
+        self.original_img_annotations = None
+        self.scrolledAnnotations = None
 
     def clearParameters(self):
         self.last_scroll = 0.0
@@ -47,7 +49,10 @@ class ScrollingProcess:
         self.scrolled_resulting_img = np.copy(self.original_unchanged_img)
         self.clearParameters()
         self.original_img_annotations = AnnotationManager.getFileAnnotations(self.annotationPaths[self.loaded_image_index])
-        AnnotationManager.addAnnotationsOverlay(self.main_img, self.last_known_x, self.original_img_annotations, self.loaded_image_index, self.max_image_index)
+
+        AnnotationManager.addAnnotationsToImage(self.main_img, self.original_img_annotations)        
+        ImageManager.addVerticalLine(self.main_img, self.last_known_x)
+        ImageManager.addStatusInfo(self.main_img, self.last_known_x, self.loaded_image_index, self.max_image_index)
 
     def initializeMainFlow(self, eventProcessingFunction):
         WindowManager.initializeBaseWindows(eventProcessingFunction, self)
@@ -133,3 +138,16 @@ class ScrollingProcess:
             scrollValOutPath = scrollValOutPath.replace(acceptedImageFormat, "_scroll.txt")
         with open(scrollValOutPath, 'w') as writer:
             writer.write(str(self.last_scroll))
+
+    def saveScrolledAnnotations(self):
+        pathToProcessedAnnotations = self.annotationPaths[self.loaded_image_index]
+        pathToProcessedAnnotations = pathToProcessedAnnotations.replace(Consts.ANNOTATIONS_PATH, Consts.SCROLLED_ANNOTATIONS_PATH)
+
+        os.makedirs(os.path.dirname(pathToProcessedAnnotations), exist_ok=True)
+        with open(pathToProcessedAnnotations, "w") as writer:
+            writer.writelines(
+                list(
+                    map(
+                        lambda postProcessedAnnotation: 
+                            f"{postProcessedAnnotation.objectType} {postProcessedAnnotation.xCenter} {postProcessedAnnotation.yCenter} {postProcessedAnnotation.width} {postProcessedAnnotation.height}\n", 
+                            self.scrolledAnnotations)))

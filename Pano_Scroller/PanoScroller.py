@@ -67,6 +67,28 @@ def main():
         if k == 27:
             break
 
+        if k == 13:
+            while (scrollingProcess.processing):
+                if not scrollingProcess.controlWindowsInitialized:
+                    scrollingProcess.initializeControlFlow()
+
+                if not scrollingProcess.calculated_c_ranges:
+                    scrollingProcess.calculateCosinusRanges()
+
+                if scrollingProcess.last_suggested_c_split >= len(scrollingProcess.calculated_c_ranges):
+                    scrollingProcess.last_suggested_c_split = 0
+
+                scrollingProcess.proposeNextCosinusSplit()
+
+                scrollingProcess.saveProcessedImage()           
+                scrollingProcess.saveScrollValue()
+                scrollingProcess.saveScrolledAnnotations()
+
+                if scrollingProcess.loaded_image_index >= scrollingProcess.max_image_index:
+                    scrollingProcess.processing = False
+                else:
+                    scrollingProcess.loadNextImage()
+
     print("Ending PanoScroller, closing the app!")
 
 if __name__ == '__main___':

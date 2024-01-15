@@ -20,7 +20,7 @@ def mainWindowCallback(event, x, y, flags, scrollingProcess):
         elif event == cv2.EVENT_LBUTTONDOWN:
             scrollingProcess.scrollImage(x)
             scrollingProcess.scrolledAnnotations = AnnotationManager.scrollAnnotations(scrollingProcess.original_img_annotations, scrollingProcess.last_scroll)
-            scrollingProcess.scrollAnnotations = AnnotationManager.mergeAdjacentObjects(scrollingProcess.scrolledAnnotations, scrollingProcess.last_scroll)
+            scrollingProcess.scrolledAnnotations = AnnotationManager.mergeAdjacentObjects(scrollingProcess.scrolledAnnotations, scrollingProcess.last_scroll)
             AnnotationManager.addAnnotationsToImage(scrollingProcess.preview_img, scrollingProcess.scrolledAnnotations, annotationColor=(0, 255, 0))
 
         elif event == cv2.EVENT_RBUTTONDOWN:

@@ -100,9 +100,9 @@ class ScrollingProcess:
         # Sort the groups by value
         groups.sort(key=lambda x: (x[0], -x[2]))
 
-        # Print the value and the simplified range (lower and upper border)
-        for value, borders, range_length in groups:
-            print(f"Value: {value}, Range: {borders}, Actual Range: {range_length}")
+        # # Print the value and the simplified range (lower and upper border)
+        # for value, borders, range_length in groups:
+        #     print(f"Value: {value}, Range: {borders}, Actual Range: {range_length}")
 
         return groups
     
@@ -122,7 +122,11 @@ class ScrollingProcess:
         self.last_suggested_c_split += 1
         ImageManager.addVerticalLine(self.main_img, suggestedSplitX, (0, 255, 0))
         self.last_suggested_c_split_x = suggestedSplitX
+        self.last_scroll = suggestedSplitX/self.main_img.shape[1]
         self.scrollImage(suggestedSplitX)
+        self.scrolledAnnotations = AnnotationManager.scrollAnnotations(self.original_img_annotations, self.last_scroll)
+        self.scrolledAnnotations = AnnotationManager.mergeAdjacentObjects(self.scrolledAnnotations, self.last_scroll)
+        AnnotationManager.addAnnotationsToImage(self.preview_img, self.scrolledAnnotations, annotationColor=(0, 255, 0))
 
     def saveProcessedImage(self):
         pathToProcessedImage = self.imagePaths[self.loaded_image_index]

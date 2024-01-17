@@ -1,0 +1,67 @@
+# Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..]
+path: ../datasets/censoredScrolled  # dataset root dir
+train: images/censoredScrolled  # train images (relative to 'path') 128 images
+val: images/censoredScrolled  # val images (relative to 'path') 128 images
+test:  # test images (optional)
+
+# Classes
+names:
+  0: Bathtub
+  1: Chair
+  2: Table
+  3: TV
+  4: Washing Machine
+  5: Cabinet
+  6: Gaming Console
+  7: Sofa
+  8: Speaker
+  9: Fireplace
+  10: Bed
+  11: Wardrobe
+  12: Pillow
+  13: Nightstand
+  14: Toilet
+  15: Shower
+  16: Laundry Rack
+  17: Hair Dryer
+  18: Fridge
+  19: Microwave
+  20: Dishwasher
+  21: Stove
+  22: Kettle
+  23: Coffe Machine
+  24: Toaster
+  25: Oven
+  26: Lamp
+  27: Air Conditioning
+  28: Computer
+  29: Plant
+  30: Window
+  31: Desk
+  32: Door
+  33: Mirror
+  34: Socket
+  35: Sink
+  36: Aquarium
+  37: Painting
+  38: Air Purifier
+  39: Switch
+  40: Boiler
+  41: Rug
+  42: Board
+  43: Vase
+  44: Faucet
+  45: Curtain
+  46: Roller Blind
+  47: Shelf
+  48: Fire Extinguisher
+  49: Fan
+  50: Heater
+  51: Car
+  52: Phone
+  53: Clock
+  54: Alarm Sensor
+
+
+# Download script/URL (optional)
+download: https://ultralytics.com/assets/coco128.zip

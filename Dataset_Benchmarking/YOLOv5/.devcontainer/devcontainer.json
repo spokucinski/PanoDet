@@ -16,7 +16,8 @@
 		"--gpus",
 		"all",
 		"--name",
-		"YOLOv5DevContainer"
+		"YOLOv5DevContainer",
+		"--ipc=host"
 	]
 
 	// Features to add to the dev container. More info: https://containers.dev/features.

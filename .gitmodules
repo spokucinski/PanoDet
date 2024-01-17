@@ -7,3 +7,6 @@
 [submodule "Dataset_Benchmarking/YOLOv5/external"]
 	path = Dataset_Benchmarking/YOLOv5/external
 	url = https://github.com/spokucinski/yolov5.git
+[submodule "Dataset_Benchmarking/YOLOv8/external"]
+	path = Dataset_Benchmarking/YOLOv8/external
+	url = https://github.com/spokucinski/yolov8.git

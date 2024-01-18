@@ -1,8 +1,6 @@
-import random
 import cv2
 import albumentations as A
 import os
-from matplotlib import pyplot as plt
 
 class Annotation():
 
@@ -21,8 +19,19 @@ class Annotation():
 
 # Define the augmentation pipeline
 transform = A.Compose([
-    A.HorizontalFlip(p=0.5),  # Horizontal flip with 50% probability
-    A.RandomBrightness(0.9, True, 1)
+    # Spatial-level transforms
+    A.HorizontalFlip(p=0.1),
+    A.PixelDropout(p=0.1),
+    A.GridDistortion(distort_limit=0.2, p=0.1),
+    
+    # Pixel-level transforms
+    A.ToGray(p=0.1),
+    A.CLAHE(p=0.1),
+    A.ColorJitter(brightness=0.5, contrast=0.2, saturation=0.25, hue=0.1, p=0.1),
+    A.GaussianBlur(p=0.1),
+    A.ImageCompression(p=0.1),
+    A.Sharpen(p=0.1),
+    A.ISONoise(color_shift=(0.1, 0.2), intensity=(0.1, 0.25), p=1)
  ], bbox_params=A.BboxParams(format='yolo'))
 
 # Define your dataset directory and image list
@@ -85,7 +94,9 @@ for dataset in datasets:
         for bbox in augmentedImage['bboxes']:
             augmentedAnnotations.append(Annotation(int(bbox[4]), bbox[0], bbox[1], bbox[2], bbox[3]))
         
-        cv2.imwrite(resultsPath, augmentedImage['image'])
+        augmentedImage = augmentedImage['image']
+        augmentedImage = cv2.cvtColor(augmentedImage, cv2.COLOR_RGB2BGR)
+        cv2.imwrite(resultsPath, augmentedImage)
         resultsPath = resultsPath.replace("images", "labels").replace(".jpg", ".txt").replace(".png", ".txt")
         os.makedirs(os.path.dirname(resultsPath), exist_ok=True)
         with open(resultsPath, "w") as writer:

@@ -20,18 +20,18 @@ class Annotation():
 # Define the augmentation pipeline
 transform = A.Compose([
     # Spatial-level transforms
-    A.HorizontalFlip(p=0.1),
-    A.PixelDropout(p=0.1),
-    A.GridDistortion(distort_limit=0.2, p=0.1),
+    A.HorizontalFlip(p=0.5),
+    A.PixelDropout(p=0.2),
+    A.GridDistortion(interpolation=cv2.INTER_LANCZOS4, border_mode=cv2.BORDER_WRAP, p=0.2),
     
     # Pixel-level transforms
-    A.ToGray(p=0.1),
-    A.CLAHE(p=0.1),
-    A.ColorJitter(brightness=0.5, contrast=0.2, saturation=0.25, hue=0.1, p=0.1),
-    A.GaussianBlur(p=0.1),
-    A.ImageCompression(p=0.1),
-    A.Sharpen(p=0.1),
-    A.ISONoise(color_shift=(0.1, 0.2), intensity=(0.1, 0.25), p=1)
+    A.ToGray(p=0.2),
+    A.CLAHE(p=0.2),
+    A.ColorJitter(brightness=0.25, contrast=0.4, saturation=0.5, hue=0, p=0.4),     # Set of hue jitter makes the images highly unrealistic
+    A.GaussianBlur(p=0.2), 
+    A.ImageCompression(quality_lower=75, quality_upper=100, p=0.2), 
+    A.Sharpen(p=0.25),
+    A.ISONoise(color_shift=(0.1, 0.2), intensity=(0.1, 0.25), p=0.2)
  ], bbox_params=A.BboxParams(format='yolo'))
 
 # Define your dataset directory and image list

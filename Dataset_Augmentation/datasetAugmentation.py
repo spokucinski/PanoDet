@@ -1,6 +1,9 @@
 import cv2
 import albumentations as A
 import os
+import math
+
+IMG_MULT = 10
 
 class Annotation():
 
@@ -73,6 +76,7 @@ for dataset in datasets:
     foundAnnotationFilesCounts: int = len(annotationPaths)
     print(f"Found: {foundImagesCount} images and {foundAnnotationFilesCounts} annotation files!")
 
+    augmentedImagePaths = []
     for imagePath in imagePaths:
         image = cv2.imread(imagePath)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -85,24 +89,32 @@ for dataset in datasets:
 
         bboxes = []
         for annotation in annotations:
-            bboxes.append([annotation.xCenter, annotation.yCenter, annotation.width, annotation.height, str(annotation.objectType)])
+            bboxes.append([max(0, annotation.xCenter), max(0, annotation.yCenter), max(0, annotation.width), max(0, annotation.height), str(annotation.objectType)])
 
-        augmentedImage = transform(image=image, bboxes=bboxes)
-        resultsPath = imagePath.replace('datasets', 'augmentedDatasets')
-        os.makedirs(os.path.dirname(resultsPath), exist_ok=True)
-        augmentedAnnotations: list[Annotation] = []
-        for bbox in augmentedImage['bboxes']:
-            augmentedAnnotations.append(Annotation(int(bbox[4]), bbox[0], bbox[1], bbox[2], bbox[3]))
-        
-        augmentedImage = augmentedImage['image']
-        augmentedImage = cv2.cvtColor(augmentedImage, cv2.COLOR_RGB2BGR)
-        cv2.imwrite(resultsPath, augmentedImage)
-        resultsPath = resultsPath.replace("images", "labels").replace(".jpg", ".txt").replace(".png", ".txt")
-        os.makedirs(os.path.dirname(resultsPath), exist_ok=True)
-        with open(resultsPath, "w") as writer:
-            writer.writelines(
-                list(
-                    map(
-                        lambda postProcessedAnnotation: 
-                            f"{postProcessedAnnotation.objectType} {postProcessedAnnotation.xCenter} {postProcessedAnnotation.yCenter} {postProcessedAnnotation.width} {postProcessedAnnotation.height}\n", 
-                            augmentedAnnotations)))
+        for mult in range(IMG_MULT):
+            augmentedImage = transform(image=image, bboxes=bboxes)
+            resultsPath = imagePath.replace('datasets', 'augmentedDatasets')
+            os.makedirs(os.path.dirname(resultsPath), exist_ok=True)
+            augmentedAnnotations: list[Annotation] = []
+            for bbox in augmentedImage['bboxes']:
+                augmentedAnnotations.append(Annotation(int(bbox[4]), bbox[0], bbox[1], bbox[2], bbox[3]))
+            
+            augmentedImage = augmentedImage['image']
+            augmentedImage = cv2.cvtColor(augmentedImage, cv2.COLOR_RGB2BGR)
+            resultsPath = resultsPath.replace(".jpg", f"_{mult+1}.jpg").replace(".png", f"_{mult+1}.png")
+            cv2.imwrite(resultsPath, augmentedImage)
+            augmentedImagePaths.append(resultsPath)
+            resultsPath = resultsPath.replace("images", "labels").replace(".jpg", ".txt").replace(".png", ".txt")
+            os.makedirs(os.path.dirname(resultsPath), exist_ok=True)
+            with open(resultsPath, "w") as writer:
+                writer.writelines(
+                    list(
+                        map(
+                            lambda postProcessedAnnotation: 
+                                f"{postProcessedAnnotation.objectType} {postProcessedAnnotation.xCenter} {postProcessedAnnotation.yCenter} {postProcessedAnnotation.width} {postProcessedAnnotation.height}\n", 
+                                augmentedAnnotations)))
+
+    imagesListPath = os.path.join(dataset.replace('datasets', 'augmentedDatasets'), "images.txt")
+    os.makedirs(os.path.dirname(imagesListPath), exist_ok=True)    
+    with open(imagesListPath, "w") as imageListWriter:
+        imageListWriter.writelines(path + '\n' for path in augmentedImagePaths)

@@ -1,9 +1,8 @@
 import cv2
 import albumentations as A
 import os
-import math
 
-IMG_MULT = 10
+IMG_MULT = 1
 
 class Annotation():
 

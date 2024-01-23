@@ -123,6 +123,36 @@ def initializeWeightsPlot():
         
     return figure, axes, plotedLine
 
+def initializeFilteredWeightsPlot():
+    # Initialize plot
+    figure, axes = plt.subplots()
+    # Plot a placeholding function
+    plotedLine, = axes.plot(range(10), range(10))
+    # Unbound from the UI thread
+    plt.show(block=False)
+
+    # App is an UI-based app, so at least one screen is required
+    monitors = get_monitors()
+    if len(monitors) < 1:
+        raise Exception("No available monitors detected! UI is required to use this app!")
+
+    # By default put the figure in the middle of the first screen
+    figureManager = plt.get_current_fig_manager()
+    windowGeometry = figureManager.window.geometry()
+    x, y, plotWindowWidth, plotWindowHeight = windowGeometry.getRect()
+
+    defaultPlotX: int = int(monitors[0].width/2) - int(plotWindowWidth/2)
+    defaultPlotY: int = int(monitors[0].height/2) - int(plotWindowHeight/2)
+    figureManager.window.setGeometry(defaultPlotX, defaultPlotY, plotWindowWidth, plotWindowHeight)
+    
+    if len(monitors) > 1:
+        # If more screens available - move the figure to the middle of the second screen
+        adjustedPlotX: int = int(monitors[1].width/2) - int(plotWindowWidth/2) + monitors[0].width
+        adjustedPlotY: int = int(monitors[1].height/2) - int(plotWindowHeight/2)
+        figureManager.window.setGeometry(adjustedPlotX, adjustedPlotY, plotWindowWidth, plotWindowHeight)
+    
+    return figure, axes, plotedLine
+
 def updateAnnotationControlView(annotationsMatrix: np.ndarray):
     colorMap = {
         0: [0, 0, 0],      # Black
@@ -159,16 +189,16 @@ def updateColoredWeightedAnnotationsControlView(weightedAnnotationsSource: np.nd
     weightedAnnotationsImage = np.zeros((weightedAnnotationsSource.shape[0], weightedAnnotationsSource.shape[1], 3), dtype=np.uint8)
     
     weightsColorMap = {
-        0: [255, 0, 0],         # Red
-        0.1: [0, 255, 0],       # Green
-        0.2: [0, 0, 255],       # Blue
-        0.3: [255, 255, 0],     # Yellow
-        0.4: [0, 255, 255],     # Cyan
-        0.5: [255, 0, 255],     # Magenta
-        0.6: [128, 0, 0],       # Dark Red
-        0.7: [0, 128, 0],       # Dark Green
-        0.8: [0, 0, 128],       # Dark Blue
-        0.9: [128, 128, 128]    # Grey
+        0:   [10, 0, 0],         # Light Red
+        0.1: [76, 0, 0],       # Salmon Red
+        0.2: [144, 0, 0],       # Soft Red
+        0.3: [210, 0, 0],       # Tomato Red
+        0.4: [255, 23, 0],       # Indian Red
+        0.5: [255, 91, 0],       # Pure Red
+        0.6: [255, 157, 0],     # Firebrick Red
+        0.7: [255, 225, 0],     # Crimson Red
+        0.8: [255, 255, 54],     # Dark Red
+        0.9: [255, 255, 156]    # Deep Red
     }
     
     for threshold, color in weightsColorMap.items():

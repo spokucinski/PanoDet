@@ -50,7 +50,7 @@ def main():
         cv2.imshow(Consts.WINDOW_PREVIEW, scrollingProcess.preview_img)
         k = cv2.waitKey(20) & 0xFF
 
-        # C suggests split point with COS(f)
+        # c suggests split point with COS(f)
         if k == 99:
             if not scrollingProcess.controlWindowsInitialized:
                 scrollingProcess.initializeControlFlow()
@@ -62,7 +62,13 @@ def main():
                 scrollingProcess.last_suggested_c_split = 0
 
             scrollingProcess.proposeNextCosinusSplit()
-        
+
+        if k == 98:
+            if not scrollingProcess.controlWindowsInitialized:
+                scrollingProcess.initializeControlFlow()
+            
+            if not scrollingProcess.calculated_maximum_ranges:
+                scrollingProcess.calculateMaximumRanges()
         # ESC escapes
         if k == 27:
             break

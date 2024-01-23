@@ -23,23 +23,36 @@ class ScrollingProcess:
         self.line_thickness = 3
         self.processing = True
         self.last_scroll = 0.0
-        self.last_suggested_c_split = 0
-        self.last_suggested_c_split_x = 0
-        self.last_suggested_std_split = 0
-        self.calculated_c_ranges = None
-        self.calculated_std_ranges = None
         self.controlWindowsInitialized = False
-        self.controlFigure = None
-        self.controlAxes = None
-        self.controlPlottedLine = None
         self.original_img_annotations = None
         self.scrolledAnnotations = None
 
+        self.controlFigure = None
+        self.controlAxes = None
+        self.controlPlottedLine = None
+
+        self.filteredFigure = None
+        self.filteredAxes = None
+        self.filteredPlottedLine = None
+
+        self.last_suggested_c_split = 0
+        self.last_suggested_maximum_split = 0
+        
+        self.last_suggested_c_split_x = 0
+        self.last_suggested_maximum_split_x = 0
+
+        self.calculated_c_ranges = None
+        self.calculated_maximum_ranges = None
+
     def clearParameters(self):
         self.last_scroll = 0.0
-        self.last_suggested_c_split = 0
-        self.calculated_c_ranges = None
         self.last_known_x = 0
+
+        self.last_suggested_c_split = 0
+        self.last_suggested_maximum_split = 0
+
+        self.calculated_c_ranges = None
+        self.calculated_maximum_ranges = None
 
     def loadNextImage(self):
         self.loaded_image_index += 1           
@@ -61,10 +74,16 @@ class ScrollingProcess:
     def initializeControlFlow(self):
         self.controlWindowsInitialized = True
         WindowManager.initializeControlWindows()
-        figure, axes, plottedLine = WindowManager.initializeWeightsPlot()
+        
+        figure, axes, plottedLine = WindowManager.initializeWeightsPlot()    
         self.controlAxes = axes
         self.controlFigure = figure
         self.controlPlottedLine = plottedLine
+
+        filteredFigure, filteredAxes, filteredPlottedLine = WindowManager.initializeFilteredWeightsPlot()
+        self.filteredAxes = filteredAxes
+        self.filteredFigure = filteredFigure
+        self.filteredPlottedLine = filteredPlottedLine
 
     def getCosSplits(self, image: cv2.typing.MatLike, annotations: list[AnnotationManager.Annotation]): 
         imageHeightInPixels = image.shape[0]
@@ -107,8 +126,64 @@ class ScrollingProcess:
 
         return groups
     
+    def getMaximumSplits(self, image: cv2.typing.MatLike, annotations: list[AnnotationManager.Annotation]):
+        imageHeightInPixels = image.shape[0]
+        imageWidthInPixels = image.shape[1]
+
+        annotationsMatrix = np.zeros((imageHeightInPixels, imageWidthInPixels), dtype=float)
+        for annotation in annotations:
+            (x1, y1), (x2, y2) = AnnotationManager.denormalizeAnnotation(annotation, imageHeightInPixels, imageWidthInPixels)
+            annotationsMatrix[y1:y2+1, x1:x2+1] += 1
+        WindowManager.updateAnnotationControlView(annotationsMatrix)
+        
+        # https://stackoverflow.com/questions/43741885/how-to-convert-spherical-coordinates-to-equirectangular-projection-coordinates
+
+        weightsMatrix = np.ones((imageHeightInPixels, imageWidthInPixels), dtype=float)
+        for h in range(imageHeightInPixels):
+            pixelsWeight = math.cos(-(h - imageHeightInPixels / 2.0) / imageHeightInPixels * math.pi)
+            weightsMatrix[h, :] = pixelsWeight
+        WindowManager.updateWeightsControlView(weightsMatrix)
+
+        weightedAnnotations = annotationsMatrix * weightsMatrix
+        WindowManager.updateWeightedAnnotationsControlView(weightedAnnotations)
+        WindowManager.updateColoredWeightedAnnotationsControlView(weightedAnnotations)
+        
+        weightedColumns = np.max(weightedAnnotations, axis=0)
+        WindowManager.updateWeightedColumnsPlot(weightedColumns, self.controlFigure, self.controlAxes, self.controlPlottedLine)
+        
+            # Group by value and find ranges
+        groups = []
+        for k, g in groupby(enumerate(weightedColumns), lambda x: x[1]):
+            group = list(map(itemgetter(0), g))
+            range_length = group[-1] - group[0]
+            groups.append((k, (group[0], group[-1]), range_length))
+
+        filteredPlot = [0] * imageWidthInPixels
+        filteredGroups = [group for group in groups if group[2] >= 0.001 * imageWidthInPixels]
+        for filteredGroup in filteredGroups:
+            startIndex = filteredGroup[1][0]
+            endIndex = filteredGroup[1][1]
+            rangeValue = filteredGroup[0]
+            rangeLength = filteredGroup[2]
+            rangeValues = [rangeValue] * rangeLength
+            filteredPlot[startIndex:endIndex] = rangeValues
+
+        WindowManager.updateWeightedColumnsPlot(filteredPlot, self.controlFigure, self.controlAxes, self.controlPlottedLine)
+
+        # Sort the groups by value
+        groups.sort(key=lambda x: (x[0], -x[2]))
+
+        # # Print the value and the simplified range (lower and upper border)
+        # for value, borders, range_length in groups:
+        #     print(f"Value: {value}, Range: {borders}, Actual Range: {range_length}")
+
+        return groups
+
     def calculateCosinusRanges(self):
         self.calculated_c_ranges = self.getCosSplits(self.original_unchanged_img, self.original_img_annotations)
+
+    def calculateMaximumRanges(self):
+        self.calculated_maximum_ranges = self.getMaximumSplits(self.original_unchanged_img, self.original_img_annotations)
 
     def scrollImage(self, requestedSplitX: int):
         self.preview_img = np.copy(self.original_unchanged_img)      

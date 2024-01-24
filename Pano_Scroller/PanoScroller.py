@@ -74,11 +74,12 @@ def main():
                 scrollingProcess.last_suggested_maximum_split = 0
 
             scrollingProcess.proposeNextMaxSplit()
-            
+
         # ESC escapes
         if k == 27:
             break
 
+        # Enter for Auto-Min Scrolling
         if k == 13:
             while (scrollingProcess.processing):
                 if not scrollingProcess.controlWindowsInitialized:
@@ -91,6 +92,28 @@ def main():
                     scrollingProcess.last_suggested_c_split = 0
 
                 scrollingProcess.proposeNextCosinusSplit()
+
+                scrollingProcess.saveProcessedImage()           
+                scrollingProcess.saveScrollValue()
+                scrollingProcess.saveScrolledAnnotations()
+
+                if scrollingProcess.loaded_image_index >= scrollingProcess.max_image_index:
+                    scrollingProcess.processing = False
+                else:
+                    scrollingProcess.loadNextImage()
+
+        if k == 32:
+            while (scrollingProcess.processing):
+                if not scrollingProcess.controlWindowsInitialized:
+                    scrollingProcess.initializeControlFlow()
+
+                if not scrollingProcess.calculated_maximum_ranges:
+                    scrollingProcess.calculateMaximumRanges()
+
+                if scrollingProcess.last_suggested_maximum_split >= len(scrollingProcess.calculated_maximum_ranges):
+                    scrollingProcess.last_suggested_maximum_split = 0
+
+                scrollingProcess.proposeNextMaxSplit()
 
                 scrollingProcess.saveProcessedImage()           
                 scrollingProcess.saveScrollValue()

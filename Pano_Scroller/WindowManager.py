@@ -160,15 +160,15 @@ def updateColoredWeightedAnnotationsControlView(weightedAnnotationsSource: np.nd
     
     weightsColorMap = {
         0:   [10, 0, 0],         # Light Red
-        0.1: [76, 0, 0],       # Salmon Red
-        0.2: [144, 0, 0],       # Soft Red
-        0.3: [210, 0, 0],       # Tomato Red
+        0.1: [76, 0, 0],         # Salmon Red
+        0.2: [144, 0, 0],        # Soft Red
+        0.3: [210, 0, 0],        # Tomato Red
         0.4: [255, 23, 0],       # Indian Red
         0.5: [255, 91, 0],       # Pure Red
-        0.6: [255, 157, 0],     # Firebrick Red
-        0.7: [255, 225, 0],     # Crimson Red
+        0.6: [255, 157, 0],      # Firebrick Red
+        0.7: [255, 225, 0],      # Crimson Red
         0.8: [255, 255, 54],     # Dark Red
-        0.9: [255, 255, 156]    # Deep Red
+        0.9: [255, 255, 156]     # Deep Red
     }
     
     for threshold, color in weightsColorMap.items():

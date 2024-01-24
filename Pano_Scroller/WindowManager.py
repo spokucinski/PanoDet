@@ -93,7 +93,7 @@ def initializeControlWindows():
         cv2.moveWindow(Consts.WINDOW_C_W_ANN_CTR, firstMonitorWidth + adjustedWindowWidth, adjustedWindowHeight)
 
     
-def initializeWeightsPlot():
+def initializePlot():
     # Initialize plot
     figure, axes = plt.subplots()
     # Plot a placeholding function
@@ -121,36 +121,6 @@ def initializeWeightsPlot():
         adjustedPlotY: int = int(monitors[1].height/2) - int(plotWindowHeight/2)
         figureManager.window.setGeometry(adjustedPlotX, adjustedPlotY, plotWindowWidth, plotWindowHeight)
         
-    return figure, axes, plotedLine
-
-def initializeFilteredWeightsPlot():
-    # Initialize plot
-    figure, axes = plt.subplots()
-    # Plot a placeholding function
-    plotedLine, = axes.plot(range(10), range(10))
-    # Unbound from the UI thread
-    plt.show(block=False)
-
-    # App is an UI-based app, so at least one screen is required
-    monitors = get_monitors()
-    if len(monitors) < 1:
-        raise Exception("No available monitors detected! UI is required to use this app!")
-
-    # By default put the figure in the middle of the first screen
-    figureManager = plt.get_current_fig_manager()
-    windowGeometry = figureManager.window.geometry()
-    x, y, plotWindowWidth, plotWindowHeight = windowGeometry.getRect()
-
-    defaultPlotX: int = int(monitors[0].width/2) - int(plotWindowWidth/2)
-    defaultPlotY: int = int(monitors[0].height/2) - int(plotWindowHeight/2)
-    figureManager.window.setGeometry(defaultPlotX, defaultPlotY, plotWindowWidth, plotWindowHeight)
-    
-    if len(monitors) > 1:
-        # If more screens available - move the figure to the middle of the second screen
-        adjustedPlotX: int = int(monitors[1].width/2) - int(plotWindowWidth/2) + monitors[0].width
-        adjustedPlotY: int = int(monitors[1].height/2) - int(plotWindowHeight/2)
-        figureManager.window.setGeometry(adjustedPlotX, adjustedPlotY, plotWindowWidth, plotWindowHeight)
-    
     return figure, axes, plotedLine
 
 def updateAnnotationControlView(annotationsMatrix: np.ndarray):
@@ -206,7 +176,7 @@ def updateColoredWeightedAnnotationsControlView(weightedAnnotationsSource: np.nd
     weightedAnnotationsImage = cv2.cvtColor(weightedAnnotationsImage, cv2.COLOR_RGB2BGR)
     cv2.imshow(Consts.WINDOW_C_W_ANN_CTR, weightedAnnotationsImage)
 
-def updateWeightedColumnsPlot(weightedColumns: np.ndarray, figure, axes, line):
+def updatePlot(weightedColumns: np.ndarray, figure, axes, line):
     updatedValuesX = np.arange(len(weightedColumns))
     
     line.set_xdata(updatedValuesX)

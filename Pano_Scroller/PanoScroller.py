@@ -69,6 +69,12 @@ def main():
             
             if not scrollingProcess.calculated_maximum_ranges:
                 scrollingProcess.calculateMaximumRanges()
+
+            if scrollingProcess.last_suggested_maximum_split >= len(scrollingProcess.calculated_maximum_ranges):
+                scrollingProcess.last_suggested_maximum_split = 0
+
+            scrollingProcess.proposeNextMaxSplit()
+            
         # ESC escapes
         if k == 27:
             break

@@ -17,16 +17,26 @@ IMAGE_SIZES:list[int] = [2048] #[1024, 2048, 4096]
 BATCH_SIZES:list[int] = [4]
 MODELS:list[str] = ['yolov5x', 'yolov5m']
 
-exp_date:str = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+exp_date:str = '2024-01-27_12:07:35' # datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
 datasets_found: list[str] = [dataset for dataset in os.listdir(DATASETS_PATH) 
                              if os.path.isdir(os.path.join(DATASETS_PATH, dataset))]
 
-logging.basicConfig(level=logging.INFO,
-                    filename=os.path.join(RES_PATH, LOG_NAME + f'{exp_date}.log'),
-                    filemode='a',
-                    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
-logger = logging.getLogger(__name__)
+
+# Get YOLOv5 logger and add custom file handler
+logger = val.LOGGER
+# Create a file handler to log messages to a file
+filePath = os.path.join(RES_PATH, LOG_NAME + f'{exp_date}.log')
+directory = os.path.dirname(filePath)
+# Check if the directory exists, and create it if it doesn't
+if not os.path.exists(directory):
+    os.makedirs(directory)
+file_handler = logging.FileHandler(filePath)
+file_handler.setLevel(logging.INFO)  # Set the logging level for this handler
+# Optionally, set a formatter
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
 
 logger.info("Starting experiments!")
 logger.info("Reading start parameters...")
@@ -46,35 +56,43 @@ for dataset in datasets_found:
                 for model in MODELS:
                     
                     runName:str = f"{dataset}_{epochNum}_{imageSize}_{batchSize}_{model}_{exp_date}"
+                    logger.warning(f"STARTING NEW EXPERIMENT: {runName}")
+                    logger.warning(f"STARTING NEW EXPERIMENT: {runName}")
+                    logger.warning(f"STARTING NEW EXPERIMENT: {runName}")
+                    logger.warning(f"STARTING NEW EXPERIMENT: {runName}")
                     # # Training
+                    # try:
+                    #     importlib.reload(train)
+                    #     opt = train.parse_opt()
+                    #     opt.epochs = epochNum
+                    #     opt.imgsz = imageSize
+                    #     opt.batch_size = batchSize
+                    #     opt.weights = PosixPath(f'external/{model}.pt')
+                    #     opt.rect = True
+                    #     opt.data = PosixPath(f'{DATA_PATH}/{dataset}.yaml')
+                    #     opt.name = runName
+                    #     opt.project = PosixPath(f'{RES_PATH}/{PROJ_NAME}/Train')
+                    #     opt.hyp = PosixPath('external/data/hyps/hyp.no-augmentation.yaml')
+                    #     train.main(opt)
+
                     try:
-                        importlib.reload(train)
-                        opt = train.parse_opt()
-                        opt.epochs = epochNum
-                        opt.imgsz = imageSize
-                        opt.batch_size = batchSize
-                        opt.weights = PosixPath(f'external/{model}.pt')
-                        opt.rect = True
-                        opt.data = PosixPath(f'{DATA_PATH}/{dataset}.yaml')
-                        opt.name = runName
-                        opt.project = PosixPath(f'{RES_PATH}/{PROJ_NAME}/Train')
-                        opt.hyp = PosixPath('external/data/hyps/hyp.no-augmentation.yaml')
-                        train.main(opt)
+                        importlib.reload(val)
+                    
+                        testOpt = val.parse_opt()
+                        testOpt.data = PosixPath(f'{DATA_PATH}/{dataset}.yaml')
+                        testOpt.weights = PosixPath(f'{RES_PATH}/{PROJ_NAME}/Train/{runName}/weights/best.pt')
+                        testOpt.batch_size = 1
+                        testOpt.imgsz = imageSize
+                        testOpt.save_txt = True
+                        testOpt.verbose = True
+                        testOpt.task = 'test'
+                        testOpt.name = runName
+                        testOpt.project = PosixPath(f'{RES_PATH}/{PROJ_NAME}/Test')
+                        
+                        val.main(testOpt)
 
-                        try:
-                            importlib.reload(val)
-                            testOpt = val.parse_opt()
-                            testOpt.data = PosixPath(f'{DATA_PATH}/{dataset}.yaml')
-                            testOpt.weights = PosixPath(f'{RES_PATH}/{PROJ_NAME}/Train/{runName}/weights/best.pt')
-                            testOpt.batch_size = 1
-                            testOpt.imgsz = imageSize
-                            testOpt.task = 'test'
-                            testOpt.name = runName
-                            testOpt.project = PosixPath(f'{RES_PATH}/{PROJ_NAME}/Test')
-                            val.main(testOpt)
+                    except Exception as testingException:
+                        logger.exception('Error during testing!', testingException)
 
-                        except Exception as testingException:
-                            logger.exception('Error during testing!', testingException)
-
-                    except Exception as e:
-                        logger.exception('Error during training!', e)
+                    # except Exception as e:
+                    #     logger.exception('Error during training!', e)

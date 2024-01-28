@@ -1,2 +1,4 @@
 /datasets/*
 /results/*
+/data/*
+/wandb/*

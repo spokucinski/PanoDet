@@ -3,7 +3,7 @@
 {
 	"name": "YOLOv5DevContainer",
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"image": "ultralytics/yolov5:latest",
+	"build": { "dockerfile": "Dockerfile" },
 	"customizations": {
 		"vscode": {
 			"extensions": [

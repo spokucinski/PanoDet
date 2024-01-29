@@ -1,12 +1,18 @@
-import fiftyone as fo
-import fiftyone.zoo as foz
+import os
+#os.system('pkill mongod')
 
-dataset = foz.load_zoo_dataset("quickstart")
+import fiftyone as fo
+
+unscrolledDataset = fo.Dataset.from_dir(dataset_dir='data/UnscrolledDataset', dataset_type=fo.types.YOLOv5Dataset)
+#unscrolledTestDataset = fo.Dataset.from_dir(dataset_dir='data/UnscrolledDataset/test', dataset_type=fo.types.YOLOv5Dataset)
+
+dataset : fo.Dataset = fo.Dataset(name="Test")
+subset_images_path = os.path.join('data/Test', "images")
+subset_ann_path = os.path.join('data/Test', "annotations.xml")
+dataset.merge_dir(data_path=subset_images_path, labels_path=subset_ann_path, dataset_type=fo.types.CVATImageDataset)
+
 session = fo.launch_app(dataset)
 
 session.wait()
 
-i = 4
-
-#pgrep mongod
-#kill -9 [ID]
+session.close()

@@ -3,3 +3,4 @@
 /data/DataSources/*
 !/data/DataSources
 /results/*
+__pycache__/*

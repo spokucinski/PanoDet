@@ -4,11 +4,11 @@ import scipy as sc
 from scipy import ndimage as nd
 from matplotlib import pyplot as plt
 import cv2
-import albumentations as A
+# import albumentations as A
 
 
-os.chdir("Dataset_Exporter")
-IMG_PATH = "data\sample\ApartmentAirB&B\images\Kiok64M7Jn1-6a6a5b76440e4e008e8d63600810f576.jpg"
+#os.chdir("Dataset_Exporter")
+IMG_PATH = "/workspaces/PanoDet/Dataset_Exporter/data/sample/ApartmentAirB&B/images/Kiok64M7Jn1-6a6a5b76440e4e008e8d63600810f576.jpg"
 
 # image = Image.open(IMG_PATH)
 # image.show()
@@ -19,7 +19,7 @@ IMG_PATH = "data\sample\ApartmentAirB&B\images\Kiok64M7Jn1-6a6a5b76440e4e008e8d6
 image = cv2.imread(IMG_PATH)
 image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-cv2.namedWindow('source', cv2.WINDOW_NORMAL)
+#cv2.namedWindow('source', cv2.WINDOW_NORMAL)
 cv2.imshow("source", image)
 
 transform = A.Compose([

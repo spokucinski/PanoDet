@@ -21,7 +21,10 @@ exp_date:str = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
 datasets_found: list[str] = [dataset for dataset in os.listdir(DATASETS_PATH) 
                              if os.path.isdir(os.path.join(DATASETS_PATH, dataset))]
 
-
+alreadyConductedTrainings: list[str] = ["_".join(doneTrainingConfiguration.split('_')[:-2]) \
+                                        for doneTrainingConfiguration \
+                                            in os.listdir(os.path.join(RES_PATH, PROJ_NAME, 'Train')) \
+                                                if os.path.isdir(os.path.join(RES_PATH, PROJ_NAME, 'Train', doneTrainingConfiguration))]
 
 # Get YOLOv5 logger and add custom file handler
 logger = val.LOGGER
@@ -55,7 +58,12 @@ for dataset in datasets_found:
             for batchSize in BATCH_SIZES:
                 for model in MODELS:
                     
-                    runName:str = f"{dataset}_{epochNum}_{imageSize}_{batchSize}_{model}_{exp_date}"
+                    runConfiguration: str = f"{dataset}_{epochNum}_{imageSize}_{batchSize}_{model}"
+                    if runConfiguration in alreadyConductedTrainings:
+                        continue
+                    
+                    runName:str = f"{runConfiguration}_{exp_date}"
+
                     logger.warning(f"STARTING NEW EXPERIMENT: {runName}")
                     logger.warning(f"STARTING NEW EXPERIMENT: {runName}")
                     logger.warning(f"STARTING NEW EXPERIMENT: {runName}")

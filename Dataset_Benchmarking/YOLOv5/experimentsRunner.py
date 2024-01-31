@@ -8,16 +8,16 @@ import importlib
 
 RES_PATH:str = 'results'
 LOG_NAME:str = 'experimentLog'
-PROJ_NAME:str = 'CODE'
+PROJ_NAME:str = 'PanoDet'
 DATASETS_PATH:str = 'datasets'
 DATA_PATH:str = 'data'
 
 EPOCHS_NUM:int = [500] #[500]
-IMAGE_SIZES:list[int] = [2048] #[1024, 2048, 4096]
-BATCH_SIZES:list[int] = [4]
-MODELS:list[str] = ['yolov5x', 'yolov5m']
+IMAGE_SIZES:list[int] = [1024] #[2048] #[1024, 2048, 4096]
+BATCH_SIZES:list[int] = [16]
+MODELS:list[str] = ['yolov5x'] #['yolov5x', 'yolov5m']
 
-exp_date:str = '2024-01-27_12:07:35' # datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+exp_date:str = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
 datasets_found: list[str] = [dataset for dataset in os.listdir(DATASETS_PATH) 
                              if os.path.isdir(os.path.join(DATASETS_PATH, dataset))]
 
@@ -60,39 +60,37 @@ for dataset in datasets_found:
                     logger.warning(f"STARTING NEW EXPERIMENT: {runName}")
                     logger.warning(f"STARTING NEW EXPERIMENT: {runName}")
                     logger.warning(f"STARTING NEW EXPERIMENT: {runName}")
-                    # # Training
-                    # try:
-                    #     importlib.reload(train)
-                    #     opt = train.parse_opt()
-                    #     opt.epochs = epochNum
-                    #     opt.imgsz = imageSize
-                    #     opt.batch_size = batchSize
-                    #     opt.weights = PosixPath(f'external/{model}.pt')
-                    #     opt.rect = True
-                    #     opt.data = PosixPath(f'{DATA_PATH}/{dataset}.yaml')
-                    #     opt.name = runName
-                    #     opt.project = PosixPath(f'{RES_PATH}/{PROJ_NAME}/Train')
-                    #     opt.hyp = PosixPath('external/data/hyps/hyp.no-augmentation.yaml')
-                    #     train.main(opt)
-
-                    try:
-                        importlib.reload(val)
                     
-                        testOpt = val.parse_opt()
-                        testOpt.data = PosixPath(f'{DATA_PATH}/{dataset}.yaml')
-                        testOpt.weights = PosixPath(f'{RES_PATH}/{PROJ_NAME}/Train/{runName}/weights/best.pt')
-                        testOpt.batch_size = 1
-                        testOpt.imgsz = imageSize
-                        testOpt.save_txt = True
-                        testOpt.verbose = True
-                        testOpt.task = 'test'
-                        testOpt.name = runName
-                        testOpt.project = PosixPath(f'{RES_PATH}/{PROJ_NAME}/Test')
+                    try:
+                        importlib.reload(train)
+                        opt = train.parse_opt()
+                        opt.epochs = epochNum
+                        opt.imgsz = imageSize
+                        opt.batch_size = batchSize
+                        opt.weights = PosixPath(f'external/{model}.pt')
+                        opt.rect = True
+                        opt.data = PosixPath(f'{DATA_PATH}/{dataset}.yaml')
+                        opt.name = runName
+                        opt.project = PosixPath(f'{RES_PATH}/{PROJ_NAME}/Train')
+                        opt.hyp = PosixPath('external/data/hyps/hyp.no-augmentation.yaml')
+                        train.main(opt)
+
+                    except Exception as e:
+                        logger.exception('Error during training!', e)
+
+                    # try:             
+                    #     testOpt = val.parse_opt()
+                    #     testOpt.data = PosixPath(f'{DATA_PATH}/{dataset}.yaml')
+                    #     testOpt.weights = PosixPath(f'{RES_PATH}/{PROJ_NAME}/Train/{runName}/weights/best.pt')
+                    #     testOpt.batch_size = 1
+                    #     testOpt.imgsz = imageSize
+                    #     testOpt.save_txt = True
+                    #     testOpt.verbose = True
+                    #     testOpt.task = 'test'
+                    #     testOpt.name = runName
+                    #     testOpt.project = PosixPath(f'{RES_PATH}/{PROJ_NAME}/Test')
                         
-                        val.main(testOpt)
+                    #     val.main(testOpt)
 
-                    except Exception as testingException:
-                        logger.exception('Error during testing!', testingException)
-
-                    # except Exception as e:
-                    #     logger.exception('Error during training!', e)
+                    # except Exception as testingException:
+                    #     logger.exception('Error during testing!', testingException)

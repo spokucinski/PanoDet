@@ -1,4 +1,4 @@
-class TrainingOptions():
+class Options():
     def __init__(self,
                  resultsPath: str,
                  logName: str,

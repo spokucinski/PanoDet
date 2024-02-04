@@ -1,5 +1,8 @@
-/datasets/*
-/results/*
-/data/*
-/wandb/*
-/archive
+datasets
+results
+data
+wandb
+archivedCODE
+archivedPanoDet
+archive
+__pycache__

@@ -1,16 +1,7 @@
 data/original_annotations/*
-!data/original_annotations/.gitkeep
-
 data/original_images/*
-!data/original_images/.gitkeep
-
 data/scroll_values/*
-!data/scroll_values/.gitkeep
-
 data/scrolled_annotations/*
-!data/scrolled_annotations/.gitkeep
-
 data/scrolled_images/*
-!data/scrolled_images/.gitkeep
 
 __pycache__

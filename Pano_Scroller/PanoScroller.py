@@ -63,6 +63,7 @@ def main():
 
             scrollingProcess.proposeNextCosinusSplit()
 
+        # b suggests split point with MAX
         if k == 98:
             if not scrollingProcess.controlWindowsInitialized:
                 scrollingProcess.initializeControlFlow()
@@ -74,6 +75,10 @@ def main():
                 scrollingProcess.last_suggested_maximum_split = 0
 
             scrollingProcess.proposeNextMaxSplit()
+
+        # r suggests split point with uniform distribution
+        if k == 114:
+            scrollingProcess.proposeNextUnifiedSplit()
 
         # ESC escapes
         if k == 27:
@@ -102,6 +107,20 @@ def main():
                 else:
                     scrollingProcess.loadNextImage()
 
+        # t for auto-unified scrolling
+        if k == 116:
+            while (scrollingProcess.processing):
+                scrollingProcess.proposeNextUnifiedSplit()
+                scrollingProcess.saveProcessedImage()
+                scrollingProcess.saveScrollValue()
+                scrollingProcess.saveScrolledAnnotations()
+
+                if scrollingProcess.loaded_image_index >= scrollingProcess.max_image_index:
+                    scrollingProcess.processing = False
+                else:
+                    scrollingProcess.loadNextImage()
+
+        # Space for auto max scrolling
         if k == 32:
             while (scrollingProcess.processing):
                 if not scrollingProcess.controlWindowsInitialized:

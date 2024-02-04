@@ -1,3 +1,4 @@
+import random
 import cv2
 import os
 import numpy as np
@@ -41,12 +42,15 @@ class ScrollingProcess:
 
         self.last_suggested_c_split = 0
         self.last_suggested_maximum_split = 0
+        self.last_suggested_unified_split = 0
         
         self.last_suggested_c_split_x = 0
         self.last_suggested_maximum_split_x = 0
+        self.last_suggested_unified_split_x = 0
 
         self.calculated_c_ranges = None
         self.calculated_maximum_ranges = None
+        self.calculated_unified_ranges = None
 
     def clearParameters(self):
         self.last_scroll = 0.0
@@ -54,9 +58,11 @@ class ScrollingProcess:
 
         self.last_suggested_c_split = 0
         self.last_suggested_maximum_split = 0
+        self.last_suggested_unified_split = 0
 
         self.calculated_c_ranges = None
         self.calculated_maximum_ranges = None
+        self.calculated_unified_ranges = None
 
     def loadNextImage(self):
         self.loaded_image_index += 1           
@@ -120,6 +126,44 @@ class ScrollingProcess:
         WindowManager.updatePlot(weightedColumns, self.controlFigure, self.controlAxes, self.controlPlottedLine)
         
             # Group by value and find ranges
+        groups = []
+        for k, g in groupby(enumerate(weightedColumns), lambda x: x[1]):
+            group = list(map(itemgetter(0), g))
+            range_length = group[-1] - group[0]
+            groups.append((k, (group[0], group[-1]), range_length))
+
+        # Sort the groups by value
+        groups.sort(key=lambda x: (x[0], -x[2]))
+
+        # # Print the value and the simplified range (lower and upper border)
+        # for value, borders, range_length in groups:
+        #     print(f"Value: {value}, Range: {borders}, Actual Range: {range_length}")
+
+        return groups
+    
+    def getUnifiedSplits(self, image: cv2.typing.MatLike, annotations: list[AnnotationManager.Annotation]):
+        imageHeightInPixels = image.shape[0]
+        imageWidthInPixels = image.shape[1]
+
+        annotationsMatrix = np.zeros((imageHeightInPixels, imageWidthInPixels), dtype=float)
+        for annotation in annotations:
+            (x1, y1), (x2, y2) = AnnotationManager.denormalizeAnnotation(annotation, imageHeightInPixels, imageWidthInPixels)
+            annotationsMatrix[y1:y2+1, x1:x2+1] += 1
+        WindowManager.updateAnnotationControlView(annotationsMatrix)
+        
+        # https://stackoverflow.com/questions/43741885/how-to-convert-spherical-coordinates-to-equirectangular-projection-coordinates
+
+        weightsMatrix = np.ones((imageHeightInPixels, imageWidthInPixels), dtype=float)
+        WindowManager.updateWeightsControlView(weightsMatrix)
+
+        weightedAnnotations = annotationsMatrix * weightsMatrix
+        WindowManager.updateWeightedAnnotationsControlView(weightedAnnotations)
+        WindowManager.updateColoredWeightedAnnotationsControlView(weightedAnnotations)
+        
+        weightedColumns = np.sum(weightedAnnotations, axis=0)
+        WindowManager.updatePlot(weightedColumns, self.controlFigure, self.controlAxes, self.controlPlottedLine)
+        
+        # Group by value and find ranges
         groups = []
         for k, g in groupby(enumerate(weightedColumns), lambda x: x[1]):
             group = list(map(itemgetter(0), g))
@@ -218,6 +262,9 @@ class ScrollingProcess:
     def calculateMaximumRanges(self):
         self.calculated_maximum_ranges = self.getMaximumSplits(self.original_unchanged_img, self.original_img_annotations)
 
+    def calculateUnifiedRanges(self):
+        self.calculated_unified_ranges = self.getUnifiedSplits(self.original_unchanged_img, self.original_img_annotations)
+
     def scrollImage(self, requestedSplitX: int):
         self.preview_img = np.copy(self.original_unchanged_img)      
         ImageManager.scrollImage(self.preview_img, requestedSplitX)          
@@ -244,6 +291,17 @@ class ScrollingProcess:
         self.last_suggested_maximum_split += 1
         ImageManager.addVerticalLine(self.main_img, suggestedSplitX, (0, 255, 0))
         self.last_suggested_maximum_split_x = suggestedSplitX
+        self.last_scroll = suggestedSplitX/self.main_img.shape[1]
+        self.scrollImage(suggestedSplitX)
+        self.scrolledAnnotations = AnnotationManager.scrollAnnotations(self.original_img_annotations, self.last_scroll)
+        self.scrolledAnnotations = AnnotationManager.mergeAdjacentObjects(self.scrolledAnnotations, self.last_scroll)
+        AnnotationManager.addAnnotationsToImage(self.preview_img, self.scrolledAnnotations, annotationColor=(0, 255, 0))
+
+    def proposeNextUnifiedSplit(self):
+        ImageManager.removeVerticalLine(self.main_img, self.last_suggested_unified_split_x, self.original_unchanged_img)
+        suggestedSplitX = random.randint(0, self.main_img.shape[1])
+        ImageManager.addVerticalLine(self.main_img, suggestedSplitX, (0, 255, 0))
+        self.last_suggested_unified_split_x = suggestedSplitX
         self.last_scroll = suggestedSplitX/self.main_img.shape[1]
         self.scrollImage(suggestedSplitX)
         self.scrolledAnnotations = AnnotationManager.scrollAnnotations(self.original_img_annotations, self.last_scroll)

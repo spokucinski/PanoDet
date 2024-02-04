@@ -5,7 +5,7 @@ import subprocess
 import logging
 import signal
 import argparse
-from options import TrainingOptions
+from options import Options
 
 def parse_opt():
     parser = argparse.ArgumentParser()
@@ -18,47 +18,39 @@ def parse_opt():
     parser.add_argument("--patience", type=int, default=100, help="How many epochs without improvement before early stopping")
     parser.add_argument("--models", type=str, nargs="+", default=['yolov5x', 'yolov5m'], help="What models use in training")
     parser.add_argument("--batchSizes", type=int, nargs="+", default=[-1], help="Size of the batch, -1 for auto-batch")
-    parser.add_argument("--imageSizes", type=int, nargs="+", default=[1024], help="Image sizes to be used in training")
+    parser.add_argument("--imageSizes", type=int, nargs="+", default=[2048], help="Image sizes to be used in training")
     parser.add_argument("--rectangularTraining", type=bool, default=True, help="Expect the image to be rectangular, not a square")
     parser.add_argument("--hyperParameters", type=str, default="external/data/hyps/hyp.no-augmentation.yaml", help="Path to hyperparameters configuration .yaml file")
 
     return parser.parse_args()
 
-def main(options: TrainingOptions):
+def loadDoneExperiments(resultsPath: str, projectName: str, experimentType: str = "Train") -> list[str]:
+    
+    expectedResultsPath = os.path.join(resultsPath, projectName, experimentType)
+    
+    if not os.path.exists(expectedResultsPath):
+        os.makedirs(expectedResultsPath)
 
-    exp_date:str = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
-    datasets_found: list[str] = [dataset for dataset in os.listdir(options.datasetsPath) 
-                                if os.path.isdir(os.path.join(options.datasetsPath, dataset))]
+    return [doneTrainingConfiguration for doneTrainingConfiguration \
+            in os.listdir(expectedResultsPath) \
+            if os.path.isdir(os.path.join(expectedResultsPath, doneTrainingConfiguration))]
 
-    if not os.path.exists(os.path.join(options.resultsPath, options.projectName, 'Train')):
-        os.makedirs(os.path.join(options.resultsPath, options.projectName, 'Train'))
+def loadDatasets(datasetsPath: str) -> list[str]:
+    
+    if not os.path.exists(datasetsPath):
+        os.makedirs(datasetsPath)
+    
+    return [dataset for dataset 
+            in os.listdir(datasetsPath) 
+            if os.path.isdir(os.path.join(datasetsPath, dataset))]
 
-    alreadyConductedTrainings: list[str] = ["_".join(doneTrainingConfiguration.split('_')[:-2]) \
-                                            for doneTrainingConfiguration \
-                                                in os.listdir(os.path.join(options.resultsPath, options.projectName, 'Train')) \
-                                                    if os.path.isdir(os.path.join(options.resultsPath, options.projectName, 'Train', doneTrainingConfiguration))]
-
+def initializeExperimentLogger(options: Options, expDate: str):
     logging.basicConfig(level=logging.INFO,
-                        filename=os.path.join(options.resultsPath, options.logName + f'{exp_date}.log'),
+                        filename=os.path.join(options.resultsPath, options.logName + f'{expDate}.log'),
                         filemode='a',
                         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
     logger = logging.getLogger("ExperimentsRunner")
-
-    # # Get YOLOv5 logger and add custom file handler
-    # logger = val.LOGGER
-    # # Create a file handler to log messages to a file
-    # filePath = os.path.join(RES_PATH, LOG_NAME + f'{exp_date}.log')
-    # directory = os.path.dirname(filePath)
-    # # Check if the directory exists, and create it if it doesn't
-    # if not os.path.exists(directory):
-    #     os.makedirs(directory)
-    # file_handler = logging.FileHandler(filePath)
-    # file_handler.setLevel(logging.INFO)  # Set the logging level for this handler
-    # # Optionally, set a formatter
-    # formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    # file_handler.setFormatter(formatter)
-    # logger.addHandler(file_handler)
 
     logger.info("Starting experiments!")
     logger.info("Reading start parameters...")
@@ -71,108 +63,129 @@ def main(options: TrainingOptions):
     logger.info(f'Batch sizes: {options.batchSizes}')
     logger.info(f'Models: {options.models}')
 
+    return logger
+
+def conductTesting(imageSize: int, 
+                   batchSize: int, 
+                   runName: str, 
+                   runDate: str,
+                   modelPath: str, 
+                   dataDefPath: str, 
+                   alreadyConductedTests: list[str],
+                   resultsPath: str,
+                   projectName: str):
+    
+    if runName not in alreadyConductedTests:
+        try:
+            test_cmd = ['python', 'external/val.py',
+                        f'--task=test',
+                        f'--imgsz={imageSize}',
+                        f'--weights={modelPath}', #{options.resultsPath}/{options.projectName}/Train/{runName}/weights/best.pt',
+                        f'--data={dataDefPath}', #{options.datasetDefsPath}/{dataset}.yaml',
+                        f'--name={runName}',
+                        f'--project={resultsPath}/{projectName}/Test',
+                        f'--verbose',
+                        f'--save-txt',
+                        f'--batch-size={batchSize}',
+                        f'--exist-ok'
+                        ]
+            
+            testLogDir = f'{resultsPath}/{projectName}/Test/{runName}'       
+            if not os.path.exists(testLogDir):
+                os.makedirs(testLogDir)
+                
+            testLogPath = f'{testLogDir}/testLog.txt'
+            testLogFile = open(testLogPath, 'a')
+            testLogFile.write(f'TESTING LOG OF: {runName}')
+            testLogFile.flush()
+            p = subprocess.Popen(test_cmd, stdout=testLogFile, stderr=testLogFile, start_new_session=True)
+            p.wait(timeout=14400)
+
+        except Exception as testingException:
+            logger = logging.getLogger(__name__)
+            logger.error(f"Exception during YOLOv5 testing! Run command: {test_cmd}")
+            logger.error(f"Killing YOLOv5 testing!")
+            os.killpg(os.getpgid(p.pid), signal.SIGTERM)
+            logger.error("YOLOv5 testing killed!")
+
+def conductTraining(epochs: int, 
+                    imageSize: int, 
+                    batchSize: int, 
+                    runName: str, 
+                    runDate: str,
+                    modelPath: str, 
+                    dataDefPath: str, 
+                    alreadyConductedTrainings: list[str],
+                    resultsPath: str,
+                    projectName: str,
+                    hyperParPath: str):
+
+    runName:str = f"{runName}_{runDate}"
+    
+    if runName == 'UnifiedDistributionDataset_500_2048_-1_yolov5m_2024-02-04_09:24:43' or runName not in alreadyConductedTrainings:
+        try:
+            train_cmd = ['python', 'external/train.py',
+                        f'--epochs={epochs}',
+                        f'--imgsz={imageSize}',
+                        f'--batch-size={batchSize}',
+                        f'--weights={modelPath}', #external/{model}.pt',
+                        f'--rect',
+                        f'--data={dataDefPath}', #{options.datasetDefsPath}/{dataset}.yaml',
+                        f'--name={runName}',
+                        f'--project={resultsPath}/{projectName}/Train',
+                        f'--hyp={hyperParPath}', #external/data/hyps/hyp.no-augmentation.yaml'
+                        f'--exist-ok',
+                        f'--resume'
+                        ]
+            
+            trainLogDir = f'{resultsPath}/{projectName}/Train/{runName}'
+            if not os.path.exists(trainLogDir):
+                os.makedirs(trainLogDir)
+            
+            trainLogPath = f'{trainLogDir}/trainLog.txt'       
+            trainLog = open(trainLogPath, 'a')
+            trainLog.write(f'TRAINING LOG OF: {runName}')
+            trainLog.flush()
+            p = subprocess.Popen(train_cmd, stdout=trainLog, stderr=trainLog, start_new_session=True)
+            p.wait(timeout=14400)
+        
+        except Exception as e:
+            logger = logging.getLogger(__name__)
+            logger.error(f"Exception during YOLOv5 training! Run command: {train_cmd}")
+            logger.error(f"Killing YOLOv5 training!")
+            os.killpg(os.getpgid(p.pid), signal.SIGTERM)
+            logger.error("YOLOv5 training killed!")
+
+def main(options: Options):
+
+    expDate:str = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+    expDate = '2024-02-04_09:24:43'
+    datasets_found: list[str] = loadDatasets(options.datasetsPath)
+
+    alreadyConductedTrainings = loadDoneExperiments(options.resultsPath, options.projectName, "Train")
+    alreadyConductedTests = loadDoneExperiments(options.resultsPath, options.projectName, "Test")
+
+    logger = initializeExperimentLogger(options, expDate)
+
     for model in options.models:
         for dataset in datasets_found:
             for epochNum in options.epochs:
                 for imageSize in options.imageSizes:
                     for batchSize in options.batchSizes:
-
-                        runConfiguration: str = f"{dataset}_{epochNum}_{imageSize}_{batchSize}_{model}"
-                        if runConfiguration in alreadyConductedTrainings:
-                            continue
+                        dataDefPath = f'{options.datasetDefsPath}/{dataset}.yaml'
+                        hyperParPath = f'external/data/hyps/hyp.no-augmentation.yaml'
+                        modelPath = f'external/{model}.pt'
+                        runConfiguration: str = f"{dataset}_{epochNum}_{imageSize}_{batchSize}_{model}"                     
                         
-                        runName:str = f"{runConfiguration}_{exp_date}"
+                        conductTraining(epochNum, imageSize, batchSize, runConfiguration, expDate, modelPath, dataDefPath, alreadyConductedTrainings, options.resultsPath, options.projectName, hyperParPath)
                         
-                        try:
-                            train_cmd = ['python', 'external/train.py',
-                                        f'--epochs={epochNum}',
-                                        f'--imgsz={imageSize}',
-                                        f'--batch-size={batchSize}',
-                                        f'--weights=external/{model}.pt',
-                                        f'--rect',
-                                        f'--data={options.datasetDefsPath}/{dataset}.yaml',
-                                        f'--name={runName}',
-                                        f'--project={options.resultsPath}/{options.projectName}/Train',
-                                        f'--hyp=external/data/hyps/hyp.no-augmentation.yaml'
-                                        ]
-                            
-                            train_path = f'{options.resultsPath}/YOLOv5/{dataset}/TrainLog/{runName}'
-                            if not os.path.exists(train_path):
-                                os.makedirs(train_path)
-                            train_log = open(
-                                f'{options.resultsPath}/YOLOv5/{dataset}/TrainLog/{runName}/run_log.txt', 'a')
-                            train_log.write(f'TRAINING LOG OF: {runName}')
-                            train_log.flush()
-                            p = subprocess.Popen(train_cmd, stdout=train_log, stderr=train_log, start_new_session=True)
-                            p.wait(timeout=14400)
-                            # opt = train.parse_opt()
-                            # opt.epochs = epochNum
-                            # opt.imgsz = imageSize
-                            # opt.batch_size = batchSize
-                            # opt.weights = PosixPath(f'external/{model}.pt')
-                            # opt.rect = True
-                            # opt.data = PosixPath(f'{DATA_PATH}/{dataset}.yaml')
-                            # opt.name = runName
-                            # opt.project = PosixPath(f'{RES_PATH}/{PROJ_NAME}/Train')
-                            # opt.hyp = PosixPath('external/data/hyps/hyp.no-augmentation.yaml')
-                            # train.main(opt)
-
-                        except Exception as e:
-                            logger = logging.getLogger(__name__)
-                            logger.error(f"Exception during YOLOv5 testing! Run command: {train_cmd}")
-                            logger.error(f"Killing YOLOv5 testing!")
-                            os.killpg(os.getpgid(p.pid), signal.SIGTERM)
-                            logger.error("YOLOv5 testing killed!")
-
-                        try:
-
-                            test_cmd = ['python', 'external/val.py',
-                                        f'--task=test',
-                                        f'--imgsz={imageSize}',
-                                        f'--weights={options.resultsPath}/{options.projectName}/Train/{runName}/weights/best.pt',
-                                        f'--data={options.datasetDefsPath}/{dataset}.yaml',
-                                        f'--name={runName}',
-                                        f'--project={options.resultsPath}/{options.projectName}/Train',
-                                        f'--verbose',
-                                        f'--save_txt',
-                                        f'--batch-size=1',
-                                        ]
-                            
-                            test_path = f'{options.resultsPath}/YOLOv5/{dataset}/TestLog/{runName}'
-                            if not os.path.exists(test_path):
-                                os.makedirs(test_path)
-                            test_log = open(f'{options.resultsPath}/YOLOv5/{dataset}/TestLog/{runName}/run_log.txt', 'a')
-                            test_log.write(f'TESTING LOG OF: {runName}')
-                            test_log.flush()
-                            p = subprocess.Popen(test_cmd, stdout=test_log, stderr=test_log, start_new_session=True)
-                            p.wait(timeout=14400)
-                            # testOpt = val.parse_opt()
-                            # testOpt.data = PosixPath(f'{DATA_PATH}/{dataset}.yaml')
-                            # testOpt.weights = PosixPath(f'{RES_PATH}/{PROJ_NAME}/Train/{runName}/weights/best.pt')
-                            # testOpt.batch_size = 1
-                            # testOpt.imgsz = imageSize
-                            # testOpt.save_txt = True
-                            # testOpt.verbose = True
-                            # testOpt.task = 'test'
-                            # testOpt.name = runName
-                            # testOpt.project = PosixPath(f'{RES_PATH}/{PROJ_NAME}/Test')
-                            
-                            # val.main(testOpt)
-
-                        except Exception as testingException:
-                            logger = logging.getLogger(__name__)
-                            logger.error(f"Exception during YOLOv5 testing! Run command: {test_cmd}")
-                            logger.error(f"Killing YOLOv5 testing!")
-                            os.killpg(os.getpgid(p.pid), signal.SIGTERM)
-                            logger.error("YOLOv5 testing killed!")
-
-                            #logger.exception('Error during testing!', testingException)
-
+                        bestTrainingModelPath = f'{options.resultsPath}/{options.projectName}/Train/{runConfiguration}_{expDate}/weights/best.pt'           
+                        conductTesting(imageSize, 1, f'{runConfiguration}_{expDate}', expDate, bestTrainingModelPath, dataDefPath, alreadyConductedTests, options.resultsPath, options.projectName)
 
 if __name__ == "__main__":
     opt = parse_opt()
-    trainingOptions: TrainingOptions = \
-        TrainingOptions(opt.resultsPath,
+    trainingOptions: Options = \
+        Options(opt.resultsPath,
                         opt.logName,
                         opt.projectName,
                         opt.datasetsPath,

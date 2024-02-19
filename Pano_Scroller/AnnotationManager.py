@@ -17,6 +17,14 @@ class Annotation():
         self.width = width
         self.height = height
 
+    def __eq__(self, other):
+        if not isinstance(other, Annotation):
+            return NotImplemented
+
+        return (self.objectType == other.objectType) \
+            and (self.xCenter == other.xCenter) and (self.yCenter == other.yCenter) \
+            and (self.width == other.width) and (self.height == other.height)
+
 def addAnnotationsToImage(image: cv2.typing.MatLike, annotations: list[Annotation], lineThickness: int = 3, annotationColor: (int, int, int) = ((0, 0, 255))):
     image_width, image_height = image.shape[1], image.shape[0]
 
@@ -99,7 +107,7 @@ def mergeAdjacentObjects(scrolledAnnotations: list[Annotation], scroll: float) -
             adjacentAnnotationOfSameTypeOriginallyOnTheEdge = []
             for annotation in adjacentAnnotationsOfSameType:
                 leftEdge: float = annotation.xCenter - (annotation.width/2)
-                if (math.isclose(leftEdge, 1 - scroll, rel_tol=0.005)):
+                if (math.isclose(leftEdge, 1 - scroll, rel_tol=0.0005)):
                     adjacentAnnotationOfSameTypeOriginallyOnTheEdge.append(annotation)
         
             if len(adjacentAnnotationOfSameTypeOriginallyOnTheEdge) > 0:

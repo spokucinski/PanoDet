@@ -318,6 +318,7 @@ class ScrollingProcess:
         pathToProcessedImage = self.imagePaths[self.loaded_image_index]
         scrolledImgOutPath = pathToProcessedImage.replace(Consts.IMAGES_PATH, Consts.SCROLLED_IMAGES_PATH)
         scrollValOutPath = scrolledImgOutPath.replace(Consts.SCROLLED_IMAGES_PATH, Consts.SCROLL_VALUES_PATH)
+        os.makedirs(os.path.dirname(scrollValOutPath), exist_ok=True)
         for acceptedImageFormat in Consts.ACCEPTED_IMAGE_FORMATS:
             scrollValOutPath = scrollValOutPath.replace(acceptedImageFormat, "_scroll.txt")
         with open(scrollValOutPath, 'w') as writer:

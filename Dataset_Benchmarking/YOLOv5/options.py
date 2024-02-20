@@ -5,6 +5,7 @@ class Options():
                  projectName: str,
                  datasetsPath: str,
                  datasetDefsPath: str,
+                 datasets: list[str],
                  epochs: list[int],
                  patience: int,
                  models: list[str],
@@ -18,6 +19,7 @@ class Options():
         self.projectName: str = projectName
         self.datasetsPath: str = datasetsPath
         self.datasetDefsPath: str = datasetDefsPath
+        self.datasets: list[str] = datasets
         self.epochs: list[int] = epochs
         self.patience: int = patience
         self.models: list[str] = models

@@ -14,9 +14,15 @@ def parse_opt():
     parser.add_argument("--projectName", type=str, default="PanoDet", help="Name for the project")
     parser.add_argument("--datasetsPath", type=str, default="datasets", help="Where to search for the datasets")
     parser.add_argument("--datasetDefsPath", type=str, default="data", help="Where to search for the .yaml files with dataset definitions")
-    parser.add_argument("--epochs", type=int, nargs="+", default=[500], help="Training lenght in epochs")
+    parser.add_argument("--datasets", type=str, nargs="+", default=["UnifiedDistributionDataset1", 
+                                                                    "UnifiedDistributionDataset2",
+                                                                    "UnifiedDistributionDataset3",
+                                                                    "UnifiedDistributionDataset4",
+                                                                    "UnifiedDistributionDataset5"
+                                                                    ], help="Which datasets to test")
+    parser.add_argument("--epochs", type=int, nargs="+", default=[5], help="Training lenght in epochs")
     parser.add_argument("--patience", type=int, default=100, help="How many epochs without improvement before early stopping")
-    parser.add_argument("--models", type=str, nargs="+", default=['yolov5x', 'yolov5m'], help="What models use in training")
+    parser.add_argument("--models", type=str, nargs="+", default=['yolov5n'], help="What models use in training")
     parser.add_argument("--batchSizes", type=int, nargs="+", default=[-1], help="Size of the batch, -1 for auto-batch")
     parser.add_argument("--imageSizes", type=int, nargs="+", default=[2048], help="Image sizes to be used in training")
     parser.add_argument("--rectangularTraining", type=bool, default=True, help="Expect the image to be rectangular, not a square")
@@ -44,13 +50,20 @@ def loadDatasets(datasetsPath: str) -> list[str]:
             in os.listdir(datasetsPath) 
             if os.path.isdir(os.path.join(datasetsPath, dataset))]
 
-def initializeExperimentLogger(options: Options, expDate: str):
+def initializeExperimentLogger(options: Options):
+    expDate:str = datetime.now().strftime("%Y%m%d%H%M%S")
+    
     logging.basicConfig(level=logging.INFO,
                         filename=os.path.join(options.resultsPath, options.logName + f'{expDate}.log'),
                         filemode='a',
-                        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+                        format='%(asctime)s - %(levelname)s - %(message)s')
 
     logger = logging.getLogger("ExperimentsRunner")
+
+    consoleHandler = logging.StreamHandler()
+    consoleHandler.setLevel(logging.INFO)
+    consoleHandler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+    logger.addHandler(consoleHandler)
 
     logger.info("Starting experiments!")
     logger.info("Reading start parameters...")
@@ -58,6 +71,7 @@ def initializeExperimentLogger(options: Options, expDate: str):
     logger.info(f'Project name: {options.projectName}')
     logger.info(f'Results path: {options.resultsPath}')
     logger.info(f'Datasets will be searched for in: {options.datasetsPath}')
+    logger.info(f'Datasets to be experimented with: {options.datasets}')
     logger.info(f'Epochs: {options.epochs}')
     logger.info(f'Image sizes: {options.imageSizes}')
     logger.info(f'Batch sizes: {options.batchSizes}')
@@ -68,7 +82,6 @@ def initializeExperimentLogger(options: Options, expDate: str):
 def conductTesting(imageSize: int, 
                    batchSize: int, 
                    runName: str, 
-                   runDate: str,
                    modelPath: str, 
                    dataDefPath: str, 
                    alreadyConductedTests: list[str],
@@ -112,17 +125,14 @@ def conductTraining(epochs: int,
                     imageSize: int, 
                     batchSize: int, 
                     runName: str, 
-                    runDate: str,
                     modelPath: str, 
                     dataDefPath: str, 
                     alreadyConductedTrainings: list[str],
                     resultsPath: str,
                     projectName: str,
                     hyperParPath: str):
-
-    runName:str = f"{runName}_{runDate}"
     
-    if runName == 'UnifiedDistributionDataset_500_2048_-1_yolov5m_2024-02-04_09:24:43' or runName not in alreadyConductedTrainings:
+    if runName not in alreadyConductedTrainings:
         try:
             train_cmd = ['python', 'external/train.py',
                         f'--epochs={epochs}',
@@ -158,29 +168,47 @@ def conductTraining(epochs: int,
 
 def main(options: Options):
 
-    expDate:str = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
-    expDate = '2024-02-04_09:24:43'
-    datasets_found: list[str] = loadDatasets(options.datasetsPath)
+    datasetsFound: list[str] = loadDatasets(options.datasetsPath)
 
     alreadyConductedTrainings = loadDoneExperiments(options.resultsPath, options.projectName, "Train")
     alreadyConductedTests = loadDoneExperiments(options.resultsPath, options.projectName, "Test")
 
-    logger = initializeExperimentLogger(options, expDate)
+    logger = initializeExperimentLogger(options)
 
-    for model in options.models:
-        for dataset in datasets_found:
+    for dataset in options.datasets:
+        if dataset not in datasetsFound:
+            logger.error("Requested dataset: {dataset} not found!")
+            continue
+
+        for model in options.models:    
             for epochNum in options.epochs:
                 for imageSize in options.imageSizes:
                     for batchSize in options.batchSizes:
+                        
                         dataDefPath = f'{options.datasetDefsPath}/{dataset}.yaml'
-                        hyperParPath = f'external/data/hyps/hyp.no-augmentation.yaml'
                         modelPath = f'external/{model}.pt'
                         runConfiguration: str = f"{dataset}_{epochNum}_{imageSize}_{batchSize}_{model}"                     
                         
-                        conductTraining(epochNum, imageSize, batchSize, runConfiguration, expDate, modelPath, dataDefPath, alreadyConductedTrainings, options.resultsPath, options.projectName, hyperParPath)
+                        conductTraining(epochNum, 
+                                        imageSize, 
+                                        batchSize, 
+                                        runConfiguration, 
+                                        modelPath, 
+                                        dataDefPath, 
+                                        alreadyConductedTrainings, 
+                                        options.resultsPath, 
+                                        options.projectName, 
+                                        options.hyperParameters)
                         
-                        bestTrainingModelPath = f'{options.resultsPath}/{options.projectName}/Train/{runConfiguration}_{expDate}/weights/best.pt'           
-                        conductTesting(imageSize, 1, f'{runConfiguration}_{expDate}', expDate, bestTrainingModelPath, dataDefPath, alreadyConductedTests, options.resultsPath, options.projectName)
+                        bestTrainingModelPath = f'{options.resultsPath}/{options.projectName}/Train/{runConfiguration}/weights/best.pt'           
+                        conductTesting(imageSize, 
+                                       1, 
+                                       runConfiguration, 
+                                       bestTrainingModelPath, 
+                                       dataDefPath, 
+                                       alreadyConductedTests, 
+                                       options.resultsPath, 
+                                       options.projectName)
 
 if __name__ == "__main__":
     opt = parse_opt()
@@ -190,6 +218,7 @@ if __name__ == "__main__":
                         opt.projectName,
                         opt.datasetsPath,
                         opt.datasetDefsPath,
+                        opt.datasets,
                         opt.epochs,
                         opt.patience,
                         opt.models,

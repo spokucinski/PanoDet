@@ -6,6 +6,7 @@ import logging
 import signal
 import argparse
 from options import Options
+import re
 
 def parse_opt():
     parser = argparse.ArgumentParser()
@@ -14,17 +15,18 @@ def parse_opt():
     parser.add_argument("--projectName", type=str, default="PanoDet", help="Name for the project")
     parser.add_argument("--datasetsPath", type=str, default="datasets", help="Where to search for the datasets")
     parser.add_argument("--datasetDefsPath", type=str, default="data", help="Where to search for the .yaml files with dataset definitions")
-    parser.add_argument("--datasets", type=str, nargs="+", default=["UnifiedDistributionDataset1", 
-                                                                    "UnifiedDistributionDataset2",
-                                                                    "UnifiedDistributionDataset3",
-                                                                    "UnifiedDistributionDataset4",
-                                                                    "UnifiedDistributionDataset5"
+    parser.add_argument("--datasets", type=str, nargs="+", default=[
+                                                                    "UnifiedDistributionPanoDet1", 
+                                                                    "UnifiedDistributionPanoDet2",
+                                                                    "UnifiedDistributionPanoDet3",
+                                                                    "UnifiedDistributionPanoDet4",
+                                                                    "UnifiedDistributionPanoDet5"
                                                                     ], help="Which datasets to test")
     parser.add_argument("--epochs", type=int, nargs="+", default=[5], help="Training lenght in epochs")
     parser.add_argument("--patience", type=int, default=100, help="How many epochs without improvement before early stopping")
-    parser.add_argument("--models", type=str, nargs="+", default=['yolov5n'], help="What models use in training")
+    parser.add_argument("--models", type=str, nargs="+", default=['yolov5m', 'yolov5x'], help="What models use in training")
     parser.add_argument("--batchSizes", type=int, nargs="+", default=[-1], help="Size of the batch, -1 for auto-batch")
-    parser.add_argument("--imageSizes", type=int, nargs="+", default=[2048], help="Image sizes to be used in training")
+    parser.add_argument("--imageSizes", type=int, nargs="+", default=[1024], help="Image sizes to be used in training")
     parser.add_argument("--rectangularTraining", type=bool, default=True, help="Expect the image to be rectangular, not a square")
     parser.add_argument("--hyperParameters", type=str, default="external/data/hyps/hyp.no-augmentation.yaml", help="Path to hyperparameters configuration .yaml file")
 
@@ -121,6 +123,18 @@ def conductTesting(imageSize: int,
             os.killpg(os.getpgid(p.pid), signal.SIGTERM)
             logger.error("YOLOv5 testing killed!")
 
+def clean_file(filename):
+    # Read the content of the file
+    with open(filename, 'r', encoding='utf-8') as f:
+        content = f.read()
+
+    # Remove ANSI escape sequences
+    clean_content = re.sub(r'\x1b\[[0-9;]*[mGK]', '', content)
+
+    # Write the cleaned content back to the file
+    with open(filename, 'a', encoding='utf-8') as f:
+        f.write(clean_content)
+
 def conductTraining(epochs: int, 
                     imageSize: int, 
                     batchSize: int, 
@@ -144,8 +158,7 @@ def conductTraining(epochs: int,
                         f'--name={runName}',
                         f'--project={resultsPath}/{projectName}/Train',
                         f'--hyp={hyperParPath}', #external/data/hyps/hyp.no-augmentation.yaml'
-                        f'--exist-ok',
-                        f'--resume'
+                        f'--exist-ok'
                         ]
             
             trainLogDir = f'{resultsPath}/{projectName}/Train/{runName}'
@@ -156,8 +169,10 @@ def conductTraining(epochs: int,
             trainLog = open(trainLogPath, 'a')
             trainLog.write(f'TRAINING LOG OF: {runName}')
             trainLog.flush()
-            p = subprocess.Popen(train_cmd, stdout=trainLog, stderr=trainLog, start_new_session=True)
+            p = subprocess.Popen(train_cmd, stdout=trainLog, stderr=trainLog)
             p.wait(timeout=14400)
+
+            clean_file(trainLogPath)
         
         except Exception as e:
             logger = logging.getLogger(__name__)

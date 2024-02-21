@@ -22,9 +22,9 @@ def parse_opt():
                                                                     "UnifiedDistributionPanoDet4",
                                                                     "UnifiedDistributionPanoDet5"
                                                                     ], help="Which datasets to test")
-    parser.add_argument("--epochs", type=int, nargs="+", default=[5], help="Training lenght in epochs")
+    parser.add_argument("--epochs", type=int, nargs="+", default=[500], help="Training lenght in epochs")
     parser.add_argument("--patience", type=int, default=100, help="How many epochs without improvement before early stopping")
-    parser.add_argument("--models", type=str, nargs="+", default=['yolov5m', 'yolov5x'], help="What models use in training")
+    parser.add_argument("--models", type=str, nargs="+", default=['yolov5n', 'yolov5m', 'yolov5x'], help="What models use in training")
     parser.add_argument("--batchSizes", type=int, nargs="+", default=[-1], help="Size of the batch, -1 for auto-batch")
     parser.add_argument("--imageSizes", type=int, nargs="+", default=[1024], help="Image sizes to be used in training")
     parser.add_argument("--rectangularTraining", type=bool, default=True, help="Expect the image to be rectangular, not a square")
@@ -215,15 +215,15 @@ def main(options: Options):
                                         options.projectName, 
                                         options.hyperParameters)
                         
-                        bestTrainingModelPath = f'{options.resultsPath}/{options.projectName}/Train/{runConfiguration}/weights/best.pt'           
-                        conductTesting(imageSize, 
-                                       1, 
-                                       runConfiguration, 
-                                       bestTrainingModelPath, 
-                                       dataDefPath, 
-                                       alreadyConductedTests, 
-                                       options.resultsPath, 
-                                       options.projectName)
+                        # bestTrainingModelPath = f'{options.resultsPath}/{options.projectName}/Train/{runConfiguration}/weights/best.pt'           
+                        # conductTesting(imageSize, 
+                        #                1, 
+                        #                runConfiguration, 
+                        #                bestTrainingModelPath, 
+                        #                dataDefPath, 
+                        #                alreadyConductedTests, 
+                        #                options.resultsPath, 
+                        #                options.projectName)
 
 if __name__ == "__main__":
     opt = parse_opt()

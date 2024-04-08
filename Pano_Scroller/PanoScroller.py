@@ -13,7 +13,15 @@ def mainWindowCallback(event, x, y, flags, scrollingProcess):
             AnnotationManager.addAnnotationsToImage(scrollingProcess.main_img, scrollingProcess.original_img_annotations)
             
             ImageManager.addVerticalLine(scrollingProcess.main_img, x)
-            ImageManager.addStatusInfo(scrollingProcess.main_img, x, scrollingProcess.loaded_image_index, scrollingProcess.max_image_index)
+
+            lastSuggestedX = max(scrollingProcess.last_suggested_c_split_x,
+                                 scrollingProcess.last_suggested_maximum_split_x,
+                                 scrollingProcess.last_suggested_unified_split_x)
+            
+            if lastSuggestedX > 0:
+                ImageManager.addStatusInfo(scrollingProcess.main_img, x, scrollingProcess.loaded_image_index, scrollingProcess.max_image_index, lastSuggestedX)
+            else:
+                ImageManager.addStatusInfo(scrollingProcess.main_img, x, scrollingProcess.loaded_image_index, scrollingProcess.max_image_index)
            
             scrollingProcess.last_known_x = x 
 

@@ -93,11 +93,25 @@ def initializeControlWindows():
         cv2.moveWindow(Consts.WINDOW_C_W_ANN_CTR, firstMonitorWidth + adjustedWindowWidth, adjustedWindowHeight)
 
     
-def initializePlot():
+def initializePlot(xLabel: str = None, yLabel: str = None, plotName: str = None):
     # Initialize plot
     figure, axes = plt.subplots()
+
+    if xLabel:
+        axes.set_xlabel(xLabel)
+
+    if yLabel:
+        axes.set_ylabel(yLabel)
+
+    if xLabel or yLabel:
+        axes.legend()
+
     # Plot a placeholding function
     plotedLine, = axes.plot(range(10), range(10))
+
+    if plotName:
+        plotedLine.set_label(plotName)
+
     # Unbound from the UI thread
     plt.show(block=False)
 
@@ -176,12 +190,17 @@ def updateColoredWeightedAnnotationsControlView(weightedAnnotationsSource: np.nd
     weightedAnnotationsImage = cv2.cvtColor(weightedAnnotationsImage, cv2.COLOR_RGB2BGR)
     cv2.imshow(Consts.WINDOW_C_W_ANN_CTR, weightedAnnotationsImage)
 
-def updatePlot(weightedColumns: np.ndarray, figure, axes, line):
+def updatePlot(weightedColumns: np.ndarray, figure, axes, line, lastSuggestedX):
     updatedValuesX = np.arange(len(weightedColumns))
     
     line.set_xdata(updatedValuesX)
     line.set_ydata(weightedColumns)
     
+    if lastSuggestedX > 0:
+        # Debug - mark suggested line
+        axes.axvline(x=lastSuggestedX, color='red', linestyle=':', label=f'Suggested X: {lastSuggestedX}')
+
+    np.savetxt('array.txt', weightedColumns, fmt='%d')
     axes.set_xlim(0, max(updatedValuesX))
     axes.set_ylim(0, max(weightedColumns))
     axes.autoscale_view()

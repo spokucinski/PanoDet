@@ -85,7 +85,7 @@ class ScrollingProcess:
         self.controlWindowsInitialized = True
         WindowManager.initializeControlWindows()
         
-        figure, axes, plottedLine = WindowManager.initializePlot()    
+        figure, axes, plottedLine = WindowManager.initializePlot('Column index', 'Column total weight', 'Weight')    
         self.controlAxes = axes
         self.controlFigure = figure
         self.controlPlottedLine = plottedLine
@@ -123,7 +123,7 @@ class ScrollingProcess:
         WindowManager.updateColoredWeightedAnnotationsControlView(weightedAnnotations)
         
         weightedColumns = np.sum(weightedAnnotations, axis=0)
-        WindowManager.updatePlot(weightedColumns, self.controlFigure, self.controlAxes, self.controlPlottedLine)
+        WindowManager.updatePlot(weightedColumns, self.controlFigure, self.controlAxes, self.controlPlottedLine, 1408)
         
             # Group by value and find ranges
         groups = []

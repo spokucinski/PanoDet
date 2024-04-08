@@ -12,21 +12,36 @@ def parse_opt():
     parser = argparse.ArgumentParser()
     parser.add_argument("--resultsPath", type=str, default="results", help="Where to save the results")
     parser.add_argument("--logName", type=str, default="experimentLog", help="Name for the whole experiment log file")
-    parser.add_argument("--projectName", type=str, default="PanoDet", help="Name for the project")
+    parser.add_argument("--projectName", type=str, default="CODE", help="Name for the project")
     parser.add_argument("--datasetsPath", type=str, default="datasets", help="Where to search for the datasets")
     parser.add_argument("--datasetDefsPath", type=str, default="data", help="Where to search for the .yaml files with dataset definitions")
     parser.add_argument("--datasets", type=str, nargs="+", default=[
-                                                                    "UnifiedDistributionPanoDet1", 
-                                                                    "UnifiedDistributionPanoDet2",
-                                                                    "UnifiedDistributionPanoDet3",
-                                                                    "UnifiedDistributionPanoDet4",
-                                                                    "UnifiedDistributionPanoDet5"
+                                                                    "AutomaticallyMaxScrolledDataset",
+                                                                    "AutomaticallyMinScrolledDataset",
+                                                                    "ManuallyMaxScrolledDataset",
+                                                                    "ManuallyMinScrolledDataset",
+                                                                    "UnscrolledDataset",
+                                                                    "UnifiedDistributionDataset1", 
+                                                                    "UnifiedDistributionDataset2",
+                                                                    "UnifiedDistributionDataset3",
+                                                                    "UnifiedDistributionDataset4",
+                                                                    "UnifiedDistributionDataset5"
+                                                                    # "AutomaticallyMaxScrolledPanoDet",
+                                                                    # "AutomaticallyMinScrolledPanoDet",
+                                                                    # "ManuallyMaxScrolledPanoDet",
+                                                                    # "ManuallyMinScrolledPanoDet",
+                                                                    # "UnscrolledPanoDet",
+                                                                    # "UnifiedDistributionPanoDet1", 
+                                                                    # "UnifiedDistributionPanoDet2",
+                                                                    # "UnifiedDistributionPanoDet3",
+                                                                    # "UnifiedDistributionPanoDet4",
+                                                                    # "UnifiedDistributionPanoDet5"
                                                                     ], help="Which datasets to test")
     parser.add_argument("--epochs", type=int, nargs="+", default=[500], help="Training lenght in epochs")
     parser.add_argument("--patience", type=int, default=100, help="How many epochs without improvement before early stopping")
-    parser.add_argument("--models", type=str, nargs="+", default=['yolov5n', 'yolov5m', 'yolov5x'], help="What models use in training")
-    parser.add_argument("--batchSizes", type=int, nargs="+", default=[-1], help="Size of the batch, -1 for auto-batch")
-    parser.add_argument("--imageSizes", type=int, nargs="+", default=[1024], help="Image sizes to be used in training")
+    parser.add_argument("--models", type=str, nargs="+", default=['yolov5n'], help="What models use in training")
+    parser.add_argument("--batchSizes", type=int, nargs="+", default=[4], help="Size of the batch, -1 for auto-batch")
+    parser.add_argument("--imageSizes", type=int, nargs="+", default=[2048], help="Image sizes to be used in training")
     parser.add_argument("--rectangularTraining", type=bool, default=True, help="Expect the image to be rectangular, not a square")
     parser.add_argument("--hyperParameters", type=str, default="external/data/hyps/hyp.no-augmentation.yaml", help="Path to hyperparameters configuration .yaml file")
 
@@ -114,7 +129,9 @@ def conductTesting(imageSize: int,
             testLogFile.write(f'TESTING LOG OF: {runName}')
             testLogFile.flush()
             p = subprocess.Popen(test_cmd, stdout=testLogFile, stderr=testLogFile, start_new_session=True)
-            p.wait(timeout=14400)
+            p.wait(timeout=25000)
+
+            clean_file(testLogPath)
 
         except Exception as testingException:
             logger = logging.getLogger(__name__)
@@ -132,7 +149,7 @@ def clean_file(filename):
     clean_content = re.sub(r'\x1b\[[0-9;]*[mGK]', '', content)
 
     # Write the cleaned content back to the file
-    with open(filename, 'a', encoding='utf-8') as f:
+    with open(filename, 'w', encoding='utf-8') as f:
         f.write(clean_content)
 
 def conductTraining(epochs: int, 
@@ -169,8 +186,8 @@ def conductTraining(epochs: int,
             trainLog = open(trainLogPath, 'a')
             trainLog.write(f'TRAINING LOG OF: {runName}')
             trainLog.flush()
-            p = subprocess.Popen(train_cmd, stdout=trainLog, stderr=trainLog)
-            p.wait(timeout=14400)
+            p = subprocess.Popen(train_cmd, stdout=trainLog, stderr=trainLog, start_new_session=True)
+            p.wait(timeout=25000)
 
             clean_file(trainLogPath)
         
@@ -204,26 +221,30 @@ def main(options: Options):
                         modelPath = f'external/{model}.pt'
                         runConfiguration: str = f"{dataset}_{epochNum}_{imageSize}_{batchSize}_{model}"                     
                         
-                        conductTraining(epochNum, 
-                                        imageSize, 
-                                        batchSize, 
-                                        runConfiguration, 
-                                        modelPath, 
-                                        dataDefPath, 
-                                        alreadyConductedTrainings, 
-                                        options.resultsPath, 
-                                        options.projectName, 
-                                        options.hyperParameters)
+                        # conductTraining(epochNum, 
+                        #                 imageSize, 
+                        #                 batchSize, 
+                        #                 runConfiguration, 
+                        #                 modelPath, 
+                        #                 dataDefPath, 
+                        #                 alreadyConductedTrainings, 
+                        #                 options.resultsPath, 
+                        #                 options.projectName, 
+                        #                 options.hyperParameters)
                         
                         # bestTrainingModelPath = f'{options.resultsPath}/{options.projectName}/Train/{runConfiguration}/weights/best.pt'           
-                        # conductTesting(imageSize, 
-                        #                1, 
-                        #                runConfiguration, 
-                        #                bestTrainingModelPath, 
-                        #                dataDefPath, 
-                        #                alreadyConductedTests, 
-                        #                options.resultsPath, 
-                        #                options.projectName)
+                        
+                        bestTrainingModelPath = f'{options.resultsPath}/{options.projectName}/Train/UnifiedDistributionDataset2_500_2048_-1_yolov5n/weights/best.pt'
+
+
+                        conductTesting(imageSize, 
+                                       1, 
+                                       runConfiguration, 
+                                       bestTrainingModelPath, 
+                                       dataDefPath, 
+                                       alreadyConductedTests, 
+                                       options.resultsPath, 
+                                       options.projectName)
 
 if __name__ == "__main__":
     opt = parse_opt()

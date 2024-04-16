@@ -3,8 +3,8 @@
 {
 	"name": "DatasetExporterContainer",
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"image": "voxel51/fiftyone",
-
+	// "image": "voxel51/fiftyone",
+	"build": { "dockerfile": "Dockerfile" },
 	"customizations": {
 		"vscode": {
 			"extensions": [

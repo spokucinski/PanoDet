@@ -101,6 +101,26 @@ gt_areas = F("detections.detections[]").apply(bbox_area)
 print(dataset.bounds(gt_areas))
 print(dataset.mean(gt_areas))
 
+masterHeatmap = np.zeros(shape=(1024, 2048))
+for i in range(3):
+    for sample in dataset:
+        partialMap = np.zeros(shape=(1024, 2048))
+        sampleImage = cv2.imread(sample.filepath)
+        
+        for detection in sample.detections.detections:
+            xmin = int(detection.bounding_box[0] * sample.metadata.width)
+            xmax = int((detection.bounding_box[0] + detection.bounding_box[2]) * sample.metadata.width)
+
+            ymin = int(detection.bounding_box[1] * sample.metadata.height)
+            ymax = int((detection.bounding_box[1] + detection.bounding_box[3]) * sample.metadata.height)
+                
+            partialMap[xmin:xmax, ymin:ymax] += 1
+
+            normalizedMap = np.interp(partialMap, (partialMap.min(), partialMap.max()), (0, 1))
+            normalizedMap = np.multiply(normalizedMap, 255)
+            cv2.imwrite("partialMapPreview.png", normalizedMap)
+
+
 mapa = np.random.randint(256, size=(128, 128), dtype=np.uint8)
 
 result = fo.Heatmap(map=mapa)

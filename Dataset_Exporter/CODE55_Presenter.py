@@ -1,8 +1,19 @@
 import os
 import fiftyone as fo
 import json
+import matplotlib.pyplot as plt
+import numpy as np
+import cv2
+
 from fiftyone import ViewField as F
-# os.system('pkill mongod')
+
+def plot_hist(counts, edges):
+    counts = np.asarray(counts)
+    edges = np.asarray(edges)
+    left_edges = edges[:-1]
+    widths = edges[1:] - edges[:-1]
+    plt.bar(left_edges, counts, width=widths, align="edge")
+
 DATASET = 'CODE55'
 DATASET_PATH = 'data/CODE55_CVAT11'
 
@@ -37,31 +48,76 @@ print()
 print("Schema of the dataset's Sample:")
 schema = dataset.get_field_schema()
 flattenedSchema = fo.flatten_schema(schema)
-flattendedSchemaStr : str = str(flattenedSchema).removeprefix('{').removesuffix('}')
-flattendedSchemaSet = flattendedSchemaStr.split('>, ')
-for schemaPart in flattendedSchemaSet:
-    print(schemaPart + ">, ")
+fo.pprint(flattenedSchema)
 print()
 
-# for schemaField in schema:
-#     print(schemaField)
-#     field = dataset.get_field(schemaField)
-# dataset.compute_metadata()
+print("First sample details:")
+firstSample = dataset.first()
+for fieldName in firstSample.field_names:
+    if fieldName == 'detections':
+        detectionsSubset = firstSample[fieldName][fieldName][:1]
+        print("First detection:")
+        print(detectionsSubset)
+    else:
+        print(f"{fieldName}: {firstSample[fieldName]}")
+print()
 
-# classes = dataset.get_classes("detections.detections.label")
+print("Dataset statistics:")
+stats = dataset.stats()
+fo.pprint(stats)
+print()
 
-# Define some interesting plots
-#plot1 = fo.NumericalHistogram(F("metadata.size_bytes") / 1024, bins=50, xlabel="image size (KB)")
-#plot2 = fo.NumericalHistogram("detections.confidence", bins=50, range=[0, 1])
-#plot3 = fo.CategoricalHistogram("ground_truth.detections.label", order="frequency")
-# plot4 = fo.CategoricalHistogram("detections.detections.label", order="frequency")
+print("Computing metadata...")
+dataset.compute_metadata()
+print("First sample metadata:")
 
-# session = fo.launch_app(dataset)
+firstSampleMetadata = firstSample.get_field("metadata")
+fo.pprint(firstSampleMetadata)
+print()
 
-# # Construct a custom dashboard of plots
-# plot = fo.ViewGrid([plot4], init_view=dataset)
-# plot.show(height=720)
-# session.plots.attach(plot)
+print("Available dataset aggregations:")
+print(dataset.list_aggregations())
 
-# session.wait()
-# session.close()
+print("Classes in the dataset:")
+classes = dataset.distinct("detections.detections.label")
+print(classes)
+print()
+
+print("Class counts in the dataset:")
+labelCounts = dataset.count_values("detections.detections.label")
+print(labelCounts)
+print()
+
+# Expression that computes the area of a bounding box, in pixels
+# Bboxes are in [top-left-x, top-left-y, width, height] format
+bbox_width = F("bounding_box")[2] * F("$metadata.width")
+bbox_height = F("bounding_box")[3] * F("$metadata.height")
+bbox_area = bbox_width * bbox_height
+
+# Expression that computes the area of ground truth bboxes
+gt_areas = F("detections.detections[]").apply(bbox_area)
+
+# Compute (min, max, mean) of ground truth bounding boxes
+print(dataset.bounds(gt_areas))
+print(dataset.mean(gt_areas))
+
+mapa = np.random.randint(256, size=(128, 128), dtype=np.uint8)
+
+result = fo.Heatmap(map=mapa)
+#result.save("heatmap.png")
+result.export_map("heatmap.png")
+# result2 = result.to_array()
+# cv2.imwrite("heatmap.png", result2)
+
+widthHistPlot = fo.NumericalHistogram(F("metadata.width"), bins=100, xlabel="Image width")
+heightHistPlot = fo.NumericalHistogram(F("metadata.height"), bins=100, xlabel="Image height")
+classHistPlot = fo.CategoricalHistogram("detections.detections.label", order="frequency")
+bboxAreaHistPlot = fo.NumericalHistogram(gt_areas, bins=100, xlabel="BBox area")
+plot = fo.ViewGrid([classHistPlot, widthHistPlot, heightHistPlot, bboxAreaHistPlot], shape=(4, 1), init_view=dataset)
+plot.show()
+
+session = fo.launch_app(dataset)
+session.plots.attach(plot)
+
+session.wait()
+session.close()

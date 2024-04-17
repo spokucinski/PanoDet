@@ -1,15 +1,18 @@
 import os
 import fiftyone as fo
+import json
 from fiftyone import ViewField as F
-
+# os.system('pkill mongod')
 DATASET = 'CODE55'
 DATASET_PATH = 'data/CODE55_CVAT11'
 
 print("Starting dataset presentation")
+print()
 
 print("Currently available in FiftyOne datasets:")
 allDatasets = fo.list_datasets()
 print(allDatasets)
+print()
 
 dataset : fo.Dataset
 if DATASET not in allDatasets:
@@ -24,19 +27,28 @@ else:
 
 print("Dataset ready!")
 print("Setting dataset to persist in the DB.")
+print()
 dataset.persistent = True
 
-print("Printing dataset metadata:")
+print("Dataset metadata:")
 print(dataset)
+print()
 
+print("Schema of the dataset's Sample:")
 schema = dataset.get_field_schema()
-print(schema)
-for schemaField in schema:
-    print(schemaField)
-    field = dataset.get_field(schemaField)
-dataset.compute_metadata()
+flattenedSchema = fo.flatten_schema(schema)
+flattendedSchemaStr : str = str(flattenedSchema).removeprefix('{').removesuffix('}')
+flattendedSchemaSet = flattendedSchemaStr.split('>, ')
+for schemaPart in flattendedSchemaSet:
+    print(schemaPart + ">, ")
+print()
 
-classes = dataset.get_classes("detections.detections.label")
+# for schemaField in schema:
+#     print(schemaField)
+#     field = dataset.get_field(schemaField)
+# dataset.compute_metadata()
+
+# classes = dataset.get_classes("detections.detections.label")
 
 # Define some interesting plots
 #plot1 = fo.NumericalHistogram(F("metadata.size_bytes") / 1024, bins=50, xlabel="image size (KB)")

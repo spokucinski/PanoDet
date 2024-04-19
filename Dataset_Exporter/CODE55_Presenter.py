@@ -19,6 +19,9 @@ DATASET_PATH = 'data/CODE55_CVAT11'
 OUTPUT_PATH = 'output'
 HEATMAP_SHAPE = (1024, 2048)
 
+GENERATE_HEATMAPS = False
+RUN_SESSION = True
+
 LABELS = {
     "Bathtub": 0,
     "Chair": 1,
@@ -158,6 +161,16 @@ labelCounts = dataset.count_values("detections.detections.label")
 print(labelCounts)
 print()
 
+print("Image width counts in the dataset:")
+widthCounts = dataset.count_values("metadata.width")
+print(widthCounts)
+print()
+
+print("Image height counts in the dataset:")
+heightCounts = dataset.count_values("metadata.height")
+print(heightCounts)
+print()
+
 # Expression that computes the area of a bounding box, in pixels
 # Bboxes are in [top-left-x, top-left-y, width, height] format
 bbox_width = F("bounding_box")[2] * F("$metadata.width")
@@ -171,44 +184,46 @@ gt_areas = F("detections.detections[]").apply(bbox_area)
 print(dataset.bounds(gt_areas))
 print(dataset.mean(gt_areas))
 
-heatmaps = np.zeros(shape=(HEATMAP_SHAPE[0], HEATMAP_SHAPE[1], len(LABELS) + 1))
-for sample in dataset:
-    for detection in sample.detections.detections:
-        xmin = int(detection.bounding_box[0] * HEATMAP_SHAPE[1])
-        xmax = int((detection.bounding_box[0] + detection.bounding_box[2]) * HEATMAP_SHAPE[1])
+if GENERATE_HEATMAPS:
+    heatmaps = np.zeros(shape=(HEATMAP_SHAPE[0], HEATMAP_SHAPE[1], len(LABELS) + 1))
+    for sample in dataset:
+        for detection in sample.detections.detections:
+            xmin = int(detection.bounding_box[0] * HEATMAP_SHAPE[1])
+            xmax = int((detection.bounding_box[0] + detection.bounding_box[2]) * HEATMAP_SHAPE[1])
 
-        ymin = int(detection.bounding_box[1] * HEATMAP_SHAPE[0])
-        ymax = int((detection.bounding_box[1] + detection.bounding_box[3]) * HEATMAP_SHAPE[0])
-            
-        heatmaps[ymin:ymax, xmin:xmax, LABELS[detection.label]] += 1
-        heatmaps[ymin:ymax, xmin:xmax, len(LABELS)] += 1
+            ymin = int(detection.bounding_box[1] * HEATMAP_SHAPE[0])
+            ymax = int((detection.bounding_box[1] + detection.bounding_box[3]) * HEATMAP_SHAPE[0])
+                
+            heatmaps[ymin:ymax, xmin:xmax, LABELS[detection.label]] += 1
+            heatmaps[ymin:ymax, xmin:xmax, len(LABELS)] += 1
 
-for label in LABELS:
-    print(f"Processing heatmap for label: {label}")
-    labelHeatmap = heatmaps[:, :, LABELS[label]]
-    normalizedLabelHeatmap = np.interp(labelHeatmap, (labelHeatmap.min(), labelHeatmap.max()), (0, 1))
-    normalizedLabelHeatmap = np.multiply(normalizedLabelHeatmap, 255)
-    cv2.imwrite(os.path.join(OUTPUT_PATH, f"Normalized{label}Heatmap.png"), normalizedLabelHeatmap)
-    coloredNormalizedLabelHeatmap = cv2.applyColorMap(np.uint8(normalizedLabelHeatmap), cv2.COLORMAP_INFERNO)
-    cv2.imwrite(os.path.join(OUTPUT_PATH, f"Colored{label}Heatmap.png"), coloredNormalizedLabelHeatmap) 
+    for label in LABELS:
+        print(f"Processing heatmap for label: {label}")
+        labelHeatmap = heatmaps[:, :, LABELS[label]]
+        normalizedLabelHeatmap = np.interp(labelHeatmap, (labelHeatmap.min(), labelHeatmap.max()), (0, 1))
+        normalizedLabelHeatmap = np.multiply(normalizedLabelHeatmap, 255)
+        cv2.imwrite(os.path.join(OUTPUT_PATH, f"Normalized{label}Heatmap.png"), normalizedLabelHeatmap)
+        coloredNormalizedLabelHeatmap = cv2.applyColorMap(np.uint8(normalizedLabelHeatmap), cv2.COLORMAP_INFERNO)
+        cv2.imwrite(os.path.join(OUTPUT_PATH, f"Colored{label}Heatmap.png"), coloredNormalizedLabelHeatmap) 
 
-print("Processing the master heatmap")
-masterHeatmap = heatmaps[:, :, len(LABELS)]
-normalizedMasterHeatmap = np.interp(masterHeatmap, (masterHeatmap.min(), masterHeatmap.max()), (0, 1))
-normalizedMasterHeatmap = np.multiply(normalizedMasterHeatmap, 255)
-cv2.imwrite(os.path.join(OUTPUT_PATH, "NormalizedMasterHeatmap.png"), normalizedMasterHeatmap)
-coloredMasterHeatmap = cv2.applyColorMap(np.uint8(normalizedMasterHeatmap), cv2.COLORMAP_INFERNO)
-cv2.imwrite(os.path.join(OUTPUT_PATH, "ColoredMasterHeatmap.png"), coloredMasterHeatmap)
+    print("Processing the master heatmap")
+    masterHeatmap = heatmaps[:, :, len(LABELS)]
+    normalizedMasterHeatmap = np.interp(masterHeatmap, (masterHeatmap.min(), masterHeatmap.max()), (0, 1))
+    normalizedMasterHeatmap = np.multiply(normalizedMasterHeatmap, 255)
+    cv2.imwrite(os.path.join(OUTPUT_PATH, "NormalizedMasterHeatmap.png"), normalizedMasterHeatmap)
+    coloredMasterHeatmap = cv2.applyColorMap(np.uint8(normalizedMasterHeatmap), cv2.COLORMAP_INFERNO)
+    cv2.imwrite(os.path.join(OUTPUT_PATH, "ColoredMasterHeatmap.png"), coloredMasterHeatmap)
 
-# widthHistPlot = fo.NumericalHistogram(F("metadata.width"), bins=100, xlabel="Image width")
-# heightHistPlot = fo.NumericalHistogram(F("metadata.height"), bins=100, xlabel="Image height")
-# classHistPlot = fo.CategoricalHistogram("detections.detections.label", order="frequency")
-# bboxAreaHistPlot = fo.NumericalHistogram(gt_areas, bins=100, xlabel="BBox area")
-# plot = fo.ViewGrid([classHistPlot, widthHistPlot, heightHistPlot, bboxAreaHistPlot], shape=(4, 1), init_view=dataset)
-# plot.show()
+if RUN_SESSION:
+    widthHistPlot = fo.CategoricalHistogram("metadata.width", xlabel="Image width", order="frequency")
+    heightHistPlot = fo.CategoricalHistogram("metadata.height", xlabel="Image height", order="frequency")
+    classHistPlot = fo.CategoricalHistogram("detections.detections.label", order="frequency")
+    bboxAreaHistPlot = fo.NumericalHistogram(gt_areas, bins=100, xlabel="BBox area")
+    plot = fo.ViewGrid([classHistPlot, widthHistPlot, heightHistPlot, bboxAreaHistPlot], shape=(4, 1), init_view=dataset)
+    plot.show()
 
-# session = fo.launch_app(dataset)
-# session.plots.attach(plot)
+    session = fo.launch_app(dataset)
+    session.plots.attach(plot)
 
-# session.wait()
-# session.close()
+    session.wait()
+    session.close()

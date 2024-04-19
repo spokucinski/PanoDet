@@ -16,6 +16,8 @@ def plot_hist(counts, edges):
 
 DATASET = 'CODE55'
 DATASET_PATH = 'data/CODE55_CVAT11'
+OUTPUT_PATH = 'output'
+HEATMAP_SHAPE = (1024, 2048)
 
 print("Starting dataset presentation")
 print()
@@ -101,44 +103,40 @@ gt_areas = F("detections.detections[]").apply(bbox_area)
 print(dataset.bounds(gt_areas))
 print(dataset.mean(gt_areas))
 
-masterHeatmap = np.zeros(shape=(1024, 2048))
+masterHeatmap = np.zeros(shape=(HEATMAP_SHAPE[0], HEATMAP_SHAPE[1]))
 
-for sample in dataset.take(3):
-    partialMap = np.zeros(shape=(1024, 2048))
-    sampleImage = cv2.imread(sample.filepath)
-    sampleImage = cv2.resize(sampleImage, (2048, 1024))
-    cv2.imwrite("image.png", sampleImage)
+sampleCount = 0
+for sample in dataset:
+    partialMap = np.zeros(shape=(HEATMAP_SHAPE[0], HEATMAP_SHAPE[1])) 
     for detection in sample.detections.detections:
-        xmin = int(detection.bounding_box[0] * 2048)
-        xmax = int((detection.bounding_box[0] + detection.bounding_box[2]) * 2048)
+        xmin = int(detection.bounding_box[0] * HEATMAP_SHAPE[1])
+        xmax = int((detection.bounding_box[0] + detection.bounding_box[2]) * HEATMAP_SHAPE[1])
 
-        ymin = int(detection.bounding_box[1] * 1024)
-        ymax = int((detection.bounding_box[1] + detection.bounding_box[3]) * 1024)
+        ymin = int(detection.bounding_box[1] * HEATMAP_SHAPE[0])
+        ymax = int((detection.bounding_box[1] + detection.bounding_box[3]) * HEATMAP_SHAPE[0])
             
         partialMap[ymin:ymax, xmin:xmax] += 1
 
-        normalizedMap = np.interp(partialMap, (partialMap.min(), partialMap.max()), (0, 1))
-        normalizedMap = np.multiply(normalizedMap, 255)
-        cv2.imwrite("partialMapPreview.png", normalizedMap)
+    masterHeatmap += partialMap
 
+    if sampleCount % 10 == 0:
+        print(f"Processed sample: {sampleCount} of {dataset.count}")
+    sampleCount += 1
+normalizedMasterHeatmap = np.interp(masterHeatmap, (masterHeatmap.min(), masterHeatmap.max()), (0, 1))
+normalizedMasterHeatmap = np.multiply(normalizedMasterHeatmap, 255)
+cv2.imwrite(os.path.join(OUTPUT_PATH, "normalizedMasterHeatmap.png"), normalizedMasterHeatmap)
+coloredMasterHeatmap = cv2.applyColorMap(np.uint8(normalizedMasterHeatmap), cv2.COLORMAP_INFERNO)
+cv2.imwrite(os.path.join(OUTPUT_PATH, "coloredMasterHeatmap.png"), coloredMasterHeatmap)
 
-mapa = np.random.randint(256, size=(128, 128), dtype=np.uint8)
+# widthHistPlot = fo.NumericalHistogram(F("metadata.width"), bins=100, xlabel="Image width")
+# heightHistPlot = fo.NumericalHistogram(F("metadata.height"), bins=100, xlabel="Image height")
+# classHistPlot = fo.CategoricalHistogram("detections.detections.label", order="frequency")
+# bboxAreaHistPlot = fo.NumericalHistogram(gt_areas, bins=100, xlabel="BBox area")
+# plot = fo.ViewGrid([classHistPlot, widthHistPlot, heightHistPlot, bboxAreaHistPlot], shape=(4, 1), init_view=dataset)
+# plot.show()
 
-result = fo.Heatmap(map=mapa)
-#result.save("heatmap.png")
-result.export_map("heatmap.png")
-# result2 = result.to_array()
-# cv2.imwrite("heatmap.png", result2)
+# session = fo.launch_app(dataset)
+# session.plots.attach(plot)
 
-widthHistPlot = fo.NumericalHistogram(F("metadata.width"), bins=100, xlabel="Image width")
-heightHistPlot = fo.NumericalHistogram(F("metadata.height"), bins=100, xlabel="Image height")
-classHistPlot = fo.CategoricalHistogram("detections.detections.label", order="frequency")
-bboxAreaHistPlot = fo.NumericalHistogram(gt_areas, bins=100, xlabel="BBox area")
-plot = fo.ViewGrid([classHistPlot, widthHistPlot, heightHistPlot, bboxAreaHistPlot], shape=(4, 1), init_view=dataset)
-plot.show()
-
-session = fo.launch_app(dataset)
-session.plots.attach(plot)
-
-session.wait()
-session.close()
+# session.wait()
+# session.close()

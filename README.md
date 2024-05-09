@@ -5,16 +5,16 @@
 ## Repo Content
 
 All the conducted experiments and research consists of **(but is not limited to!)**:
-- [CODE_55 - 55 Common Objects in Domestic Environment - A novel dataset definition for the most commonly expected objects in an indoor home environment](CODE_55/README.md)
-- [CODE_MTNN - Multitask Neural Network try-out combining the object detection and room classification for a home-digitalization project](CODE_MTNN/README.md)
-- [Dataset_Augmentation - Experiments with image dataset augmentations save for equirectangular panoramas](Dataset_Augmentation/README.md)
-- [Dataset_Benchmarking - YOLO-based project for experiments with panoramic datasets utilizing the scrolling mechanism](Dataset_Benchmarking/README.md)
-- [Dataset_Exporter - Exporter of the datasets in a Roboflow-compatible format](Dataset_Exporter/README.md)
-- [Model_Exporter - Customized exporter for the AI models to be usable in the .NET ecosystem](Model_Exporter/README.md)
-- [PanoScroller - App implementing a custom workflow for the equirectangular panoramas pre-processing](Pano_Scroller/README.md)
-- [SAM_Dataset_Improver - Segment Anything Model-based dataset improver](SAM_Dataset_Improver/README.md)
-- [WiMR_Dataset_Parser - Custom made annotations parser for already existing dataset](WiMR_Dataset_Parser/README.md)
-- [YOLO_Object_Detection_Experiments - YOLO object detectors in the task of equirectangular panoramas processing](YOLO_Object_Detection_Experiments/README.md)
+- [CODE_55](CODE_55/README.md) - 55 Common Objects in Domestic Environment - A novel dataset definition for the most commonly expected objects in an indoor home environment
+- [CODE_MTNN](CODE_MTNN/README.md) - Multitask Neural Network try-out combining the object detection and room classification for a home-digitalization project
+- [Dataset_Augmentation](Dataset_Augmentation/README.md) - Experiments with image dataset augmentations save for equirectangular panoramas
+- [Dataset_Benchmarking](Dataset_Benchmarking/README.md) - YOLO-based project for experiments with panoramic datasets utilizing the scrolling mechanism
+- [Dataset_Exporter](Dataset_Exporter/README.md) - Exporter of the datasets in a Roboflow-compatible format
+- [Model_Exporter](Model_Exporter/README.md) - Customized exporter for the AI models to be usable in the .NET ecosystem
+- [PanoScroller](Pano_Scroller/README.md) - App implementing a custom workflow for the equirectangular panoramas pre-processing
+- [SAM_Dataset_Improver](SAM_Dataset_Improver/README.md) - Segment Anything Model-based dataset improver
+- [WiMR_Dataset_Parser](WiMR_Dataset_Parser/README.md) - Custom made annotations parser for already existing dataset
+- [YOLO_Object_Detection_Experiments](YOLO_Object_Detection_Experiments/README.md) - YOLO object detectors in the task of equirectangular panoramas processing
 
 ## Datasets
 References and direct links for the dataset details.

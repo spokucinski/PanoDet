@@ -5,15 +5,17 @@
 ## Repo Content
 
 All the conducted experiments and research consists of **(but is not limited to!)**:
-- [YOLO object detectors in the task of equirectangular panoramas processing](YOLO_Object_Detection_Experiments/README.md)
-- [Custom parser for the 'What's in My Room' project's annotations](WiMR_Dataset_Parser/README.md)
+- [CODE_55 - 55 Common Objects in Domestic Environment - A novel dataset definition for the most commonly expected objects in an indoor home environment](CODE_55/README.md)
+- [CODE_MTNN - Multi-task Neural Network approach to the detection and understanding of indoor environemnts](CODE_MTNN/README.md)
+- [Dataset_Augmentation - Experiments with image dataset augmentations save for equirectangular panoramas](Dataset_Augmentation/README.md)
+- [Dataset_Benchmarking - YOLO-based project for experiments with panoramic datasets utilizing the scrolling mechanism](Dataset_Benchmarking/README.md)
 - [Segment Anything Model-based dataset improver](SAM_Dataset_Improver/README.md)
 - [PanoScroller - App implementing a custom workflow for the equirectangular panoramas pre-processing](Pano_Scroller/README.md)
 - [Customized exporter for the AI models to be usable in the .NET ecosystem](Model_Exporter/README.md)
 - [Exporter of the datasets in a Roboflow-compatible format](Dataset_Exporter/README.md)
 - [Multitask Neural Network try-out combining the object detection and room classification for a home-digitalization project](CODE_MTNN/README.md)
 - [WiMR_Dataset_Parser - Custom made annotations parser for already existing dataset](WiMR_Dataset_Parser/README.md)
-- [CODE - Common Objects in Domestic Environment - A novel dataset definition for the most commonly expected objects in an indoor home environment](CODE_55/README.md)
+- [YOLO_Object_Detection_Experiments - YOLO object detectors in the task of equirectangular panoramas processing](YOLO_Object_Detection_Experiments/README.md)
 
 ## Datasets
 References and direct links for the dataset details.

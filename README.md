@@ -12,6 +12,7 @@ All the conducted experiments and research consists of **(but is not limited to!
 - [Customized exporter for the AI models to be usable in the .NET ecosystem](Model_Exporter/README.md)
 - [Exporter of the datasets in a Roboflow-compatible format](Dataset_Exporter/README.md)
 - [Multitask Neural Network try-out combining the object detection and room classification for a home-digitalization project](CODE_MTNN/README.md)
+- [WiMR_Dataset_Parser - Custom made annotations parser for already existing dataset](WiMR_Dataset_Parser/README.md)
 - [CODE - Common Objects in Domestic Environment - A novel dataset definition for the most commonly expected objects in an indoor home environment](CODE_55/README.md)
 
 ## Datasets

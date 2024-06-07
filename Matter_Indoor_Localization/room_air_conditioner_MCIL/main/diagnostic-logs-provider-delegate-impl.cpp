@@ -28,38 +28,42 @@
 using namespace chip;
 using namespace chip::app::Clusters::DiagnosticLogs;
 
-static const char *TAG = "DiagnosticLogsProvider";
+static const char *TAG = "### - DiagnosticLogsProvider";
 
 LogProvider LogProvider::sInstance;
 LogProvider::CrashLogContext LogProvider::sCrashLogContext;
 
-namespace {
-bool IsValidIntent(IntentEnum intent)
-{
-    return intent != IntentEnum::kUnknownEnumValue;
-}
-
-// end_user_support.log and network_diag.log files are embedded in the firmware
-extern const uint8_t endUserSupportLogStart[] asm("_binary_end_user_support_log_start");
-extern const uint8_t endUserSupportLogEnd[] asm("_binary_end_user_support_log_end");
-
-extern const uint8_t networkDiagnosticLogStart[] asm("_binary_network_diag_log_start");
-extern const uint8_t networkDiagnosticLogEnd[] asm("_binary_network_diag_log_end");
-
 // Total size allocated for the log buffer
-const size_t totalLogMemorySize = 1024;
-u_int8_t logBuffer[totalLogMemorySize] = {};
+// const size_t totalLogMemorySize = 32768; // 32kB
+const size_t totalLogMemorySize = 8192; // 8kB
 
+// Log buffer for in-memory logs.
+u_int8_t logBuffer[totalLogMemorySize] = {};
 u_int8_t currentLogCount = 0;
 
 // Pointers to the beginning and current end of the log buffer
 uint8_t* logStart = logBuffer;
 uint8_t* logEnd = logBuffer;
 
+LogProvider::~LogProvider()
+{
+    for (auto sessionSpan : mSessionContextMap)
+    {
+        Platform::MemoryFree(sessionSpan.second);
+    }
+    mSessionContextMap.clear();
+}
+
+bool IsValidIntent(IntentEnum intent)
+{
+    ESP_LOGI(TAG, "Checking log request intent");
+    return intent == IntentEnum::kEndUserSupport;
+}
+
 // Function to add a log entry
 void LogProvider::AddLogEntry(const char* logEntry) {
 
-    ESP_LOGI(TAG, "Went into AddLogEntry");
+    ESP_LOGI(TAG, "Started adding a new log");
 
     // Calculate the size of the new log entry
     size_t newLogEntrySize = std::strlen(logEntry);
@@ -71,10 +75,8 @@ void LogProvider::AddLogEntry(const char* logEntry) {
 
     // Check if there is enough space at the end of the buffer
     if (newLogEntrySize + 1 > spaceAtEnd) { // +1 for newline or null terminator
-        ESP_LOGI(TAG, "Went into first if");
         // Not enough space at the end, so wrap around
         if (newLogEntrySize + 1 > totalLogMemorySize) {
-            ESP_LOGI(TAG, "Went into second if");
             // If the new entry is too large to fit in the buffer, truncate it
             newLogEntrySize = totalLogMemorySize - 1;
         }
@@ -98,28 +100,15 @@ void LogProvider::AddLogEntry(const char* logEntry) {
     }
 }
 
-uint8_t defaultLog[14] = { 0x54, 0x45, 0x53, 0x54, 0x20, 0x4c, 0x4f, 0x47, 0x20, 0x53, 0x45, 0x42, 0x4b, 0x41 }; // TEST LOG SEBKA
-chip::ByteSpan defaultLogSpan = chip::ByteSpan(defaultLog);
-
-} // namespace
-
-LogProvider::~LogProvider()
-{
-    for (auto sessionSpan : mSessionContextMap)
-    {
-        Platform::MemoryFree(sessionSpan.second);
-    }
-    mSessionContextMap.clear();
-}
-
 void LogProvider::InitializeLogBuffer(){
+    ESP_LOGI(TAG, "Log buffer initialization");
     AddLogEntry("### LOG BUFFER INITIALIZATION ###");
 }
 
 CHIP_ERROR LogProvider::GetLogForIntent(IntentEnum intent, MutableByteSpan & outBuffer, Optional<uint64_t> & outTimeStamp,
                                         Optional<uint64_t> & outTimeSinceBoot)
 {
-    ESP_LOGI(TAG, "Went into GetLogForIntent");
+    ESP_LOGI(TAG, "Getting log");
 
     CHIP_ERROR err                 = CHIP_NO_ERROR;
     LogSessionHandle sessionHandle = kInvalidLogSessionHandle;
@@ -145,98 +134,41 @@ CHIP_ERROR LogProvider::GetLogForIntent(IntentEnum intent, MutableByteSpan & out
 
 size_t LogProvider::GetSizeForIntent(IntentEnum intent)
 {
-    ESP_LOGI(TAG, "Went into GetSizeForIntent");
+    ESP_LOGI(TAG, "Calculating log size");
 
     switch (intent)
     {
-    case IntentEnum::kEndUserSupport:
-    {
-        int logSize = logEnd - logStart;
-        ESP_LOGI(TAG, "Calculated size for intent: %d", logSize);
-        return static_cast<size_t>(logEnd - logStart);
+        case IntentEnum::kEndUserSupport:
+        {
+            int logSize = logEnd - logStart;
+            ESP_LOGI(TAG, "Calculated log size: %d", logSize);
+            return static_cast<size_t>(logEnd - logStart);
+        }
+
+        default:
+            return 0;
     }
-    case IntentEnum::kNetworkDiag:
-        return static_cast<size_t>(logEnd - logStart);
-    case IntentEnum::kCrashLogs:
-        return GetCrashSize();
-    default:
-        return 0;
-    }
-}
-
-size_t LogProvider::GetCrashSize()
-{
-    size_t outSize = 0;
-
-#if defined(CONFIG_ESP_COREDUMP_ENABLE_TO_FLASH) && defined(CONFIG_ESP_COREDUMP_DATA_FORMAT_ELF)
-    // Verify that the crash is present and sane
-    esp_err_t esp_err = esp_core_dump_image_check();
-    VerifyOrReturnValue(esp_err == ESP_OK, 0, ChipLogError(DeviceLayer, "Core dump image check failed, esp_err:%d", esp_err));
-
-    outSize = sizeof(esp_core_dump_summary_t);
-#endif // defined(CONFIG_ESP_COREDUMP_ENABLE_TO_FLASH) && defined(CONFIG_ESP_COREDUMP_DATA_FORMAT_ELF)
-
-    return outSize;
 }
 
 CHIP_ERROR LogProvider::PrepareLogContextForIntent(LogContext * context, IntentEnum intent)
 {
-    ESP_LOGI(TAG, "Went into PrepareLogContextForIntent");
+    ESP_LOGI(TAG, "Initialization of log context");
 
     context->intent = intent;
 
     switch (intent)
     {
-    case IntentEnum::kEndUserSupport: {
+        case IntentEnum::kEndUserSupport: {
 
-        int calculatedBufferSize = logEnd - logStart;
-        ESP_LOGI(TAG, "Buffer size in PrepareLogContextForIntent: %d", calculatedBufferSize);
-        context->EndUserSupport.span =
-            //defaultLogSpan;
-            //ByteSpan(&endUserSupportLogStart[0], static_cast<size_t>(endUserSupportLogEnd - endUserSupportLogStart));
-            ByteSpan(logBuffer, static_cast<size_t>(logEnd - logStart));
-    }
-    break;
-
-    case IntentEnum::kNetworkDiag: {
-        context->NetworkDiag.span =
-            // defaultLogSpan;
-            // ByteSpan(&networkDiagnosticLogStart[0], static_cast<size_t>(networkDiagnosticLogEnd - networkDiagnosticLogStart));
-            ByteSpan(logBuffer, static_cast<size_t>(logEnd - logStart));
-    }
-    break;
-
-    case IntentEnum::kCrashLogs: {
-#if defined(CONFIG_ESP_COREDUMP_ENABLE_TO_FLASH) && defined(CONFIG_ESP_COREDUMP_DATA_FORMAT_ELF)
-        sCrashLogContext.Reset();
-        context->Crash.logContext = &sCrashLogContext;
-
-        size_t crashSize = GetCrashSize();
-        VerifyOrReturnError(crashSize > 0, CHIP_ERROR_NOT_FOUND);
-
-        esp_core_dump_summary_t * summary =
-            reinterpret_cast<esp_core_dump_summary_t *>(Platform::MemoryCalloc(1, sizeof(esp_core_dump_summary_t)));
-        VerifyOrReturnError(summary != nullptr, CHIP_ERROR_NO_MEMORY);
-
-        esp_err_t esp_err = esp_core_dump_get_summary(summary);
-        if (esp_err != ESP_OK)
-        {
-            ChipLogError(DeviceLayer, "Failed to get core dump image, esp_err:%d", esp_err);
-            Platform::MemoryFree(summary);
-            return CHIP_ERROR_NOT_FOUND;
+            int calculatedBufferSize = logEnd - logStart;
+            ESP_LOGI(TAG, "Log context ByteSpan's size set to: %d", calculatedBufferSize);
+            context->EndUserSupport.span =
+                ByteSpan(logBuffer, static_cast<size_t>(logEnd - logStart));
         }
+        break;
 
-        context->Crash.logContext->crashSize  = crashSize;
-        context->Crash.logContext->readOffset = 0;
-        context->Crash.logContext->summary    = summary;
-#else
-        return CHIP_ERROR_NOT_FOUND;
-#endif // defined(CONFIG_ESP_COREDUMP_ENABLE_TO_FLASH) && defined(CONFIG_ESP_COREDUMP_DATA_FORMAT_ELF)
-    }
-    break;
-
-    default:
-        return CHIP_ERROR_INVALID_ARGUMENT;
+        default:
+            return CHIP_ERROR_INVALID_ARGUMENT;
     }
 
     return CHIP_NO_ERROR;
@@ -244,91 +176,43 @@ CHIP_ERROR LogProvider::PrepareLogContextForIntent(LogContext * context, IntentE
 
 void LogProvider::CleanupLogContextForIntent(LogContext * context)
 {
+    ESP_LOGI(TAG, "Cleaning of log context");
+    
     switch (context->intent)
     {
-    case IntentEnum::kEndUserSupport:
-        break;
+        case IntentEnum::kEndUserSupport:
+            break;
 
-    case IntentEnum::kNetworkDiag:
-        break;
-
-    case IntentEnum::kCrashLogs: {
-#if defined(CONFIG_ESP_COREDUMP_ENABLE_TO_FLASH) && defined(CONFIG_ESP_COREDUMP_DATA_FORMAT_ELF)
-        CrashLogContext * logContext = context->Crash.logContext;
-        // Reset() frees the summary if allocated
-        logContext->Reset();
-#endif // defined(CONFIG_ESP_COREDUMP_ENABLE_TO_FLASH) && defined(CONFIG_ESP_COREDUMP_DATA_FORMAT_ELF)
-    }
-    break;
-
-    default:
-        break;
+        default:
+            break;
     }
 }
 
 CHIP_ERROR LogProvider::GetDataForIntent(LogContext * context, MutableByteSpan & outBuffer, bool & outIsEndOfLog)
 {
+    ESP_LOGI(TAG, "Getting log data");
+
     switch (context->intent)
     {
-    case IntentEnum::kEndUserSupport: {
-        auto dataSize = context->EndUserSupport.span.size();
-        auto count    = std::min(dataSize, outBuffer.size());
+        case IntentEnum::kEndUserSupport: {
+            auto dataSize = context->EndUserSupport.span.size();
+            auto count    = std::min(dataSize, outBuffer.size());
 
-        VerifyOrReturnError(CanCastTo<off_t>(count), CHIP_ERROR_INVALID_ARGUMENT, outBuffer.reduce_size(0));
-        ReturnErrorOnFailure(CopySpanToMutableSpan(ByteSpan(context->EndUserSupport.span.data(), count), outBuffer));
+            VerifyOrReturnError(CanCastTo<off_t>(count), CHIP_ERROR_INVALID_ARGUMENT, outBuffer.reduce_size(0));
+            ReturnErrorOnFailure(CopySpanToMutableSpan(ByteSpan(context->EndUserSupport.span.data(), count), outBuffer));
 
-        outIsEndOfLog = dataSize == count;
-        if (!outIsEndOfLog)
-        {
-            // reduce the span after reading count bytes
-            context->EndUserSupport.span = context->EndUserSupport.span.SubSpan(count);
+            outIsEndOfLog = dataSize == count;
+            if (!outIsEndOfLog)
+            {
+                // reduce the span after reading count bytes
+                context->EndUserSupport.span = context->EndUserSupport.span.SubSpan(count);
+            }
         }
-    }
-    break;
+        break;
 
-    case IntentEnum::kNetworkDiag: {
-        auto dataSize = context->NetworkDiag.span.size();
-        auto count    = std::min(dataSize, outBuffer.size());
-
-        VerifyOrReturnError(CanCastTo<off_t>(count), CHIP_ERROR_INVALID_ARGUMENT, outBuffer.reduce_size(0));
-        ReturnErrorOnFailure(CopySpanToMutableSpan(ByteSpan(context->NetworkDiag.span.data(), count), outBuffer));
-
-        outIsEndOfLog = dataSize == count;
-        if (!outIsEndOfLog)
-        {
-            // reduce the span after reading count bytes
-            context->NetworkDiag.span = context->NetworkDiag.span.SubSpan(count);
+        default:
+            return CHIP_ERROR_INVALID_ARGUMENT;
         }
-    }
-    break;
-
-    case IntentEnum::kCrashLogs: {
-#if defined(CONFIG_ESP_COREDUMP_ENABLE_TO_FLASH) && defined(CONFIG_ESP_COREDUMP_DATA_FORMAT_ELF)
-        CrashLogContext * logContext = context->Crash.logContext;
-
-        VerifyOrReturnError(logContext->readOffset < logContext->crashSize, CHIP_ERROR_INCORRECT_STATE, outBuffer.reduce_size(0));
-
-        size_t dataSize = logContext->crashSize - logContext->readOffset;
-        auto count      = std::min(dataSize, outBuffer.size());
-
-        VerifyOrReturnError(CanCastTo<off_t>(count), CHIP_ERROR_INVALID_ARGUMENT, outBuffer.reduce_size(0));
-
-        const uint8_t * readAddr = reinterpret_cast<const uint8_t *>(logContext->summary) + logContext->readOffset;
-        memcpy(outBuffer.data(), readAddr, count);
-        outBuffer.reduce_size(count);
-
-        logContext->readOffset += count;
-        outIsEndOfLog = dataSize == count;
-#else
-        outBuffer.reduce_size(0);
-        return CHIP_ERROR_NOT_FOUND;
-#endif // defined(CONFIG_ESP_COREDUMP_ENABLE_TO_FLASH) && defined(CONFIG_ESP_COREDUMP_DATA_FORMAT_ELF)
-    }
-    break;
-
-    default:
-        return CHIP_ERROR_INVALID_ARGUMENT;
-    }
 
     return CHIP_NO_ERROR;
 }
@@ -336,16 +220,9 @@ CHIP_ERROR LogProvider::GetDataForIntent(LogContext * context, MutableByteSpan &
 CHIP_ERROR LogProvider::StartLogCollection(IntentEnum intent, LogSessionHandle & outHandle, Optional<uint64_t> & outTimeStamp,
                                            Optional<uint64_t> & outTimeSinceBoot)
 {
-    VerifyOrReturnValue(IsValidIntent(intent), CHIP_ERROR_INVALID_ARGUMENT);
+    ESP_LOGI(TAG, "Starting log collection");
 
-#if defined(CONFIG_ESP_COREDUMP_ENABLE_TO_FLASH) && defined(CONFIG_ESP_COREDUMP_DATA_FORMAT_ELF)
-    // In case of crash logs we can only mmap at max once, so check before doing anything
-    if (intent == IntentEnum::kCrashLogs)
-    {
-        VerifyOrReturnError(sCrashLogContext.summary == nullptr, CHIP_ERROR_INCORRECT_STATE,
-                            ChipLogError(DeviceLayer, "Crash summary already allocated"));
-    }
-#endif // defined(CONFIG_ESP_COREDUMP_ENABLE_TO_FLASH) && defined(CONFIG_ESP_COREDUMP_DATA_FORMAT_ELF)
+    VerifyOrReturnValue(IsValidIntent(intent), CHIP_ERROR_INVALID_ARGUMENT);
 
     LogContext * context = reinterpret_cast<LogContext *>(Platform::MemoryCalloc(1, sizeof(LogContext)));
     VerifyOrReturnValue(context != nullptr, CHIP_ERROR_NO_MEMORY);
@@ -365,6 +242,8 @@ CHIP_ERROR LogProvider::StartLogCollection(IntentEnum intent, LogSessionHandle &
 
 CHIP_ERROR LogProvider::EndLogCollection(LogSessionHandle sessionHandle)
 {
+    ESP_LOGI(TAG, "Ending log collection");
+
     VerifyOrReturnValue(sessionHandle != kInvalidLogSessionHandle, CHIP_ERROR_INVALID_ARGUMENT);
     VerifyOrReturnValue(mSessionContextMap.count(sessionHandle), CHIP_ERROR_INVALID_ARGUMENT);
 
@@ -380,6 +259,7 @@ CHIP_ERROR LogProvider::EndLogCollection(LogSessionHandle sessionHandle)
 
 CHIP_ERROR LogProvider::CollectLog(LogSessionHandle sessionHandle, MutableByteSpan & outBuffer, bool & outIsEndOfLog)
 {
+    ESP_LOGI(TAG, "Collecting log");
     VerifyOrReturnValue(sessionHandle != kInvalidLogSessionHandle, CHIP_ERROR_INVALID_ARGUMENT);
     VerifyOrReturnValue(mSessionContextMap.count(sessionHandle), CHIP_ERROR_INVALID_ARGUMENT);
 

@@ -50,7 +50,8 @@
 #include <diagnostic-logs-provider-delegate-impl.h>
 #include <app/clusters/diagnostic-logs-server/diagnostic-logs-server.h>
 
-static const char *TAG = "app_main";
+static const char *TAG = "##### AirConditionerMCIL #####";
+static const char *TRACKER_NAME = "Tracker_1";
 uint16_t room_air_conditioner_endpoint_id = 0;
 
 using namespace esp_matter;
@@ -59,6 +60,8 @@ using namespace esp_matter::endpoint;
 using namespace chip::app::Clusters;
 
 constexpr auto k_timeout_seconds = 300;
+
+cluster_t* myCluster = NULL;
 
 void delay_ms(int milliseconds) {
     vTaskDelay(pdMS_TO_TICKS(milliseconds));
@@ -81,130 +84,152 @@ static void log_error_if_nonzero(const char *message, int error_code)
  * @param event_id The id for the received event.
  * @param event_data The data for the event, esp_mqtt_event_handle_t.
  */
+using namespace chip::app::Clusters::DiagnosticLogs;
 static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data)
 {
-    ESP_LOGD(TAG, "Event dispatched from event loop base=%s, event_id=%" PRIi32 "", base, event_id);
+    ESP_LOGI(TAG, "MQQT Event handler called!");
+
     esp_mqtt_event_handle_t event = (esp_mqtt_event_handle_t)event_data;
     esp_mqtt_client_handle_t client = event->client;
-    int msg_id;
+
+    // Sample publish of message
+    // client, topic, data(message), length (0 - autocalculated), Qos (1), Retain (0)
+    // msg_id = esp_mqtt_client_publish(client, "/topic/qos1", "data_3", 0, 1, 0);
+    //  
+    // Sampl subscribe
+    // client, topic, QoS (1)
+    // msg_id = esp_mqtt_client_subscribe(client, "/topic/qos1", 1);
+
     switch ((esp_mqtt_event_id_t)event_id) {
-    case MQTT_EVENT_CONNECTED:
-        ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
-        msg_id = esp_mqtt_client_publish(client, "/topic/qos1", "data_3", 0, 1, 0);
-        ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
+        
+        case MQTT_EVENT_CONNECTED:
+            {
+                ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
+                
+                ESP_LOGI(TAG, "Broadcasting connected");
+                char messageBuffer[24];
+                std::snprintf(messageBuffer, sizeof(messageBuffer), "%s CONNECTED!", TRACKER_NAME);
+                esp_mqtt_client_publish(client, "/TrackingStatus", messageBuffer, 0, 1, 0);
 
-        msg_id = esp_mqtt_client_subscribe(client, "/topic/qos0", 0);
-        ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
 
-        msg_id = esp_mqtt_client_subscribe(client, "/topic/qos1", 1);
-        ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
+                ESP_LOGI(TAG, "Subscribing to tracking topic");
+                esp_mqtt_client_subscribe(client, "/Tracker_1", 1);
+            }
+            break;
 
-        msg_id = esp_mqtt_client_unsubscribe(client, "/topic/qos1");
-        ESP_LOGI(TAG, "sent unsubscribe successful, msg_id=%d", msg_id);
-        break;
-    case MQTT_EVENT_DISCONNECTED:
-        ESP_LOGI(TAG, "MQTT_EVENT_DISCONNECTED");
-        break;
+        case MQTT_EVENT_DISCONNECTED:
+            ESP_LOGI(TAG, "MQTT_EVENT_DISCONNECTED");
+            break;
 
-    case MQTT_EVENT_SUBSCRIBED:
-        ESP_LOGI(TAG, "MQTT_EVENT_SUBSCRIBED, msg_id=%d", event->msg_id);
-        msg_id = esp_mqtt_client_publish(client, "/topic/qos0", "data", 0, 0, 0);
-        ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
-        break;
-    case MQTT_EVENT_UNSUBSCRIBED:
-        ESP_LOGI(TAG, "MQTT_EVENT_UNSUBSCRIBED, msg_id=%d", event->msg_id);
-        break;
-    case MQTT_EVENT_PUBLISHED:
-        ESP_LOGI(TAG, "MQTT_EVENT_PUBLISHED, msg_id=%d", event->msg_id);
-        break;
-    case MQTT_EVENT_DATA:
-        ESP_LOGI(TAG, "MQTT_EVENT_DATA");
-        printf("TOPIC=%.*s\r\n", event->topic_len, event->topic);
-        printf("DATA=%.*s\r\n", event->data_len, event->data);
-        break;
-    case MQTT_EVENT_ERROR:
-        ESP_LOGI(TAG, "MQTT_EVENT_ERROR");
-        if (event->error_handle->error_type == MQTT_ERROR_TYPE_TCP_TRANSPORT) {
-            log_error_if_nonzero("reported from esp-tls", event->error_handle->esp_tls_last_esp_err);
-            log_error_if_nonzero("reported from tls stack", event->error_handle->esp_tls_stack_err);
-            log_error_if_nonzero("captured as transport's socket errno",  event->error_handle->esp_transport_sock_errno);
-            ESP_LOGI(TAG, "Last errno string (%s)", strerror(event->error_handle->esp_transport_sock_errno));
+        case MQTT_EVENT_SUBSCRIBED:
+            ESP_LOGI(TAG, "Tracker_1 Subscribed!");
+            break;
 
-        }
-        break;
-    default:
-        ESP_LOGI(TAG, "Other event id:%d", event->event_id);
-        break;
+        case MQTT_EVENT_UNSUBSCRIBED:
+            ESP_LOGI(TAG, "MQTT_EVENT_UNSUBSCRIBED, msg_id=%d", event->msg_id);
+            break;
+
+        case MQTT_EVENT_PUBLISHED:
+            ESP_LOGI(TAG, "MQTT_EVENT_PUBLISHED, msg_id=%d", event->msg_id);
+            break;
+
+        case MQTT_EVENT_DATA:
+            {
+                ESP_LOGI(TAG, "MQTT_EVENT_DATA, Got message, printing!");
+                printf("Topic = %.*s\r\n", event->topic_len, event->topic);
+                printf("Message = %.*s\r\n", event->data_len, event->data);
+                ESP_LOGI(TAG, "Processing MQTT message to Log entry");
+                auto & logProvider = chip::app::Clusters::DiagnosticLogs::LogProvider::GetInstance();
+                logProvider.AddLogEntry(event->data);
+            }
+            break;
+
+        case MQTT_EVENT_ERROR:
+            {
+                ESP_LOGI(TAG, "MQTT_EVENT_ERROR");
+                if (event->error_handle->error_type == MQTT_ERROR_TYPE_TCP_TRANSPORT) {
+                    log_error_if_nonzero("reported from esp-tls", event->error_handle->esp_tls_last_esp_err);
+                    log_error_if_nonzero("reported from tls stack", event->error_handle->esp_tls_stack_err);
+                    log_error_if_nonzero("captured as transport's socket errno",  event->error_handle->esp_transport_sock_errno);
+                    ESP_LOGI(TAG, "Last errno string (%s)", strerror(event->error_handle->esp_transport_sock_errno));
+
+                }
+            }
+            break;
+
+        default:
+            ESP_LOGI(TAG, "Other event id:%d", event->event_id);
+            break;
     }
 }
 
 static void app_event_cb(const ChipDeviceEvent *event, intptr_t arg)
 {
     switch (event->Type) {
-    case chip::DeviceLayer::DeviceEventType::kInterfaceIpAddressChanged:
-        ESP_LOGI(TAG, "Interface IP Address changed");
-        break;
+        case chip::DeviceLayer::DeviceEventType::kInterfaceIpAddressChanged:
+            ESP_LOGI(TAG, "Interface IP Address changed");
+            break;
 
-    case chip::DeviceLayer::DeviceEventType::kCommissioningComplete:
-        ESP_LOGI(TAG, "Commissioning complete");
-        break;
+        case chip::DeviceLayer::DeviceEventType::kCommissioningComplete:
+            ESP_LOGI(TAG, "Commissioning complete");
+            break;
 
-    case chip::DeviceLayer::DeviceEventType::kFailSafeTimerExpired:
-        ESP_LOGI(TAG, "Commissioning failed, fail safe timer expired");
-        break;
+        case chip::DeviceLayer::DeviceEventType::kFailSafeTimerExpired:
+            ESP_LOGI(TAG, "Commissioning failed, fail safe timer expired");
+            break;
 
-    case chip::DeviceLayer::DeviceEventType::kCommissioningSessionStarted:
-        ESP_LOGI(TAG, "Commissioning session started");
-        break;
+        case chip::DeviceLayer::DeviceEventType::kCommissioningSessionStarted:
+            ESP_LOGI(TAG, "Commissioning session started");
+            break;
 
-    case chip::DeviceLayer::DeviceEventType::kCommissioningSessionStopped:
-        ESP_LOGI(TAG, "Commissioning session stopped");
-        break;
+        case chip::DeviceLayer::DeviceEventType::kCommissioningSessionStopped:
+            ESP_LOGI(TAG, "Commissioning session stopped");
+            break;
 
-    case chip::DeviceLayer::DeviceEventType::kCommissioningWindowOpened:
-        ESP_LOGI(TAG, "Commissioning window opened");
-        break;
+        case chip::DeviceLayer::DeviceEventType::kCommissioningWindowOpened:
+            ESP_LOGI(TAG, "Commissioning window opened");
+            break;
 
-    case chip::DeviceLayer::DeviceEventType::kCommissioningWindowClosed:
-        ESP_LOGI(TAG, "Commissioning window closed");
-        break;
+        case chip::DeviceLayer::DeviceEventType::kCommissioningWindowClosed:
+            ESP_LOGI(TAG, "Commissioning window closed");
+            break;
 
-    case chip::DeviceLayer::DeviceEventType::kFabricRemoved:
-        {
-            ESP_LOGI(TAG, "Fabric removed successfully");
-            if (chip::Server::GetInstance().GetFabricTable().FabricCount() == 0)
+        case chip::DeviceLayer::DeviceEventType::kFabricRemoved:
             {
-                chip::CommissioningWindowManager & commissionMgr = chip::Server::GetInstance().GetCommissioningWindowManager();
-                constexpr auto kTimeoutSeconds = chip::System::Clock::Seconds16(k_timeout_seconds);
-                if (!commissionMgr.IsCommissioningWindowOpen())
+                ESP_LOGI(TAG, "Fabric removed successfully");
+                if (chip::Server::GetInstance().GetFabricTable().FabricCount() == 0)
                 {
-                    /* After removing last fabric, this example does not remove the Wi-Fi credentials
-                     * and still has IP connectivity so, only advertising on DNS-SD.
-                     */
-                    CHIP_ERROR err = commissionMgr.OpenBasicCommissioningWindow(kTimeoutSeconds,
-                                                    chip::CommissioningWindowAdvertisement::kDnssdOnly);
-                    if (err != CHIP_NO_ERROR)
+                    chip::CommissioningWindowManager & commissionMgr = chip::Server::GetInstance().GetCommissioningWindowManager();
+                    constexpr auto kTimeoutSeconds = chip::System::Clock::Seconds16(k_timeout_seconds);
+                    if (!commissionMgr.IsCommissioningWindowOpen())
                     {
-                        ESP_LOGE(TAG, "Failed to open commissioning window, err:%" CHIP_ERROR_FORMAT, err.Format());
+                        /* After removing last fabric, this example does not remove the Wi-Fi credentials
+                        * and still has IP connectivity so, only advertising on DNS-SD.
+                        */
+                        CHIP_ERROR err = commissionMgr.OpenBasicCommissioningWindow(kTimeoutSeconds,
+                                                        chip::CommissioningWindowAdvertisement::kDnssdOnly);
+                        if (err != CHIP_NO_ERROR)
+                        {
+                            ESP_LOGE(TAG, "Failed to open commissioning window, err:%" CHIP_ERROR_FORMAT, err.Format());
+                        }
                     }
                 }
+            break;
             }
-        break;
-        }
 
-    case chip::DeviceLayer::DeviceEventType::kFabricWillBeRemoved:
-        ESP_LOGI(TAG, "Fabric will be removed");
-        break;
+        case chip::DeviceLayer::DeviceEventType::kFabricWillBeRemoved:
+            ESP_LOGI(TAG, "Fabric will be removed");
+            break;
 
-    case chip::DeviceLayer::DeviceEventType::kFabricUpdated:
-        ESP_LOGI(TAG, "Fabric is updated");
-        break;
+        case chip::DeviceLayer::DeviceEventType::kFabricUpdated:
+            ESP_LOGI(TAG, "Fabric is updated");
+            break;
 
-    case chip::DeviceLayer::DeviceEventType::kFabricCommitted:
-        ESP_LOGI(TAG, "Fabric is committed");
-        break;
-    default:
-        break;
+        case chip::DeviceLayer::DeviceEventType::kFabricCommitted:
+            ESP_LOGI(TAG, "Fabric is committed");
+            break;
+        default:
+            break;
     }
 }
 
@@ -234,38 +259,51 @@ static esp_err_t app_attribute_update_cb(attribute::callback_type_t type, uint16
     return err;
 }
 
-cluster_t* myCluster = NULL;
+using namespace chip::app::Clusters::DiagnosticLogs;
+void emberAfDiagnosticLogsClusterInitCallback(chip::EndpointId endpoint)
+{
+    ESP_LOGI(TAG, "Setting Diagnostic Logs Provider Delegate");
+    auto & logProvider = LogProvider::GetInstance();
+    DiagnosticLogsServer::Instance().SetDiagnosticLogsProviderDelegate(endpoint, &logProvider);
+    
+    ESP_LOGI(TAG, "Call for initialize log buffer");
+    logProvider.InitializeLogBuffer();
+}
 
 extern "C" void app_main()
 {
-    ESP_LOGI(TAG, "### Starting app_main() ###");
-    esp_err_t err = ESP_OK;
-
+    ESP_LOGI(TAG, "Starting app_main()");
+    
+    ESP_LOGI(TAG, "ESP NVS Layer Initialization");
     /* Initialize the ESP NVS layer */
     nvs_flash_init();
 
+    ESP_LOGI(TAG, "App Driver Initialization");
     /* Initialize driver */
     app_driver_handle_t room_air_conditioner_handle = app_driver_room_air_conditioner_init();
     app_driver_handle_t button_handle = app_driver_button_init();
     app_reset_button_register(button_handle);
 
+    ESP_LOGI(TAG, "Creating Matter Root Node - Endpoint 0");
     /* Create a Matter node and add the mandatory Root Node device type on endpoint 0 */
     node::config_t node_config;
     node_t *node = node::create(&node_config, app_attribute_update_cb, app_identification_cb);
     ABORT_APP_ON_FAILURE(node != nullptr, ESP_LOGE(TAG, "Failed to create Matter node"));
 
+    ESP_LOGI(TAG, "Creating Matter room_air_conditioner Endpoint");
     room_air_conditioner::config_t room_air_conditioner_config;
     room_air_conditioner_config.on_off.on_off = DEFAULT_POWER;
     endpoint_t *endpoint = room_air_conditioner::create(node, &room_air_conditioner_config, ENDPOINT_FLAG_NONE, room_air_conditioner_handle);
     ABORT_APP_ON_FAILURE(endpoint != nullptr, ESP_LOGE(TAG, "Failed to create room air conditioner endpoint"));
-
     room_air_conditioner_endpoint_id = endpoint::get_id(endpoint);
     ESP_LOGI(TAG, "Room Air Conditioner created with endpoint_id %d", room_air_conditioner_endpoint_id);
 
+    ESP_LOGI(TAG, "Creating Matter diagnostic_logs Cluster in room_air_conditioner Endpoint");
     esp_matter::cluster::diagnostic_logs::config_t logsConfig;
     myCluster = esp_matter::cluster::diagnostic_logs::create(endpoint, &logsConfig, CLUSTER_FLAG_SERVER);
 
 #if CHIP_DEVICE_CONFIG_ENABLE_THREAD
+    ESP_LOGI(TAG, "CHIP_DEVICE_CONFIG_ENABLE_THREAD = True, Enabling Thread");
     /* Set OpenThread platform config */
     esp_openthread_platform_config_t config = {
         .radio_config = ESP_OPENTHREAD_DEFAULT_RADIO_CONFIG(),
@@ -276,54 +314,45 @@ extern "C" void app_main()
 #endif
 
     /* Matter start */
+    ESP_LOGI(TAG, "Starting Matter");
+    esp_err_t err = ESP_OK;
     err = esp_matter::start(app_event_cb);
     ABORT_APP_ON_FAILURE(err == ESP_OK, ESP_LOGE(TAG, "Failed to start Matter, err:%d", err));
-    ESP_LOGI(TAG, "### Matter started successfully! ###");
+    ESP_LOGI(TAG, "Matter started successfully!");
 
+    ESP_LOGI(TAG, "Starting App Driver with defaults");
     /* Starting driver with default values */
     app_driver_room_air_conditioner_set_defaults(room_air_conditioner_endpoint_id);
 
 #if CONFIG_ENABLE_CHIP_SHELL
+    ESP_LOGI(TAG, "CONFIG_ENABLE_CHIP_SHELL = True, Enabling CHIP Shell");
     esp_matter::console::diagnostics_register_commands();
     esp_matter::console::wifi_register_commands();
     esp_matter::console::init();
 #endif
 
-    ESP_LOGI(TAG, "### Starting MQTT communication ###");
+    ESP_LOGI(TAG, "Starting MQTT communication");
 
     esp_mqtt_client_config_t mqtt_cfg = 
     {
         .broker = {
             .address = {
-                .uri = "mqtt://192.168.199.197:1885"
+                .uri = "mqtt://192.168.199.214:1885"
             }
         }
     };
 
-    ESP_LOGI(TAG, "### MQTT Config structure ready ###");
-    
+    ESP_LOGI(TAG, "MQTT Config structure ready");
+    ESP_LOGI(TAG, "Delaying for Wifi initialization");
     delay_ms(20000);
 
-    ESP_LOGI(TAG, "### esp_mqtt_client_init ###");
+    ESP_LOGI(TAG, "MQTT Client initialization");
     esp_mqtt_client_handle_t client = esp_mqtt_client_init(&mqtt_cfg);
 
-    ESP_LOGI(TAG, "### esp_mqtt_client_register_event ###");
+    ESP_LOGI(TAG, "MQTT Event handler registering");
     /* The last argument may be used to pass data to the event handler, in this example mqtt_event_handler */
     esp_mqtt_client_register_event(client, MQTT_EVENT_ANY, mqtt_event_handler, NULL);
 
-    ESP_LOGI(TAG, "### esp_mqtt_client_start ###");
+    ESP_LOGI(TAG, "MQTT Starting client");
     esp_mqtt_client_start(client);
 }
-
-using namespace chip::app::Clusters::DiagnosticLogs;
-void emberAfDiagnosticLogsClusterInitCallback(chip::EndpointId endpoint)
-{
-    auto & logProvider = LogProvider::GetInstance();
-    DiagnosticLogsServer::Instance().SetDiagnosticLogsProviderDelegate(endpoint, &logProvider);
-    
-    ESP_LOGI(TAG, "### Call for initialize log buffer ###");
-    logProvider.InitializeLogBuffer();
-}
-
-
-

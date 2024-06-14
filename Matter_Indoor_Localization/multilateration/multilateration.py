@@ -36,7 +36,49 @@ anchors = np.array([
     [0.0, 80.0, 0.0]
 ])
 
-distances = np.array([1.0, 1.414, 1.414, 1.732])
+distances_data = [
+    [174, 52, 22, 171],
+    [174, 45, 19, 175],
+    [175, 48, 18, 170],
+    [175, 41, 23, 174],
+    [175, 41, 16, 170],
+    [178, 44, 16, 173],
+    [175, 44, 22, 177],
+    [173, 43, 18, 174],
+    [174, 48, 15, 172],
+    [174, 45, 20, 171],
+    [173, 46, 20, 177],
+    [175, 48, 51, 169],
+    [174, 49, 41, 174],
+    [179, 47, 42, 170],
+    [173, 45, 20, 169],
+    [174, 44, 20, 171],
+    [174, 45, 18, 171],
+    [174, 46, 15, 171],
+    [173, 42, 22, 172],
+    [53,  46, 21, 170],
+    [174, 42, 39, 172],
+    [174, 47, 29, 169],
+    [172, 43, 24, 169],
+    [174, 46, 30, 164],
+    [173, 43, 39, 167],
+    [174, 47, 25, 164],
+    [173, 45, 23, 165],
+    [174, 46, 36, 168],
+    [173, 48, 22, 167],
+    [174, 45, 24, 172],
+    [175, 42, 24, 171],
+    [173, 48, 27, 172],
+    [175, 44, 30, 170],
+    [178, 44, 19, 174],
+    [174, 44, 26, 173],
+    ]
 
-tracker_position = multilateration(anchors, distances)
-print("Estimated tracker position:", tracker_position)
+distances = np.array(distances_data)
+tracker_positions = []
+for sample in distances:
+    tracker_position = multilateration(anchors, sample)
+    tracker_positions.append(tracker_position)
+
+mean_position = np.mean(tracker_positions, axis=0)
+print("Estimated tracker position:", mean_position)

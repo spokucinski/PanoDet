@@ -50,7 +50,7 @@ public:
     CHIP_ERROR GetLogForIntent(IntentEnum intent, MutableByteSpan & outBuffer, Optional<uint64_t> & outTimeStamp,
                                Optional<uint64_t> & outTimeSinceBoot) override;
     void InitializeLogBuffer();
-    void AddLogEntry(const char* logEntry);
+    void AddLogEntry(const char* logEntry, size_t logEntryLength);
 
 private:
     static LogProvider sInstance;

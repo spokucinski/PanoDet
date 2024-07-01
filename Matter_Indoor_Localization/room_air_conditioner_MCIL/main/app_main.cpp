@@ -6,7 +6,6 @@
    CONDITIONS OF ANY KIND, either express or implied.
 */
 
-
 #include <stdio.h>
 #include <stdint.h>
 #include <stddef.h>
@@ -17,41 +16,38 @@
 #include "esp_event.h"
 #include "esp_netif.h"
 #include "protocol_examples_common.h"
-
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/semphr.h"
 #include "freertos/queue.h"
-
 #include "lwip/sockets.h"
 #include "lwip/dns.h"
 #include "lwip/netdb.h"
-
 #include "esp_log.h"
 #include "mqtt_client.h"
-
 #include <esp_err.h>
 #include <nvs_flash.h>
-
 #include <esp_matter.h>
 #include <esp_matter_console.h>
 #include <esp_matter_ota.h>
-
 #include <common_macros.h>
 #include <app_priv.h>
 #include <app_reset.h>
 #if CHIP_DEVICE_CONFIG_ENABLE_THREAD
 #include <platform/ESP32/OpenthreadLauncher.h>
 #endif
-
 #include <app/server/CommissioningWindowManager.h>
 #include <app/server/Server.h>
-
 #include <diagnostic-logs-provider-delegate-impl.h>
 #include <app/clusters/diagnostic-logs-server/diagnostic-logs-server.h>
 
+// ##### ##### ##### MANUAL CONFIG ##### ##### ##### 
 static const char *TAG = "##### AirConditionerMCIL #####";
-static const char *TRACKER_NAME = "Tracker_1";
+static const char *TRACKER_NAME = "UWB_Tracker_1";
+static const char *TRACKER_TOPIC = "UWB_Tracking/UWB_Tracker_1";
+static const char *STATUS_TOPIC = "UWB_Status";
+static const char *MQTT_URI = "mqtt://192.168.199.197:1885";
+
 uint16_t room_air_conditioner_endpoint_id = 0;
 
 using namespace esp_matter;
@@ -92,11 +88,12 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
     esp_mqtt_event_handle_t event = (esp_mqtt_event_handle_t)event_data;
     esp_mqtt_client_handle_t client = event->client;
 
+    // NOTES:
     // Sample publish of message
-    // client, topic, data(message), length (0 - autocalculated), Qos (1), Retain (0)
+    // client, topic, data (message), length (0 - autocalculated), Qos (1), Retain (0)
     // msg_id = esp_mqtt_client_publish(client, "/topic/qos1", "data_3", 0, 1, 0);
     //  
-    // Sampl subscribe
+    // Sample subscribe
     // client, topic, QoS (1)
     // msg_id = esp_mqtt_client_subscribe(client, "/topic/qos1", 1);
 
@@ -107,13 +104,13 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
                 ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
                 
                 ESP_LOGI(TAG, "Broadcasting connected");
-                char messageBuffer[24];
+                char messageBuffer[32];
                 std::snprintf(messageBuffer, sizeof(messageBuffer), "%s CONNECTED!", TRACKER_NAME);
-                esp_mqtt_client_publish(client, "/TrackingStatus", messageBuffer, 0, 1, 0);
+                esp_mqtt_client_publish(client, STATUS_TOPIC, messageBuffer, 0, 1, 0);
 
 
                 ESP_LOGI(TAG, "Subscribing to tracking topic");
-                esp_mqtt_client_subscribe(client, "/Tracker_1", 1);
+                esp_mqtt_client_subscribe(client, TRACKER_TOPIC, 1);
             }
             break;
 
@@ -122,7 +119,7 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
             break;
 
         case MQTT_EVENT_SUBSCRIBED:
-            ESP_LOGI(TAG, "Tracker_1 Subscribed!");
+            ESP_LOGI(TAG, "Tracker Subscribed!");
             break;
 
         case MQTT_EVENT_UNSUBSCRIBED:
@@ -140,7 +137,7 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
                 printf("Message = %.*s\r\n", event->data_len, event->data);
                 ESP_LOGI(TAG, "Processing MQTT message to Log entry");
                 auto & logProvider = chip::app::Clusters::DiagnosticLogs::LogProvider::GetInstance();
-                logProvider.AddLogEntry(event->data);
+                logProvider.AddLogEntry(event->data, event->data_len);
             }
             break;
 
@@ -337,7 +334,7 @@ extern "C" void app_main()
     {
         .broker = {
             .address = {
-                .uri = "mqtt://192.168.199.214:1885"
+                .uri = MQTT_URI
             }
         }
     };

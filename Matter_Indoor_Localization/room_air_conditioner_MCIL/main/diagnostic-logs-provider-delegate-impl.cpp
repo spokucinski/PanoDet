@@ -35,7 +35,7 @@ LogProvider::CrashLogContext LogProvider::sCrashLogContext;
 
 // Total size allocated for the log buffer
 // const size_t totalLogMemorySize = 32768; // 32kB
-const size_t totalLogMemorySize = 8192; // 8kB
+const size_t totalLogMemorySize = 384; // 6 lines of readings
 
 // Log buffer for in-memory logs.
 u_int8_t logBuffer[totalLogMemorySize] = {};
@@ -61,17 +61,18 @@ bool IsValidIntent(IntentEnum intent)
 }
 
 // Function to add a log entry
-void LogProvider::AddLogEntry(const char* logEntry) {
+void LogProvider::AddLogEntry(const char* logEntry, size_t logEntryLength) {
 
     ESP_LOGI(TAG, "Started adding a new log");
 
     // Calculate the size of the new log entry
-    size_t newLogEntrySize = std::strlen(logEntry);
-    ESP_LOGI(TAG, "Calculated newLogEntrySize: %d", newLogEntrySize);
+    // and ensure the logEntryLength does not exceed the actual length of the logEntry
+    size_t newLogEntrySize = std::min(std::strlen(logEntry), logEntryLength);
+    ESP_LOGI(TAG, "Calculated newLogEntrySize: %zu", newLogEntrySize);
 
     // Calculate available space from current logEnd to the end of the buffer
     size_t spaceAtEnd = totalLogMemorySize - (logEnd - logStart);
-    ESP_LOGI(TAG, "Calculated spaceAtEnd: %d", spaceAtEnd);
+    ESP_LOGI(TAG, "Calculated spaceAtEnd: %zu", spaceAtEnd);
 
     // Check if there is enough space at the end of the buffer
     if (newLogEntrySize + 1 > spaceAtEnd) { // +1 for newline or null terminator
@@ -102,7 +103,7 @@ void LogProvider::AddLogEntry(const char* logEntry) {
 
 void LogProvider::InitializeLogBuffer(){
     ESP_LOGI(TAG, "Log buffer initialization");
-    AddLogEntry("### LOG BUFFER INITIALIZATION ###");
+    //AddLogEntry("### LOG BUFFER INITIALIZATION ###");
 }
 
 CHIP_ERROR LogProvider::GetLogForIntent(IntentEnum intent, MutableByteSpan & outBuffer, Optional<uint64_t> & outTimeStamp,
@@ -115,9 +116,9 @@ CHIP_ERROR LogProvider::GetLogForIntent(IntentEnum intent, MutableByteSpan & out
   
     currentLogCount++;
     ESP_LOGI(TAG, "Increasing log counter. Current state: %d", currentLogCount);
-    std::string text = "### TEST LOG NUMBER: ";
-    text += std::to_string(currentLogCount);
-    AddLogEntry(text.c_str());
+    //std::string text = "### TEST LOG NUMBER: ";
+    //text += std::to_string(currentLogCount);
+    //AddLogEntry(text.c_str());
 
     err = StartLogCollection(intent, sessionHandle, outTimeStamp, outTimeSinceBoot);
     VerifyOrReturnError(CHIP_NO_ERROR == err, err, outBuffer.reduce_size(0));
@@ -161,9 +162,9 @@ CHIP_ERROR LogProvider::PrepareLogContextForIntent(LogContext * context, IntentE
         case IntentEnum::kEndUserSupport: {
 
             int calculatedBufferSize = logEnd - logStart;
-            ESP_LOGI(TAG, "Log context ByteSpan's size set to: %d", calculatedBufferSize);
+            ESP_LOGI(TAG, "Log context ByteSpan's size set to: %d", totalLogMemorySize);
             context->EndUserSupport.span =
-                ByteSpan(logBuffer, static_cast<size_t>(logEnd - logStart));
+                ByteSpan(logBuffer, totalLogMemorySize);
         }
         break;
 

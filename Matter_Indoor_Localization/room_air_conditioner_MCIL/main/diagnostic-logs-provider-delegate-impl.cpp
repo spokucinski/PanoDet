@@ -35,7 +35,7 @@ LogProvider::CrashLogContext LogProvider::sCrashLogContext;
 
 // Total size allocated for the log buffer
 // const size_t totalLogMemorySize = 32768; // 32kB
-const size_t totalLogMemorySize = 384; // 6 lines of readings
+const size_t totalLogMemorySize = 360; // 5 lines of readings
 
 // Log buffer for in-memory logs.
 u_int8_t logBuffer[totalLogMemorySize] = {};

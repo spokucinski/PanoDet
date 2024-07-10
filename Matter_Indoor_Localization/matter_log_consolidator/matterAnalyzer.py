@@ -2,14 +2,17 @@ import subprocess
 import re as regExp
 import concurrent.futures
 import time
+import os
 
+from datetime import datetime
 from secrets import TOPIC_ENDPOINT, TOPIC_KEY
-from secrets import CHIP_PATH, CHIP_STORAGE
-from secrets import TRACKER_NUM, TARGET_MEASUREMENTS, MAX_ERRORS
+from secrets import CHIP_PATH, CHIP_STORAGE, OUT_BASE_PATH
+from secrets import TRACKER_NUM, TARGET_MEASUREMENT_SETS, MAX_ERRORS
 from typing import List, Optional, Tuple
 from azure.eventgrid import EventGridPublisherClient, EventGridEvent
 from azure.core.credentials import AzureKeyCredential
 from distanceMeasurement import DistanceMeasurement
+from error import Error
 
 def retrieveDiagnosticLogs(nodeId: int, chipToolPath: str, chipStoragePath: str) -> Tuple[Optional[str], Optional[str]]:
     command = [
@@ -31,13 +34,13 @@ def retrieveDiagnosticLogs(nodeId: int, chipToolPath: str, chipStoragePath: str)
         # return filled result and empty error
         return result.stdout, None
 
-def parseDiagnosticLog(commandOutput: str) -> Optional[List[DistanceMeasurement]]:
+def parseDiagnosticLog(commandOutput: str, measurementSetExecutionTime: float) -> Optional[List[DistanceMeasurement]]:
     match = regExp.search(r"logContent:\s*([0-9a-fA-F]+)", commandOutput)
     if not match:
         return None
     logTextInHex = match.group(1)
     logTextInAscii = convertHexToAscii(logTextInHex)
-    measurements = extractMeasurements(logTextInAscii)
+    measurements = extractMeasurements(logTextInAscii, measurementSetExecutionTime)
     return measurements
 
 def convertHexToAscii(stringInHex: str) -> str:
@@ -45,10 +48,10 @@ def convertHexToAscii(stringInHex: str) -> str:
     stringInAscii = bytesObject.decode("ASCII")
     return stringInAscii
 
-def extractMeasurements(logText: str) -> List[DistanceMeasurement]:
-    pattern = regExp.compile(r'A(\d):(\d{2}\.\d{2});') # Syntax: A1:XX.XX;A2:XX.XX;A3...
+def extractMeasurements(logText: str, measurementSetExecutionTime: float) -> List[DistanceMeasurement]:
+    pattern = regExp.compile(r'A(\d):(\d{2}\.\d{2});?') # Syntax: A1:XX.XX;A2:XX.XX;A3...
     foundMatches = pattern.findall(logText)
-    measurements = [DistanceMeasurement(anchorId, float(distance)) for anchorId, distance in foundMatches]
+    measurements = [DistanceMeasurement(anchorId, float(distance), measurementSetExecutionTime) for anchorId, distance in foundMatches]
     return measurements
 
 def reportMeasurementsToEventGrid(measurements: List[DistanceMeasurement], eventGridTopicEndpoint: str, eventGridAccessKey: str):
@@ -63,65 +66,114 @@ def reportMeasurementsToEventGrid(measurements: List[DistanceMeasurement], event
     client = EventGridPublisherClient(eventGridTopicEndpoint, credential)
     client.send([event])
 
-def getNodeMeasurements(nodeId: int, chipToolPath: str, chipBaseStoragePath: str) -> Tuple[List[DistanceMeasurement], List[str]]:
+def getNodeMeasurements(trackerId: int, chipToolPath: str, chipBaseStoragePath: str) -> Tuple[List[DistanceMeasurement], List[str], float]:
+    experimentStartTime = time.time()
     measurements = []
     errors = []
     errorCount = 0
+    measurementSetCount = 0
 
-    while len(measurements) < TARGET_MEASUREMENTS and errorCount < MAX_ERRORS:
-        output, error = retrieveDiagnosticLogs(nodeId, chipToolPath, chipBaseStoragePath)
-        if error or parseDiagnosticLog(output) is None:
-            if error:
-                note = getErrorType(error)
-                errors.append(f"{error} (Note: {note})")
-            else:
-                errors.append("Unknown error")
+    while measurementSetCount < TARGET_MEASUREMENT_SETS and errorCount < MAX_ERRORS:
+        print(f"Tracker {trackerId} collects measurements, Now: {len(measurements)} measurements and {errorCount} errors.")
+        
+        measurementSetStartTime = time.time()
+        output, error = retrieveDiagnosticLogs(trackerId, chipToolPath, chipBaseStoragePath)
+        measurementSetEndTime = time.time()
+        measurementSetExecutionTime = measurementSetEndTime - measurementSetStartTime
+
+        # Error occured
+        if error:
+            errorType = getErrorType(error)
+            errors.append(Error(errorType, measurementSetExecutionTime))
             errorCount += 1
-            if errorCount % 1 == 0:
-                print(f"Error count {errorCount} for node {nodeId}: {error} (Note: {note})")
+            continue
+        
+        parsedMeasurements = parseDiagnosticLog(output, measurementSetExecutionTime)
+        if parsedMeasurements is None:
+            errorType = getErrorType(output)
+            errors.append(Error(errorType, measurementSetExecutionTime))
+            errorCount += 1
             continue
 
-        node_measurements = parseDiagnosticLog(output)
-        if node_measurements:
-            measurements.extend(node_measurements[:TARGET_MEASUREMENTS - len(measurements)])
+        measurements.extend(parsedMeasurements)
+        measurementSetCount += 1
 
     if errorCount >= MAX_ERRORS:
-        print(f"Node {nodeId} reached the maximum error limit of {MAX_ERRORS} errors.")
+        print(f"Tracker {trackerId} reached the maximum error limit of {MAX_ERRORS} errors.")
 
-    return measurements, errors
+    experimentEndTime = time.time()
+    experimentExecution = experimentEndTime - experimentStartTime
+
+    print(f"Tracker {trackerId} finished experiment, done {measurementSetCount} sets, collected: {len(measurements)} measurements and {len(errors)} errors.")
+    print(f"Tracker {trackerId} experiment took: {experimentExecution}")
+
+    return measurements, errors, experimentExecution
 
 def getErrorType(commandErrorOutput: str) -> str:
     if "CHIP Error 0x00000032: Timeout" in commandErrorOutput:
         return "Timeout"
     
-    return "Error"
+    noLogsPattern = regExp.compile(r"RetrieveLogsResponse.*status:\s*2", regExp.DOTALL)
+    if noLogsPattern.search(commandErrorOutput):
+        return "NoLogs"
+    
+    return "Unknown Error"
 
 def main():
     allMeasurements = {}
     allErrors = {}
+    allExecutionTimes = {}
 
     print(f"Starting measurement collection from: {TRACKER_NUM} trackers!")
+    # measurements, errors, experimentExecutionTime = getNodeMeasurements(2, CHIP_PATH, CHIP_STORAGE)
     with concurrent.futures.ThreadPoolExecutor(max_workers=TRACKER_NUM) as threadExecutor:
-        futures = {threadExecutor.submit(getNodeMeasurements, nodeId, CHIP_PATH, CHIP_STORAGE): nodeId for nodeId in range(1, TRACKER_NUM + 1)}
+        futures = {threadExecutor.submit(getNodeMeasurements, trackerId, CHIP_PATH, CHIP_STORAGE): trackerId for trackerId in range(1, TRACKER_NUM + 1)}
 
         for future in concurrent.futures.as_completed(futures):
-            nodeId = futures[future]
-            try:
-                measurements, errors = future.result()
-                allMeasurements[nodeId] = measurements
-                allErrors[nodeId] = errors
-            except Exception as e:
-                print(f"Node {nodeId} generated an exception: {e}")
+            trackerId = futures[future]
+            measurements, errors, experimentExecutionTime = future.result()
+            allMeasurements[trackerId] = measurements
+            allErrors[trackerId] = errors
+            allExecutionTimes[trackerId] = experimentExecutionTime 
 
-    for nodeId, measurements in allMeasurements.items():
-        print(f"Node {nodeId} collected {len(measurements)} measurements.")
+    # Create output directories
+    outputBaseDir = os.path.join(OUT_BASE_PATH, "out", "matter")
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    outputDir = os.path.join(outputBaseDir, timestamp)
+    os.makedirs(outputDir, exist_ok=True)
 
-    for nodeId, errors in allErrors.items():
-        print(f"Node {nodeId} had {len(errors)} errors.")
+    for trackerId, measurements in allMeasurements.items():
+        filename = os.path.join(outputDir, f"tracker_{trackerId}.txt")
+        with open(filename, "w") as file:
+            summary = f"Tracker {trackerId} collected {len(measurements)} measurements."
+            print(summary)
+            print(summary, file = file)
+            for measurement in measurements:
+                measurementSummary = f"Anchor ID: {measurement.anchorId}, Distance: {measurement.distance:.2f}, Exec Time: {measurement.executionTime:.2f}s"
+                print(measurementSummary)
+                print(measurementSummary, file = file)
 
-    for nodeId, measurements in allMeasurements.items():
-        reportMeasurementsToEventGrid(measurements, TOPIC_ENDPOINT, TOPIC_KEY)
-        print(f"Measurements for node: {nodeId} sent to Azure Event Grid.")
+    for trackerId, errors in allErrors.items():
+        filename = os.path.join(outputDir, f"tracker_{trackerId}.txt")
+        with open(filename, "a") as file:
+            summary = f"Tracker {trackerId} had {len(errors)} errors."
+            print(summary)
+            print(summary, file = file)
+            for error in errors:
+                errorSummary = f"Error: {error.errorType}, Exec Time: {error.executionTime:.2f}s"
+                print(errorSummary)
+                print(errorSummary, file = file)
+
+    for trackerId, executionTime in allExecutionTimes.items():
+        filename = os.path.join(outputDir, f"tracker_{trackerId}.txt")
+        with open(filename, "a") as file:
+            executionTimeSummary = f"Whole experiment took: {executionTime:.2f}s"
+            print(executionTimeSummary)
+            print(executionTimeSummary, file = file)
+
+    # for trackerId, measurements in allMeasurements.items():
+    #     reportMeasurementsToEventGrid(measurements, TOPIC_ENDPOINT, TOPIC_KEY)
+    #     print(f"Measurements for Tracker: {trackerId} sent to Azure Event Grid.")
 
 if __name__ == "__main__":
     main()

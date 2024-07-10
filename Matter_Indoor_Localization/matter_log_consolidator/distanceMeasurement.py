@@ -1,7 +1,5 @@
 class DistanceMeasurement:
-    def __init__(self, anchor_id: str, distance: float):
-        self.anchor_id = anchor_id
+    def __init__(self, anchorId: str, distance: float, executionTime: float):
+        self.anchorId = anchorId
         self.distance = distance
-
-    def to_dict(self):
-        return {"anchor_id": self.anchor_id, "distance": self.distance}
+        self.executionTime = executionTime

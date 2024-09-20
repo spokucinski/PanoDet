@@ -15,6 +15,7 @@ All the conducted experiments and research consists of **(but is not limited to!
 - [SAM_Dataset_Improver](SAM_Dataset_Improver/README.md) - Segment Anything Model-based dataset improver
 - [WiMR_Dataset_Parser](WiMR_Dataset_Parser/README.md) - Custom made annotations parser for already existing dataset
 - [YOLO_Object_Detection_Experiments](YOLO_Object_Detection_Experiments/README.md) - YOLO object detectors in the task of equirectangular panoramas processing
+- [Matter_Indoor_Localization](Matter_Indoor_Localization/README.md) - Distance estimation for IoT ecosystems with Matter Protocol as coordinator
 
 ## Datasets
 References and direct links for the dataset details.

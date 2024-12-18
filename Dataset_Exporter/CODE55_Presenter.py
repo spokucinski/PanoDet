@@ -16,6 +16,79 @@ def plot_hist(counts, edges):
 
 DATASET = 'CODE55'
 DATASET_PATH = 'data/CODE55_CVAT11'
+OUTPUT_PATH = 'output'
+HEATMAP_SHAPE = (1024, 2048)
+
+GENERATE_HEATMAPS = False
+RUN_SESSION = True
+
+LABELS = {
+    "Bathtub": 0,
+    "Chair": 1,
+    "Table": 2,
+    "TV": 3,
+    "Washing Machine": 4,
+    "Cabinet": 5,
+    "Gaming Console": 6,
+    "Sofa": 7,
+    "Speaker": 8,
+    "Fireplace": 9,
+    "Bed": 10,
+    "Wardrobe": 11,
+    "Pillow": 12,
+    "Nightstand": 13,
+    "Toilet": 14,
+    "Shower": 15,
+    "Laundry Rack": 16,
+    "Hair Dryer": 17,
+    "Fridge": 18,
+    "Microwave": 19,
+    "Dishwasher": 20,
+    "Stove": 21,
+    "Kettle": 22,
+    "Coffe Machine": 23,
+    "Toaster": 24,
+    "Oven": 25,
+    "Lamp": 26,
+    "Air Conditioning": 27,
+    "Computer": 28,
+    "Plant": 29,
+    "Window": 30,
+    "Desk": 31,
+    "Door": 32,
+    "Mirror": 33,
+    "Socket": 34,
+    "Sink": 35,
+    "Aquarium": 36,
+    "Painting": 37,
+    "Air Purifier": 38,
+    "Switch": 39,
+    "Boiler": 40,
+    "Rug": 41,
+    "Board": 42,
+    "Vase": 43,
+    "Faucet": 44,
+    "Curtain": 45,
+    "Roller Blind": 46,
+    "Shelf": 47,
+    "Fire Extinguisher": 48,
+    "Fan": 49,
+    "Heater": 50,
+    "Car": 51,
+    "Phone": 52,
+    "Clock": 53,
+    "Alarm Sensor": 54,
+    "Living Room": 55,
+    "Kitchen": 56,
+    "Bathroom": 57,
+    "Bedroom": 58,
+    "Hall": 59,
+    "Garage": 60,
+    "Kid's Room": 61,
+    "Office": 62,
+    "Closet Room": 63,
+    "Toilet Room": 64
+}
 
 print("Starting dataset presentation")
 print()
@@ -88,6 +161,16 @@ labelCounts = dataset.count_values("detections.detections.label")
 print(labelCounts)
 print()
 
+print("Image width counts in the dataset:")
+widthCounts = dataset.count_values("metadata.width")
+print(widthCounts)
+print()
+
+print("Image height counts in the dataset:")
+heightCounts = dataset.count_values("metadata.height")
+print(heightCounts)
+print()
+
 # Expression that computes the area of a bounding box, in pixels
 # Bboxes are in [top-left-x, top-left-y, width, height] format
 bbox_width = F("bounding_box")[2] * F("$metadata.width")
@@ -101,43 +184,46 @@ gt_areas = F("detections.detections[]").apply(bbox_area)
 print(dataset.bounds(gt_areas))
 print(dataset.mean(gt_areas))
 
-masterHeatmap = np.zeros(shape=(1024, 2048))
-for i in range(3):
+if GENERATE_HEATMAPS:
+    heatmaps = np.zeros(shape=(HEATMAP_SHAPE[0], HEATMAP_SHAPE[1], len(LABELS) + 1))
     for sample in dataset:
-        partialMap = np.zeros(shape=(1024, 2048))
-        sampleImage = cv2.imread(sample.filepath)
-        
         for detection in sample.detections.detections:
-            xmin = int(detection.bounding_box[0] * sample.metadata.width)
-            xmax = int((detection.bounding_box[0] + detection.bounding_box[2]) * sample.metadata.width)
+            xmin = int(detection.bounding_box[0] * HEATMAP_SHAPE[1])
+            xmax = int((detection.bounding_box[0] + detection.bounding_box[2]) * HEATMAP_SHAPE[1])
 
-            ymin = int(detection.bounding_box[1] * sample.metadata.height)
-            ymax = int((detection.bounding_box[1] + detection.bounding_box[3]) * sample.metadata.height)
+            ymin = int(detection.bounding_box[1] * HEATMAP_SHAPE[0])
+            ymax = int((detection.bounding_box[1] + detection.bounding_box[3]) * HEATMAP_SHAPE[0])
                 
-            partialMap[xmin:xmax, ymin:ymax] += 1
+            heatmaps[ymin:ymax, xmin:xmax, LABELS[detection.label]] += 1
+            heatmaps[ymin:ymax, xmin:xmax, len(LABELS)] += 1
 
-            normalizedMap = np.interp(partialMap, (partialMap.min(), partialMap.max()), (0, 1))
-            normalizedMap = np.multiply(normalizedMap, 255)
-            cv2.imwrite("partialMapPreview.png", normalizedMap)
+    for label in LABELS:
+        print(f"Processing heatmap for label: {label}")
+        labelHeatmap = heatmaps[:, :, LABELS[label]]
+        normalizedLabelHeatmap = np.interp(labelHeatmap, (labelHeatmap.min(), labelHeatmap.max()), (0, 1))
+        normalizedLabelHeatmap = np.multiply(normalizedLabelHeatmap, 255)
+        cv2.imwrite(os.path.join(OUTPUT_PATH, f"Normalized{label}Heatmap.png"), normalizedLabelHeatmap)
+        coloredNormalizedLabelHeatmap = cv2.applyColorMap(np.uint8(normalizedLabelHeatmap), cv2.COLORMAP_INFERNO)
+        cv2.imwrite(os.path.join(OUTPUT_PATH, f"Colored{label}Heatmap.png"), coloredNormalizedLabelHeatmap) 
 
+    print("Processing the master heatmap")
+    masterHeatmap = heatmaps[:, :, len(LABELS)]
+    normalizedMasterHeatmap = np.interp(masterHeatmap, (masterHeatmap.min(), masterHeatmap.max()), (0, 1))
+    normalizedMasterHeatmap = np.multiply(normalizedMasterHeatmap, 255)
+    cv2.imwrite(os.path.join(OUTPUT_PATH, "NormalizedMasterHeatmap.png"), normalizedMasterHeatmap)
+    coloredMasterHeatmap = cv2.applyColorMap(np.uint8(normalizedMasterHeatmap), cv2.COLORMAP_INFERNO)
+    cv2.imwrite(os.path.join(OUTPUT_PATH, "ColoredMasterHeatmap.png"), coloredMasterHeatmap)
 
-mapa = np.random.randint(256, size=(128, 128), dtype=np.uint8)
+if RUN_SESSION:
+    widthHistPlot = fo.CategoricalHistogram("metadata.width", xlabel="Image width", order="frequency")
+    heightHistPlot = fo.CategoricalHistogram("metadata.height", xlabel="Image height", order="frequency")
+    classHistPlot = fo.CategoricalHistogram("detections.detections.label", order="frequency")
+    bboxAreaHistPlot = fo.NumericalHistogram(gt_areas, bins=100, xlabel="BBox area")
+    plot = fo.ViewGrid([classHistPlot, widthHistPlot, heightHistPlot, bboxAreaHistPlot], shape=(4, 1), init_view=dataset)
+    plot.show()
 
-result = fo.Heatmap(map=mapa)
-#result.save("heatmap.png")
-result.export_map("heatmap.png")
-# result2 = result.to_array()
-# cv2.imwrite("heatmap.png", result2)
+    session = fo.launch_app(dataset)
+    session.plots.attach(plot)
 
-widthHistPlot = fo.NumericalHistogram(F("metadata.width"), bins=100, xlabel="Image width")
-heightHistPlot = fo.NumericalHistogram(F("metadata.height"), bins=100, xlabel="Image height")
-classHistPlot = fo.CategoricalHistogram("detections.detections.label", order="frequency")
-bboxAreaHistPlot = fo.NumericalHistogram(gt_areas, bins=100, xlabel="BBox area")
-plot = fo.ViewGrid([classHistPlot, widthHistPlot, heightHistPlot, bboxAreaHistPlot], shape=(4, 1), init_view=dataset)
-plot.show()
-
-session = fo.launch_app(dataset)
-session.plots.attach(plot)
-
-session.wait()
-session.close()
+    session.wait()
+    session.close()

@@ -5,14 +5,17 @@
 ## Repo Content
 
 All the conducted experiments and research consists of **(but is not limited to!)**:
-- [YOLO object detectors in the task of equirectangular panoramas processing](YOLO_Object_Detection_Experiments/README.md)
-- [Custom parser for the 'What's in My Room' project's annotations](WiMR_Dataset_Parser/README.md)
-- [Segment Anything Model-based dataset improver](SAM_Dataset_Improver/README.md)
-- [PanoScroller - App implementing a custom workflow for the equirectangular panoramas pre-processing](Pano_Scroller/README.md)
-- [Customized exporter for the AI models to be usable in the .NET ecosystem](Model_Exporter/README.md)
-- [Exporter of the datasets in a Roboflow-compatible format](Dataset_Exporter/README.md)
-- [Multitask Neural Network try-out combining the object detection and room classification for a home-digitalization project](CODE_MTNN/README.md)
-- [CODE - Common Objects in Domestic Environment - A novel dataset definition for the most commonly expected objects in an indoor home environment](CODE_55/README.md)
+- [CODE_55](CODE_55/README.md) - 55 Common Objects in Domestic Environment - A novel dataset definition for the most commonly expected objects in an indoor home environment
+- [CODE_MTNN](CODE_MTNN/README.md) - Multitask Neural Network try-out combining the object detection and room classification for a home-digitalization project
+- [Dataset_Augmentation](Dataset_Augmentation/README.md) - Experiments with image dataset augmentations save for equirectangular panoramas
+- [Dataset_Benchmarking](Dataset_Benchmarking/README.md) - YOLO-based project for experiments with panoramic datasets utilizing the scrolling mechanism
+- [Dataset_Exporter](Dataset_Exporter/README.md) - Exporter of the datasets in a Roboflow-compatible format
+- [Model_Exporter](Model_Exporter/README.md) - Customized exporter for the AI models to be usable in the .NET ecosystem
+- [PanoScroller](Pano_Scroller/README.md) - App implementing a custom workflow for the equirectangular panoramas pre-processing
+- [SAM_Dataset_Improver](SAM_Dataset_Improver/README.md) - Segment Anything Model-based dataset improver
+- [WiMR_Dataset_Parser](WiMR_Dataset_Parser/README.md) - Custom made annotations parser for already existing dataset
+- [YOLO_Object_Detection_Experiments](YOLO_Object_Detection_Experiments/README.md) - YOLO object detectors in the task of equirectangular panoramas processing
+- [Matter_Indoor_Localization](Matter_Indoor_Localization/README.md) - Distance estimation for IoT ecosystems with Matter Protocol as coordinator
 
 ## Datasets
 References and direct links for the dataset details.
@@ -29,6 +32,7 @@ References and direct links for the dataset details.
 > In some cases the datasets are novel and fresh.
 > In such cases, the privacy of the people sharing the images is the top priority and I do my best to secure it.
 > The images may contain manually-checked pictures with blurred areas, covering critically private parts.
+> 
 > Images present a private indoor domestic environment - it should stay private and the use of collected pictures is expected to be strictly monitored.
 
 ### WiMR Dataset [Existing Project, Link]

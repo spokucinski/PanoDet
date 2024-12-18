@@ -1,0 +1,5 @@
+/datasets/*
+/augmentedDatasets/*
+
+!/datasets/.gitkeep
+!/augmentedDatasets/.gitkeep

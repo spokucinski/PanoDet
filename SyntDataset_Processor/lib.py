@@ -1,26 +1,9 @@
-from datetime import datetime
-import os
-import fiftyone as fo
-import shutil
-import fiftyone.utils.random as four
-import cv2
-import numpy as np
-#import tensorflow as tf
-from scipy import ndimage as nd
-from matplotlib import pyplot as plt
 import albumentations as A
+import cv2
+import os
+import shutil
+
 from pathlib import Path
-
-#from Exporter import CSVImageClassificationDatasetExporter
-#os.chdir("Dataset_Exporter")
-
-custom_augmentations = {
-    "LivingRoom": 1,
-    "Bedroom": 1,
-    "Bathroom": 2,
-    "Hallway": 5,
-    "Kitchen": 6
-}
 
 def export_dataset(dataset, name, export_path, use_aug):
     
@@ -69,40 +52,3 @@ def augment_image(image_path):
     result = cv2.cvtColor(result, cv2.COLOR_RGB2BGR)
     
     return result
-    
-FO_DATASET_NAME = f"items"
-IMPORT_TYPE = fo.types.CVATImageDataset
-EXPORT_TYPE = fo.types.TFImageClassificationDataset
-DATA_PATH = "data/" + FO_DATASET_NAME
-EXPORT_PATH = "out/" + DATA_PATH
-RUN_FO_SESSION = False
-USE_AUG = False
-AUG_NUM = 10
-
-data_path_exists = os.path.exists(DATA_PATH)
-existing_datasets = fo.list_datasets()
-dataset : fo.Dataset = fo.Dataset(name=FO_DATASET_NAME)
-
-data_sources = os.listdir(DATA_PATH)
-data_sources = [datasource for datasource in data_sources if os.path.isdir(os.path.join(DATA_PATH, datasource))]
-for data_source in data_sources:
-    subset_images_path = os.path.join(DATA_PATH, data_source, "images")
-    subset_ann_path = os.path.join(DATA_PATH, data_source, "annotations.xml")
-    dataset.merge_dir(data_path=subset_images_path, labels_path=subset_ann_path, dataset_type=IMPORT_TYPE)
-
-if RUN_FO_SESSION:
-    session = fo.launch_app(dataset)
-    session.wait()
-
-four.random_split(dataset, {"train": 0.7, "val": 0.1, "test": 0.2})
-print(dataset.count_sample_tags())
-
-train_dataset = dataset.match_tags("train")
-val_dataset = dataset.match_tags("val")
-test_dataset = dataset.match_tags("test")
-
-export_dataset(train_dataset, "train", EXPORT_PATH, use_aug=USE_AUG)
-export_dataset(val_dataset, "val", EXPORT_PATH, use_aug=False)
-export_dataset(test_dataset, "test", EXPORT_PATH, use_aug=False)
-
-print("Processing ended!")

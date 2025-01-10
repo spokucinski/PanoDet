@@ -6,7 +6,7 @@ import random
 import os
 
 
-DATASETS_DIR = Path("datasets/AutomaticallyMinScrolledDataset")
+DATASETS_DIR = Path("datasets/items0301")
 
 IMG_FORMATS = 'bmp', 'dng', 'jpeg', 'jpg', 'mpo', 'png', 'tif', 'tiff', 'webp', 'pfm'  # include image suffixes
 
@@ -17,7 +17,7 @@ def img2label_paths(img_paths):
 
 
 
-def autosplit(path=DATASETS_DIR / "images", weights=(0.8, 0.2, 0.0), annotated_only=False):
+def autosplit(path=DATASETS_DIR / "images", weights=(0.7, 0.15, 0.15), annotated_only=False):
     """Autosplit a dataset into train/val/test splits and save path/autosplit_*.txt files
     Usage: from utils.dataloaders import *; autosplit()
     Arguments

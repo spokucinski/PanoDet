@@ -14,3 +14,5 @@ RUN pip install --upgrade pip && \
     pip install -U albumentations && \
     pip install ipywidgets && \
     pip install fiftyone
+
+RUN fiftyone plugins download https://github.com/jacobmarks/fiftyone-albumentations-plugin

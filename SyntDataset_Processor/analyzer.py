@@ -1,4 +1,6 @@
-# Script used to visualize dataset properties
+# [TODO]
+# Script used to:
+# 1. Load 
 
 import os
 import fiftyone as fo

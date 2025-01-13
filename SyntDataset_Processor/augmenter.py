@@ -1,28 +1,44 @@
 # Script used to:
-# Augment a selected split of datasets
+# 1. Load specific splits of datasets (default: YOLOv5-formatted)
+# 2. Define an augmentation pipeline (default: best suitable for an equirectangular panorama)
+# 3. Apply the augmentations defined to the selected dataset split
+# 4. Export the exported augmented datasets (default: YOLOv5-formatted)
 
 import albumentations as A
 import fiftyone as fo
 import os
 import cv2
-import utils
 import shutil
 
 from tqdm import tqdm
 
 DATASET_TYPE = fo.types.YOLOv5Dataset
-
 DATA_PATH = "yolo_datasets"
 YAML_FILE_NAME = "dataset.yaml"
-
 TMP_PATH = "augmented_images"
-CLEAR_AFT_EXP = True
-
-USE_AUG = False
+CLEAR_AFT_AUG = True
 SPLIT_TO_AUG = "train"
-AUG_NUM = 3
+AUG_NUM = 4 # In total (N+1)*dataset -> N times augment + source
+RUN_FO_SESSION = False # For debugging purposes
 
-RUN_FO_SESSION = False
+def convert_to_albumentations_yolo_format(bboxes):
+    yolo_bboxes = []
+    
+    for bbox in bboxes:
+        x_min, y_min, width, height = bbox
+        x_center = x_min + (width / 2)
+        y_center = y_min + (height / 2)
+
+        yolo_bboxes.append([x_center, y_center, width, height])
+
+    return yolo_bboxes
+
+def convert_to_fiftyone_yolo_format(bbox):
+    x_center, y_center, width, height = bbox
+    x_min = x_center - (width / 2)
+    y_min = y_center - (height / 2)
+
+    return [x_min, y_min, width, height]
 
 # Search for subfolders with datasets in the source dir
 print(f"Searching for elements in: \"{DATA_PATH}\"")
@@ -32,7 +48,6 @@ print(f"Found subfolders:", dataset_paths)
 
 # Process dataset after dataset
 for dataset_name in dataset_paths:
-
     dataset_path = os.path.join(DATA_PATH, dataset_name)
     originalDataset = fo.Dataset.from_dir(name=dataset_name,
                                           dataset_type=DATASET_TYPE,
@@ -43,29 +58,40 @@ for dataset_name in dataset_paths:
 
     # Define the augmentation pipeline
     transform = A.Compose([
+        # Transform from the most likely to the most unlikely
+
+        A.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3, hue=0, p=1), # WARN: Set of high hue jitter makes the images highly unrealistic
+
         # Spatial-level transforms
         A.HorizontalFlip(p=0.5),
-        A.PixelDropout(p=0.2),
-        
-        # Grid distortion makes the bounding boxes to be misaligned (slightly) with the actual objects
-        # A.GridDistortion(interpolation=cv2.INTER_LANCZOS4, border_mode=cv2.BORDER_WRAP, p=0.2),
-        
-        # Pixel-level transforms
-        A.ToGray(p=0.2),
-        A.CLAHE(p=0.2),
 
-        # Set of hue jitter makes the images highly unrealistic
-        A.ColorJitter(brightness=0.25, contrast=0.4, saturation=0.5, hue=0, p=0.4),
+        A.RandomShadow(shadow_intensity_range=[0.25,0.5], p=0.25),
+        A.RandomSunFlare(p=0.25),
 
-        A.GaussianBlur(p=0.2), 
-        A.ImageCompression(quality_lower=75, quality_upper=100, p=0.2), 
+        A.RandomGamma(p=0.25),
+        A.RandomBrightnessContrast(p=0.25),
+        A.RandomToneCurve(p=0.25),
+
         A.Sharpen(p=0.25),
-        A.ISONoise(color_shift=(0.1, 0.2), intensity=(0.1, 0.25), p=0.2)
+        A.CLAHE(p=0.25),
+        A.ImageCompression(quality_lower=75, quality_upper=100, p=0.25),  
+
+        # Blur
+        A.GaussianBlur(p=0.25), 
+        A.MotionBlur(p=0.25),
+
+        # Noise
+        A.GaussNoise(std_range=(0.025,0.075), p=0.25),
+        A.AdditiveNoise(p=0.25), 
+        A.ISONoise(color_shift=(0.1, 0.2), intensity=(0.1, 0.25), p=0.25),
+
+        A.ToGray(p=0.1),
+
     ], bbox_params=A.BboxParams(format='yolo', label_fields=['category_ids'], clip=True))
 
     augmentedDataset = fo.Dataset(name=dataset_name + "_AUG")
 
-    for sample in tqdm(originalDataset, desc="Augmenting dataset samples..."):
+    for sample in tqdm(originalDataset, desc="Augmenting dataset samples...", leave=False):
         for aug_iter in tqdm(range(AUG_NUM), desc="Iterating augmentations...", leave=False):
             image = cv2.imread(sample.filepath)
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -76,7 +102,7 @@ for dataset_name in dataset_paths:
                 bboxes.append(detection.bounding_box)
                 category_ids.append(detection.label)
 
-            yolo_bboxes = utils.convert_to_albumentations_yolo_format(bboxes)
+            yolo_bboxes = convert_to_albumentations_yolo_format(bboxes)
             transformed = transform(image=image, bboxes=yolo_bboxes, category_ids=category_ids)
 
             filepath = sample.filepath
@@ -91,7 +117,7 @@ for dataset_name in dataset_paths:
             for bbox, label in zip(transformed['bboxes'], transformed['category_ids']):
                 detections.append(
                     fo.Detection(
-                        bounding_box=utils.convert_to_fiftyone_yolo_format(bbox),  # YOLO format
+                        bounding_box=convert_to_fiftyone_yolo_format(bbox),  # YOLO format
                         label=label,
                     )
                 )
@@ -105,7 +131,7 @@ for dataset_name in dataset_paths:
                             split=SPLIT_TO_AUG,
                             classes=originalDataset.default_classes)
     
-    if CLEAR_AFT_EXP:
+    if CLEAR_AFT_AUG:
         if os.path.exists(TMP_PATH):
             shutil.rmtree(TMP_PATH)
             print(f"Temporary folder '{TMP_PATH}' has been removed.")

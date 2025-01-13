@@ -1,10 +1,11 @@
-# Script used to merge multiple sub-parts of datasets into a single, bigger one
+# Script used to:
+# 1. Load a specific set of datasets (default: YOLOv5-formatted)
+# 2. Merge their matching splits together (train + train; val + val; test + test)
+# 3. Export the resulting combined set as a single, bigger dataset (default: YOLOv5-formatted)
 
 import os
 import fiftyone as fo
 import yaml
-
-from tqdm import tqdm
 
 # Configuration
 SPLITTED_DATASETS_PATH = "yolo_datasets"

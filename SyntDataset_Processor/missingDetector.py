@@ -1,3 +1,11 @@
+# Script used to:
+# 1. Load a specific CVAT-formatted dataset
+# 2. Analyze its annotations file (.xml)
+# 3. Go through the samples and search for missing classes
+#
+# Class is considered missing if it's listed as a label in the annotation file
+# and there are no entities of this class found in the labelled dataset samples
+
 import xml.etree.ElementTree as ET
 import fiftyone as fo
 import os

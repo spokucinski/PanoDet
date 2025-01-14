@@ -6,3 +6,5 @@ archivedCODE
 archivedPanoDet
 archive
 __pycache__
+.comet.config
+*.pt

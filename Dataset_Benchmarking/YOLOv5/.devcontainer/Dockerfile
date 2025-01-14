@@ -4,4 +4,4 @@ RUN apt-get update && \
     apt-get -y upgrade
 
 RUN pip install --upgrade pip && \
-    pip install wandb
+    pip install comet_ml

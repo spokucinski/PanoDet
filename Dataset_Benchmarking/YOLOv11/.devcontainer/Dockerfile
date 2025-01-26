@@ -1,4 +1,4 @@
-FROM ultralytics/yolov5:latest
+FROM ultralytics/ultralytics:latest
 
 RUN apt-get update && \
     apt-get -y upgrade

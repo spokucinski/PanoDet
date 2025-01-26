@@ -16,11 +16,11 @@ def parse_opt():
     parser.add_argument("--datasetsPath", type=str, default="datasets", help="Where to search for the datasets")
     parser.add_argument("--datasetDefsPath", type=str, default="datasets", help="Where to search for the .yaml files with dataset definitions")
     parser.add_argument("--datasets", type=str, nargs="+", default=[
+                                                                    "ALL",
+                                                                    "MIXED",
                                                                     "ITEMS",
                                                                     "NO_ITEMS",
-                                                                    "REAL_TOP30",
-                                                                    "MIXED",
-                                                                    "ALL",
+                                                                    "REAL_TOP30"
                                                                     ], help="Which datasets to test")
     parser.add_argument("--optimizers", type=str, nargs="+", default=[
                                                                     "SGD",
@@ -29,14 +29,15 @@ def parse_opt():
                                                                     ], help="Which optimizers to use")
     parser.add_argument("--epochs", type=int, nargs="+", default=[1500], help="Training lenght in epochs")
     parser.add_argument("--patience", type=int, default=100, help="How many epochs without improvement before early stopping")
-    parser.add_argument("--models", type=str, nargs="+", default=["yolov5s",
-                                                                  # "yolov5m",
+    parser.add_argument("--models", type=str, nargs="+", default=[# "yolov5s",
+                                                                  "rtdetr-l"
+                                                                  # "yolo11n",
                                                                   # "yolov5x",
                                                                   # "yolov5s6",
                                                                   # "yolov5m6",
                                                                   # "yolov5x6",
                                                                   ], help="What models use in training")
-    parser.add_argument("--batchSizes", type=int, nargs="+", default=[2], help="Size of the batch, -1 for auto-batch")
+    parser.add_argument("--batchSizes", type=int, nargs="+", default=[3], help="Size of the batch, -1 for auto-batch")
     parser.add_argument("--imageSizes", type=int, nargs="+", default=[1792], help="Image sizes to be used in training")
     parser.add_argument("--rectangularTraining", type=bool, default=True, help="Expect the image to be rectangular, not a square")
     parser.add_argument("--hyperParameters", type=str, default="external/data/hyps/hyp.no-augmentation.yaml", help="Path to hyperparameters configuration .yaml file")
@@ -163,21 +164,37 @@ def conductTraining(epochs: int,
     
     if runName not in alreadyConductedTrainings:
         try:
-            train_cmd = ['python', 'external/train.py',
-                        f'--epochs={epochs}',
-                        f'--imgsz={imageSize}',
-                        f'--batch-size={batchSize}',
-                        f'--weights={modelPath}', #external/{model}.pt',
-                        f'--data={dataDefPath}', #{options.datasetDefsPath}/{dataset}.yaml',
-                        f'--name={runName}',
-                        f'--project={resultsPath}/{projectName}/Train',
-                        f'--hyp={hyperParPath}', #external/data/hyps/hyp.no-augmentation.yaml'
-                        f'--exist-ok',
-                        f'--optimizer={optimizer}'
+            train_cmd = ['yolo', 'detect','train',
+                        f'epochs={epochs}',
+                        f'imgsz={imageSize}',
+                        f'batch={batchSize}',
+                        f'model={modelPath}', #external/{model}.pt',
+                        f'data={dataDefPath}', #{options.datasetDefsPath}/{dataset}.yaml',
+                        f'name={runName}',
+                        f'project={resultsPath}/{projectName}/Train',
+                        #f'hyp={hyperParPath}', #external/data/hyps/hyp.no-augmentation.yaml'
+                        f'exist_ok=True',
+                        #f'optimizer={optimizer}'
+                        f'hsv_h=0.0',
+                        f'hsv_s=0.0',
+                        f'hsv_v=0.0',
+                        f'degrees=0.0',
+                        f'translate=0.0',
+                        f'scale=0.0',
+                        f'shear=0.0',
+                        f'perspective=0.0',
+                        f'flipud=0.0',
+                        f'fliplr=0.0',
+                        f'bgr=0.0',
+                        f'mosaic=0.0',
+                        f'mixup=0.0',
+                        f'copy_paste=0.0',
+                        f'erasing=0.0',
+                        f'crop_fraction=1.0',
                         ]
             
             if rect:
-                train_cmd.append(f'--rect')
+                train_cmd.append(f'rect=True')
             
             trainLogDir = f'{resultsPath}/{projectName}/Train/{runName}'
             if not os.path.exists(trainLogDir):
@@ -188,7 +205,7 @@ def conductTraining(epochs: int,
             trainLog.write(f'TRAINING LOG OF: {runName}')
             trainLog.flush()
             p = subprocess.Popen(train_cmd, stdout=trainLog, stderr=trainLog, start_new_session=True)
-            p.wait(timeout=25000)
+            p.wait(timeout=250000)
 
             clean_file(trainLogPath)
         
@@ -212,41 +229,41 @@ def main(options: Options):
         if dataset not in datasetsFound:
             logger.error("Requested dataset: {dataset} not found!")
             continue
-
+        
         for model in options.models:    
             for epochNum in options.epochs:
                 for imageSize in options.imageSizes:
                     for batchSize in options.batchSizes:
                         for optimizer in options.optimizers:
                             dataDefPath = f'{options.datasetDefsPath}/{dataset}/dataset.yaml'
-                            modelPath = f'external/{model}.pt'
+                            modelPath = f'{model}.pt' #f'external/{model}.pt'
                             runConfiguration: str = f"{dataset}_{epochNum}_{imageSize}_{batchSize}_{model}_{optimizer}"                     
                             
-                            # conductTraining(epochNum, 
-                            #                 imageSize, 
-                            #                 batchSize, 
-                            #                 runConfiguration, 
-                            #                 modelPath, 
-                            #                 dataDefPath, 
-                            #                 alreadyConductedTrainings, 
-                            #                 options.resultsPath, 
-                            #                 options.projectName, 
-                            #                 options.hyperParameters,
-                            #                 options.rectangularTraining,
-                            #                 optimizer)
+                            conductTraining(epochNum, 
+                                            imageSize, 
+                                            batchSize, 
+                                            runConfiguration, 
+                                            modelPath, 
+                                            dataDefPath, 
+                                            alreadyConductedTrainings, 
+                                            options.resultsPath, 
+                                            options.projectName, 
+                                            options.hyperParameters,
+                                            options.rectangularTraining,
+                                            optimizer)
                             
                             # bestTrainingModelPath = f'{options.resultsPath}/{options.projectName}/Train/{runConfiguration}/weights/best.pt'
 
-                            bestTrainingModelPath = 'results/SPHERE_CODE55/Train/ALL_1500_1792_2_yolov5s_SGD/weights/best.pt'           
+                            # bestTrainingModelPath = 'results/SPHERE_CODE55/Train/ALL_1500_1792_2_yolov5s_SGD/weights/best.pt'           
 
-                            conductTesting(imageSize, 
-                                        1, 
-                                        runConfiguration, 
-                                        bestTrainingModelPath, 
-                                        dataDefPath, 
-                                        alreadyConductedTests, 
-                                        options.resultsPath, 
-                                        options.projectName)
+                            # conductTesting(imageSize, 
+                            #             1, 
+                            #             runConfiguration, 
+                            #             bestTrainingModelPath, 
+                            #             dataDefPath, 
+                            #             alreadyConductedTests, 
+                            #             options.resultsPath, 
+                            #             options.projectName)
 
 if __name__ == "__main__":
     opt = parse_opt()

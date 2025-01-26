@@ -10,3 +10,6 @@
 [submodule "Dataset_Benchmarking/YOLOv8/external"]
 	path = Dataset_Benchmarking/YOLOv8/external
 	url = https://github.com/spokucinski/yolov8.git
+[submodule "Dataset_Benchmarking/YOLOv11/external"]
+	path = Dataset_Benchmarking/YOLOv11/external
+	url = https://github.com/ultralytics/ultralytics.git

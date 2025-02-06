@@ -104,17 +104,17 @@ def conductTesting(imageSize: int,
     
     if runName not in alreadyConductedTests:
         try:
-            test_cmd = ['python', 'external/val.py',
-                        f'--task=test',
-                        f'--imgsz={imageSize}',
-                        f'--weights={modelPath}', #{options.resultsPath}/{options.projectName}/Train/{runName}/weights/best.pt',
-                        f'--data={dataDefPath}', #{options.datasetDefsPath}/{dataset}.yaml',
-                        f'--name={runName}',
-                        f'--project={resultsPath}/{projectName}/Test',
-                        f'--verbose',
-                        f'--save-txt',
-                        f'--batch-size={batchSize}',
-                        f'--exist-ok'
+            test_cmd = ['yolo', 'val',
+                        f'split=test',
+                        f'imgsz={imageSize}',
+                        f'model={modelPath}', #{options.resultsPath}/{options.projectName}/Train/{runName}/weights/best.pt',
+                        f'data={dataDefPath}', #{options.datasetDefsPath}/{dataset}.yaml',
+                        f'name={runName}',
+                        f'project={resultsPath}/{projectName}/Test',
+                        f'save_json=True',
+                        f'batch={batchSize}',
+                        f'rect=True',
+                        f'plots=True'
                         ]
             
             testLogDir = f'{resultsPath}/{projectName}/Test/{runName}'       
@@ -239,31 +239,31 @@ def main(options: Options):
                             modelPath = f'{model}.pt' #f'external/{model}.pt'
                             runConfiguration: str = f"{dataset}_{epochNum}_{imageSize}_{batchSize}_{model}_{optimizer}"                     
                             
-                            conductTraining(epochNum, 
-                                            imageSize, 
-                                            batchSize, 
-                                            runConfiguration, 
-                                            modelPath, 
-                                            dataDefPath, 
-                                            alreadyConductedTrainings, 
-                                            options.resultsPath, 
-                                            options.projectName, 
-                                            options.hyperParameters,
-                                            options.rectangularTraining,
-                                            optimizer)
+                            # conductTraining(epochNum, 
+                            #                 imageSize, 
+                            #                 batchSize, 
+                            #                 runConfiguration, 
+                            #                 modelPath, 
+                            #                 dataDefPath, 
+                            #                 alreadyConductedTrainings, 
+                            #                 options.resultsPath, 
+                            #                 options.projectName, 
+                            #                 options.hyperParameters,
+                            #                 options.rectangularTraining,
+                            #                 optimizer)
                             
                             # bestTrainingModelPath = f'{options.resultsPath}/{options.projectName}/Train/{runConfiguration}/weights/best.pt'
 
-                            # bestTrainingModelPath = 'results/SPHERE_CODE55/Train/ALL_1500_1792_2_yolov5s_SGD/weights/best.pt'           
+                            bestTrainingModelPath = 'results/SPHERE_CODE55/Train/REAL_TOP30_1500_1792_4_yolo11n_SGD/weights/best.pt'           
 
-                            # conductTesting(imageSize, 
-                            #             1, 
-                            #             runConfiguration, 
-                            #             bestTrainingModelPath, 
-                            #             dataDefPath, 
-                            #             alreadyConductedTests, 
-                            #             options.resultsPath, 
-                            #             options.projectName)
+                            conductTesting(imageSize, 
+                                        1, 
+                                        runConfiguration, 
+                                        bestTrainingModelPath, 
+                                        dataDefPath, 
+                                        alreadyConductedTests, 
+                                        options.resultsPath, 
+                                        options.projectName)
 
 if __name__ == "__main__":
     opt = parse_opt()

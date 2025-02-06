@@ -1,4 +1,4 @@
-FROM ultralytics/ultralytics:latest
+FROM ultralytics/ultralytics:8.3.67
 
 RUN apt-get update && \
     apt-get -y upgrade

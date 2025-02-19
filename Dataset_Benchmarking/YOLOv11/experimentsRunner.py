@@ -7,6 +7,8 @@ import signal
 import argparse
 from options import Options
 import re
+from external.ultralytics import RTDETR
+import sys
 
 def parse_opt():
     parser = argparse.ArgumentParser()
@@ -27,7 +29,7 @@ def parse_opt():
                                                                     # "Adam",
                                                                     # "AdamW"
                                                                     ], help="Which optimizers to use")
-    parser.add_argument("--epochs", type=int, nargs="+", default=[1500], help="Training lenght in epochs")
+    parser.add_argument("--epochs", type=int, nargs="+", default=[250], help="Training lenght in epochs")
     parser.add_argument("--patience", type=int, default=100, help="How many epochs without improvement before early stopping")
     parser.add_argument("--models", type=str, nargs="+", default=[# "yolov5s",
                                                                   "rtdetr-l"
@@ -104,35 +106,33 @@ def conductTesting(imageSize: int,
     
     if runName not in alreadyConductedTests:
         try:
-            test_cmd = ['yolo', 'val',
-                        f'split=test',
-                        f'imgsz={imageSize}',
-                        f'model={modelPath}', #{options.resultsPath}/{options.projectName}/Train/{runName}/weights/best.pt',
-                        f'data={dataDefPath}', #{options.datasetDefsPath}/{dataset}.yaml',
-                        f'name={runName}',
-                        f'project={resultsPath}/{projectName}/Test',
-                        f'save_json=True',
-                        f'batch={batchSize}',
-                        f'rect=True',
-                        f'plots=True'
-                        ]
+            model = RTDETR(modelPath)
             
             testLogDir = f'{resultsPath}/{projectName}/Test/{runName}'       
             if not os.path.exists(testLogDir):
                 os.makedirs(testLogDir)
-                
             testLogPath = f'{testLogDir}/testLog.txt'
-            testLogFile = open(testLogPath, 'a')
-            testLogFile.write(f'TESTING LOG OF: {runName}')
-            testLogFile.flush()
-            p = subprocess.Popen(test_cmd, stdout=testLogFile, stderr=testLogFile, start_new_session=True)
-            p.wait(timeout=25000)
 
-            clean_file(testLogPath)
+            with open(testLogPath, 'w') as f:
+                sys.stdout = f
+                print(f'TESTING LOG OF: {runName}')
+                results = model.val(split='test', 
+                    imgsz=imageSize, 
+                    data=dataDefPath, 
+                    name=runName, 
+                    project=f'{resultsPath}/{projectName}/Test',
+                    save_json=True,
+                    batch=1,
+                    rect=True,
+                    plots=True)
+                print(f"map50: {results.results_dict['metrics/mAP50(B)']}")
+                print(f"map50-95: {results.results_dict['metrics/mAP50-95(B)']}")
+            sys.stdout = sys.__stdout__
+            # clean_file(testLogPath)
 
         except Exception as testingException:
             logger = logging.getLogger(__name__)
-            logger.error(f"Exception during YOLOv5 testing! Run command: {test_cmd}")
+            logger.error(f"Exception during YOLOv5 testing!")
             logger.error(f"Killing YOLOv5 testing!")
             os.killpg(os.getpgid(p.pid), signal.SIGTERM)
             logger.error("YOLOv5 testing killed!")
@@ -254,7 +254,7 @@ def main(options: Options):
                             
                             # bestTrainingModelPath = f'{options.resultsPath}/{options.projectName}/Train/{runConfiguration}/weights/best.pt'
 
-                            bestTrainingModelPath = 'results/SPHERE_CODE55/Train/REAL_TOP30_1500_1792_4_yolo11n_SGD/weights/best.pt'           
+                            bestTrainingModelPath = 'results/SPHERE_CODE55/Train/REAL_TOP30_250_1792_3_rtdetr-l_SGD/weights/best.pt'           
 
                             conductTesting(imageSize, 
                                         1, 

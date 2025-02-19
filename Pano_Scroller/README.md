@@ -4,6 +4,11 @@ A graphical app, allowing users to improve datasets of equirectangular panoramas
 It may be successfully used in the image classification task (works similarily to the horizontal translation available in Keras library as a Sequential augmentation layer)
 or in object detection - by augmenting and changing the annotations.
 
+# Dataset
+The dataset utilized in this project was our custom Apartment Air B&B. For more details refer to the main page of this repository.
+
+https://github.com/spokucinski/PanoDet/tree/main#datasets
+
 # Publications
 This project was a part of processing used in the publication **"Finding the perfect cut: selection of the best cutting point in equirectangular panoramas for object detection"** - https://doi.org/10.1016/j.procs.2024.09.432 
 Presented at the 28th International Conference on Knowledge-Based and Intelligent Information & Engineering Systems (KES 2024)

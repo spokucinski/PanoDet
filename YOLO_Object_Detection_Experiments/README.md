@@ -29,7 +29,7 @@ conda install pytorch torchvision torchaudio pytorch-cuda=11.7 -c pytorch -c nvi
 
 # Publications
 This part of projects was used in the experiments conducted for the paper:
-**"YOLO-based object detection in panoramic images of smart buildings"** - DOI 10.1109/DSAA60987.2023.10302568
+**"YOLO-based object detection in panoramic images of smart buildings"** - DOI [10.1109/DSAA60987.2023.10302568](https://doi.org/10.1109/DSAA60987.2023.10302568)
 Presented at 10th International Conference on Data Science & Advanced Analytics (DSAA 2023)
 
 Cite as BibTeX:

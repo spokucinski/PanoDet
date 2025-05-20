@@ -50,3 +50,7 @@ For further details, please, refer to the project's GitHub page:
 ### Apartment Air B&B [Novel, Monitored Access]
 The "Apartment Air B&B" dataset is available under the following Google Drive's link:
 [Limited Access Link](https://drive.google.com/file/d/1_JgxNAFwwSJ7MblE26UYsYJoJBrUQqWr/view?usp=sharing)
+
+### SPHEREA [Novel, Monitored Access]
+Synthetic images of indoor environments generated with user-defined requirements and structured generation prompts.
+[Limited Access Link](https://drive.google.com/drive/folders/1Qrleo5YZe3HnNLu7zDff7hK_f8dAyAKk?usp=sharing)

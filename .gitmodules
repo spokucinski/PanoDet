@@ -15,5 +15,5 @@
 	url = https://github.com/ultralytics/ultralytics.git
 [submodule "Depth_Estimation/Depth-Anything-V2"]
 	path = Depth_Estimation/Depth-Anything-V2
-	url = https://github.com/DepthAnything/Depth-Anything-V2
+url=https://github.com/spokucinski/Depth-Anything-V2.git
 	branch = main

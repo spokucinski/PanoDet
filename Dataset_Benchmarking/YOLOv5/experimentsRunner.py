@@ -237,7 +237,7 @@ def main(options: Options):
                             
                             # bestTrainingModelPath = f'{options.resultsPath}/{options.projectName}/Train/{runConfiguration}/weights/best.pt'
 
-                            bestTrainingModelPath = 'results/SPHERE_CODE55/Train/ALL_1500_1792_2_yolov5s_SGD/weights/best.pt'           
+                            bestTrainingModelPath = 'results/SPHERE_CODE55/Train/ALL_1500_1792_2_yolov5x_SGD/weights/best.pt'           
 
                             conductTesting(imageSize, 
                                         1, 

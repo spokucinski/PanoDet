@@ -13,3 +13,7 @@
 [submodule "Dataset_Benchmarking/YOLOv11/external"]
 	path = Dataset_Benchmarking/YOLOv11/external
 	url = https://github.com/ultralytics/ultralytics.git
+[submodule "Depth_Estimation/Depth-Anything-V2"]
+	path = Depth_Estimation/Depth-Anything-V2
+	url = https://github.com/DepthAnything/Depth-Anything-V2
+	branch = main

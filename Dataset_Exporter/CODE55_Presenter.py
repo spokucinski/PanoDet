@@ -20,7 +20,7 @@ OUTPUT_PATH = 'output'
 HEATMAP_SHAPE = (1024, 2048)
 
 GENERATE_HEATMAPS = False
-RUN_SESSION = True
+RUN_SESSION = False
 
 LABELS = {
     "Bathtub": 0,

@@ -1,0 +1,209 @@
+﻿GroundTruthId;Room;Collection;ObjectId;CODE55;Xgt;Ygt;Zgt
+1;LivingRoom;Living room.001;AirConditioning;Air Conditioning;-4.10;1.63;2.30
+2;LivingRoom;Living room.001;AirConditioning.004;Air Conditioning;0.68;1.91;2.32
+3;LivingRoom;Living room.001;AirPurifier;Air Purifier;-3.15;0.41;0.26
+4;LivingRoom;Living room.001;AlarmSensor;Alarm Sensor;-4.21;1.19;2.06
+5;LivingRoom;Living room.001;AlarmSensor.001;Alarm Sensor;0.47;0.46;2.18
+6;LivingRoom;Living room.001;AlarmSensor.002;Alarm Sensor;0.48;0.39;2.18
+7;LivingRoom;Living room.001;AlarmSensor.003;Alarm Sensor;0.47;-0.46;2.18
+8;LivingRoom;Living room.001;AlarmSensor.004;Alarm Sensor;-1.45;-1.96;1.66
+9;LivingRoom;Living room.001;AlarmSensor.011;Alarm Sensor;-3.13;-0.45;1.35
+10;LivingRoom;Living room.001;AlarmSensor.013;Alarm Sensor;-2.51;-1.21;0.91
+11;LivingRoom;Living room.001;Aquarium.001;Aquarium;-0.96;-2.19;1.04
+12;LivingRoom;Living room.001;Cabinet;Cabinet;-1.65;-2.12;1.26
+13;LivingRoom;Living room.001;Cabinet.001;Cabinet;-0.20;-2.10;0.99
+14;LivingRoom;Living room.001;Cabinet.002;Cabinet;-1.35;-2.09;0.44
+15;LivingRoom;Living room.001;Cabinet.003;Cabinet;-2.46;-0.17;0.32
+16;LivingRoom;Living room.001;Cabinet.005;Cabinet;-3.00;-0.43;0.54
+17;LivingRoom;Living room.001;Cabinet.012;Cabinet;-3.03;-0.35;1.19
+18;LivingRoom;Living room.001;Chair;Chair;-1.22;-0.36;0.41
+19;LivingRoom;Living room.001;Chair.001;Chair;-0.68;-0.41;0.39
+20;LivingRoom;Living room.001;Chair.002;Chair;-0.68;-1.08;0.41
+21;LivingRoom;Living room.001;Chair.003;Chair;-1.25;-1.05;0.43
+22;LivingRoom;Living room.001;Chair.004;Chair;-3.38;-1.32;0.67
+23;LivingRoom;Living room.001;Clock;Clock;-2.47;-0.29;0.68
+24;LivingRoom;Living room.001;Clock.002;Clock;-3.66;-2.12;0.79
+25;LivingRoom;Living room.001;Computer;Computer;-3.92;-1.80;0.31
+26;LivingRoom;Living room.001;Desk;Desk;-3.38;-1.86;0.40
+27;LivingRoom;Living room.001;Door;Door;-3.76;2.11;1.04
+28;LivingRoom;Living room.001;Door.001;Door;0.48;-0.01;1.11
+29;LivingRoom;Living room.001;FireExtinquisher;Fire Extinguisher;-2.41;-0.41;0.58
+30;LivingRoom;Living room.001;GamingConsole;Gaming Console;-2.53;0.05;0.35
+31;LivingRoom;Living room.001;Heater;Heater;0.32;-1.00;0.43
+32;LivingRoom;Living room.001;Lamp;Lamp;-1.44;1.61;2.49
+33;LivingRoom;Living room.001;Lamp.001;Lamp;0.38;-0.51;1.03
+34;LivingRoom;Living room.001;Lamp.002;Lamp;0.43;-1.45;1.03
+35;LivingRoom;Living room.001;Lamp.003;Lamp;-0.21;-1.54;2.49
+36;LivingRoom;Living room.001;Lamp.004;Lamp;-0.82;-1.54;2.49
+37;LivingRoom;Living room.001;Lamp.005;Lamp;-1.41;-1.54;2.49
+38;LivingRoom;Living room.001;Lamp.006;Lamp;-0.84;1.62;2.49
+39;LivingRoom;Living room.001;Lamp.007;Lamp;-0.23;1.61;2.49
+40;LivingRoom;Living room.001;Lamp.008;Lamp;-0.83;-0.83;2.01
+41;LivingRoom;Living room.001;Lamp.009;Lamp;-3.18;-1.53;2.49
+42;LivingRoom;Living room.001;Pillow.001;Pillow;-0.25;1.80;0.55
+43;LivingRoom;Living room.001;Pillow.002;Pillow;-0.96;1.77;0.55
+44;LivingRoom;Living room.001;Pillow.003;Pillow;-0.11;0.90;0.60
+45;LivingRoom;Living room.001;Plant;Plant;-1.35;-2.05;1.90
+46;LivingRoom;Living room.001;Plant.001;Plant;0.40;-0.80;1.14
+47;LivingRoom;Living room.001;Plant.002;Plant;0.40;-1.15;1.01
+48;LivingRoom;Living room.001;Plant.003;Plant;-1.62;-2.21;1.99
+49;LivingRoom;Living room.001;Plant.004;Plant;-1.49;-2.16;1.86
+50;LivingRoom;Living room.001;Plant.005;Plant;-1.78;-1.99;1.94
+51;LivingRoom;Living room.001;Plant.006;Plant;-2.07;-0.96;1.05
+52;LivingRoom;Living room.001;Plant.007;Plant;-2.96;-0.28;1.41
+53;LivingRoom;Living room.001;Plant.008;Plant;-2.71;0.06;0.61
+54;LivingRoom;Living room.001;Plant.009;Plant;-1.20;0.73;0.52
+55;LivingRoom;Living room.001;RollerBlind.001;Roller Blind;0.46;1.03;2.01
+56;LivingRoom;Living room.001;RollerBlind.002;Roller Blind;0.46;0.00;1.90
+57;LivingRoom;Living room.001;RollerBlind.003;Roller Blind;0.46;-1.01;2.01
+58;LivingRoom;Living room.001;Rug.008;Rug;-2.85;1.98;0.02
+59;LivingRoom;Living room.001;Shelf;Shelf;-2.36;-1.71;0.75
+60;LivingRoom;Living room.001;Socket;Socket;-4.23;0.62;0.24
+61;LivingRoom;Living room.001;Socket.010;Socket;-2.57;2.27;0.25
+62;LivingRoom;Living room.001;Socket.011;Socket;0.25;-1.87;0.51
+63;LivingRoom;Living room.001;Socket.012;Socket;-2.69;-0.26;1.00
+64;LivingRoom;Living room.001;Sofa.001;Sofa;-1.07;1.38;0.45
+65;LivingRoom;Living room.001;Speaker;Speaker;-2.15;-0.62;0.62
+66;LivingRoom;Living room.001;Speaker.001;Speaker;-2.96;0.21;0.63
+67;LivingRoom;Living room.001;Speaker.002;Speaker;-2.97;0.20;0.83
+68;LivingRoom;Living room.001;Switch;Switch;-4.24;0.00;1.11
+69;LivingRoom;Living room.001;Switch.001;Switch;-4.23;0.92;1.07
+70;LivingRoom;Living room.001;Table;Table;-0.90;-0.78;0.42
+71;LivingRoom;Living room.001;Table.001;Table;-1.18;0.74;0.21
+72;LivingRoom;Living room.001;TV;TV;-2.57;-0.16;1.84
+73;LivingRoom;Living room.001;TV.001;TV;-3.96;-1.86;1.08
+74;LivingRoom;Living room.001;TV.002;TV;-3.42;-2.02;1.11
+75;LivingRoom;Living room.001;TV.003;TV;-2.87;-1.89;1.09
+76;LivingRoom;Living room.001;Vase;Vase;-1.35;-2.07;1.71
+77;LivingRoom;Living room.001;Vase.001;Vase;0.35;-0.83;0.92
+78;LivingRoom;Living room.001;Vase.002;Vase;0.35;-1.21;0.91
+79;LivingRoom;Living room.001;Vase.003;Vase;-1.51;-2.11;1.70
+80;LivingRoom;Living room.001;Vase.004;Vase;-1.65;-2.19;1.70
+81;LivingRoom;Living room.001;Vase.005;Vase;-1.79;-2.00;1.72
+82;LivingRoom;Living room.001;Vase.006;Vase;-2.09;-0.95;0.87
+83;LivingRoom;Living room.001;Vase.007;Vase;-1.20;0.73;0.45
+84;LivingRoom;Living room.001;Vase.008;Vase;-2.96;-0.28;1.35
+85;LivingRoom;Living room.001;Vase.009;Vase;-2.68;0.09;0.56
+86;LivingRoom;Living room.001;Vase.010;Vase;-0.94;-0.76;0.83
+87;LivingRoom;Living room.001;Window.001;Window;0.46;1.02;1.55
+88;LivingRoom;Living room.001;Window.002;Window;0.50;-1.00;1.54
+89;Bathroom;Bathroom.001;AirConditioning.001;Air Conditioning;-5.5063;-0.0133;2.3267
+90;Bathroom;Bathroom.001;AlarmSensor.005;Alarm Sensor;-4.5983;-0.5916;2.4549
+91;Bathroom;Bathroom.001;Bathtub;Bathtub;-5.7710;-1.9217;0.3076
+92;Bathroom;Bathroom.001;Cabinet.006;Cabinet;-6.3622;-0.7972;1.2404
+93;Bathroom;Bathroom.001;Door.003;Door;-4.5703;0.8268;1.0303
+94;Bathroom;Bathroom.001;Faucet;Faucet;-4.4273;-1.0107;0.7604
+95;Bathroom;Bathroom.001;Faucet.001;Faucet;-6.5342;-1.9623;0.6879
+96;Bathroom;Bathroom.001;Heater.001;Heater;-5.6920;-0.0763;1.3854
+97;Bathroom;Bathroom.001;Lamp.010;Lamp;-5.4431;-0.4326;2.4897
+98;Bathroom;Bathroom.001;Lamp.011;Lamp;-5.4372;-0.8996;2.4876
+99;Bathroom;Bathroom.001;Lamp.012;Lamp;-5.4464;-1.4224;2.4982
+100;Bathroom;Bathroom.001;Lamp.013;Lamp;-5.4435;-1.9260;2.4986
+101;Bathroom;Bathroom.001;Lamp.014;Lamp;-6.5024;-1.9451;2.4913
+102;Bathroom;Bathroom.001;LaundryRack;Laundry Rack;-4.7094;-0.5792;0.6255
+103;Bathroom;Bathroom.001;Mirror;Mirror;-4.6038;-1.6735;0.9429
+104;Bathroom;Bathroom.001;Mirror.001;Mirror;-4.6170;-2.0529;0.8979
+105;Bathroom;Bathroom.001;Mirror.002;Mirror;-4.6801;-0.9647;1.8279
+106;Bathroom;Bathroom.001;Mirror.003;Mirror;-4.6906;-1.5745;1.8447
+107;Bathroom;Bathroom.001;Mirror.004;Mirror;-4.6946;-2.0562;1.8461
+108;Bathroom;Bathroom.001;Rug;Rug;-5.3220;-1.3399;-0.0015
+109;Bathroom;Bathroom.001;Rug.001;Rug;-5.3233;-0.8852;0.0022
+110;Bathroom;Bathroom.001;Rug.002;Rug;-5.3258;-0.4218;0.0046
+111;Bathroom;Bathroom.001;Shower;Shower;-6.4654;-1.9487;1.4028
+112;Bathroom;Bathroom.001;Sink;Sink;-4.6964;-0.9656;0.7795
+113;Bathroom;Bathroom.001;Socket.001;Socket;-4.5236;-0.5568;0.3583
+114;Bathroom;Bathroom.001;Socket.002;Socket;-5.4719;-0.0201;0.6692
+115;Bathroom;Bathroom.001;Switch.002;Switch;-4.4168;-0.5792;0.5648
+116;Bathroom;Bathroom.001;Switch.003;Switch;-6.0377;-0.3990;0.9871
+117;Bathroom;Bathroom.001;Toilet;Toilet;-5.7659;-0.4056;0.2374
+118;Bathroom;Bathroom.001;WashingMachine;Washing Machine;-6.2778;-1.1933;1.3198
+119;Bathroom;Bathroom.001;WashingMachine.001;Washing Machine;-6.2986;-1.2051;0.4331
+120;Bedroom;Bedroom.001;AirConditioning.002;Air Conditioning;-5.8279;1.0727;2.3084
+121;Bedroom;Bedroom.001;AlarmSensor.006;Alarm Sensor;-5.7288;1.4590;2.0609
+122;Bedroom;Bedroom.001;AlarmSensor.007;Alarm Sensor;-6.7856;-1.6945;1.1077
+123;Bedroom;Bedroom.001;Bed;Bed;-7.9620;-1.2708;0.4995
+124;Bedroom;Bedroom.001;Door.002;Door;-6.1684;0.5485;1.0490
+125;Bedroom;Bedroom.001;Heater.002;Heater;-9.0476;0.8704;0.4349
+126;Bedroom;Bedroom.001;Lamp.015;Lamp;-6.3550;0.9331;2.5064
+127;Bedroom;Bedroom.001;Lamp.016;Lamp;-7.0306;0.8985;2.5037
+128;Bedroom;Bedroom.001;Lamp.017;Lamp;-7.7318;0.8993;2.5028
+129;Bedroom;Bedroom.001;Lamp.018;Lamp;-8.4130;0.8829;2.5050
+130;Bedroom;Bedroom.001;Lamp.019;Lamp;-6.9534;-2.1928;0.6854
+131;Bedroom;Bedroom.001;Lamp.020;Lamp;-7.9595;-0.7990;2.4326
+132;Bedroom;Bedroom.001;Lamp.021;Lamp;-6.9469;-1.9479;1.6223
+133;Bedroom;Bedroom.001;Lamp.022;Lamp;-8.9407;-1.9479;1.6223
+134;Bedroom;Bedroom.001;LaundryRack.001;Laundry Rack;-5.7847;1.8661;0.6159
+135;Bedroom;Bedroom.001;NightStand;Nightstand;-6.9434;-2.1643;0.2770
+136;Bedroom;Bedroom.001;NightStand.001;Nightstand;-8.9324;-2.1774;0.2814
+137;Bedroom;Bedroom.001;Painting;Painting;-7.9430;-2.3447;1.8065
+138;Bedroom;Bedroom.001;RollerBlind;Roller Blind;-9.1794;-1.0559;2.0495
+139;Bedroom;Bedroom.001;RollerBlind.004;Roller Blind;-9.1647;-0.3468;2.0568
+140;Bedroom;Bedroom.001;RollerBlind.005;Roller Blind;-9.1696;0.8822;2.0561
+141;Bedroom;Bedroom.001;Rug.003;Rug;-6.0992;1.7656;0.0128
+142;Bedroom;Bedroom.001;Rug.004;Rug;-6.9546;-1.3127;0.0242
+143;Bedroom;Bedroom.001;Rug.005;Rug;-8.9608;-1.3781;0.0135
+144;Bedroom;Bedroom.001;Rug.006;Rug;-7.9608;0.6160;-0.0012
+145;Bedroom;Bedroom.001;Shelf.001;Shelf;-6.1321;2.1139;2.2115
+146;Bedroom;Bedroom.001;Socket.003;Socket;-6.7846;-2.0280;1.1002
+147;Bedroom;Bedroom.001;Socket.004;Socket;-9.0900;-2.0904;1.1066
+148;Bedroom;Bedroom.001;Switch.004;Switch;-5.7271;1.6003;1.0934
+149;Bedroom;Bedroom.001;Switch.005;Switch;-6.7858;-1.8385;1.1059
+150;Bedroom;Bedroom.001;Switch.006;Switch;-9.0943;-1.8960;1.1059
+151;Bedroom;Bedroom.001;Table.002;Table;-7.9725;0.0604;0.2573
+152;Bedroom;Bedroom.001;Wardrobe;Wardrobe;-7.6633;1.8815;1.1392
+153;Bedroom;Bedroom.001;Wardrobe.001;Wardrobe;-6.1538;2.1537;1.0000
+154;Bedroom;Bedroom.001;Window;Window;-9.1938;-1.0599;1.5749
+155;Bedroom;Bedroom.001;Window.003;Window;-9.1756;-0.3328;1.5808
+156;Bedroom;Bedroom.001;Window.004;Window;-9.1731;0.8796;1.5858
+157;Kitchen;Kitchen.001;AirConditioning.003;Air Conditioning;-5.8623;3.3756;2.3879
+158;Kitchen;Kitchen.001;AlarmSensor.009;Alarm Sensor;-9.2032;3.6709;2.2349
+159;Kitchen;Kitchen.001;AlarmSensor.010;Alarm Sensor;-9.2048;3.7732;2.2366
+160;Kitchen;Kitchen.001;AlarmSensor.012;Alarm Sensor;-6.7400;3.3671;1.3782
+161;Kitchen;Kitchen.001;Board;Board;-6.4268;3.3537;1.6558
+162;Kitchen;Kitchen.001;Cabinet.004;Cabinet;-6.4943;3.8263;1.9996
+163;Kitchen;Kitchen.001;Cabinet.009;Cabinet;-7.0323;4.3634;0.4576
+164;Kitchen;Kitchen.001;Cabinet.010;Cabinet;-8.5521;3.9990;0.4929
+165;Kitchen;Kitchen.001;Cabinet.011;Cabinet;-8.8006;2.5926;0.4992
+166;Kitchen;Kitchen.001;Cabinet.013;Cabinet;-7.9634;4.4630;1.9996
+167;Kitchen;Kitchen.001;Clock.001;Clock;-6.4319;3.3451;1.9087
+168;Kitchen;Kitchen.001;CoffeMachine;Coffe Machine;-6.6712;4.2323;1.0971
+169;Kitchen;Kitchen.001;Dishwasher;Dishwasher;-8.8418;3.0254;0.4912
+170;Kitchen;Kitchen.001;Faucet.002;Faucet;-8.9750;3.7517;1.0990
+171;Kitchen;Kitchen.001;FireExtinquisher.001;Fire Extinguisher;-8.2437;2.5373;1.8594
+172;Kitchen;Kitchen.001;Fridge;Fridge;-6.4400;3.7314;0.9813
+173;Kitchen;Kitchen.001;Heater.003;Heater;-8.8118;2.5396;1.6607
+174;Kitchen;Kitchen.001;Kettle;Kettle;-6.9269;4.4687;1.0327
+175;Kitchen;Kitchen.001;Lamp.024;Lamp;-7.4432;2.8624;2.4950
+176;Kitchen;Kitchen.001;Lamp.025;Lamp;-8.8566;2.8533;2.5011
+177;Kitchen;Kitchen.001;Lamp.026;Lamp;-8.8604;3.7889;2.5027
+178;Kitchen;Kitchen.001;Lamp.027;Lamp;-7.4777;3.8140;2.4835
+179;Kitchen;Kitchen.001;Lamp.028;Lamp;-7.6772;4.3496;1.5066
+180;Kitchen;Kitchen.001;Oven;Oven;-7.5787;4.3525;0.4935
+181;Kitchen;Kitchen.001;Shelf.003;Shelf;-7.6348;2.6250;2.0472
+182;Kitchen;Kitchen.001;Sink.001;Sink;-8.8110;3.6290;0.7972
+183;Kitchen;Kitchen.001;Socket.007;Socket;-9.1189;2.6040;1.0525
+184;Kitchen;Kitchen.001;Socket.008;Socket;-8.1868;4.6561;1.0533
+185;Kitchen;Kitchen.001;Socket.009;Socket;-6.3802;4.6658;1.0406
+186;Kitchen;Kitchen.001;Speaker.004;Speaker;-8.2053;2.6112;1.8064
+187;Kitchen;Kitchen.001;Stove;Stove;-7.8610;4.3627;0.9399
+188;Kitchen;Kitchen.001;Switch.009;Switch;-5.8452;2.4791;1.0894
+189;Kitchen;Kitchen.001;Switch.010;Switch;-6.7400;3.3671;1.4765
+190;Kitchen;Kitchen.001;Table.003;Table;-7.4722;2.6613;0.4417
+191;Kitchen;Kitchen.001;Toaster;Toaster;-8.4100;4.4304;1.0104
+192;Kitchen;Kitchen.001;Window.005;Window;-9.2153;3.9918;1.5899
+193;Kitchen;Kitchen.001;Window.006;Window;-9.2295;3.2761;1.5941
+194;Corridor;Corridor.001;AlarmSensor.008;Alarm Sensor;-5.2558;0.4293;2.0668
+195;Corridor;Corridor.001;Cabinet.007;Cabinet;-4.7261;4.2576;1.3678
+196;Corridor;Corridor.001;Cabinet.008;Cabinet;-4.6291;2.6877;0.3356
+197;Corridor;Corridor.001;Door.004;Door;-5.1749;4.7007;1.0296
+198;Corridor;Corridor.001;Door.005;Door;-4.2023;3.3457;1.0111
+199;Corridor;Corridor.001;Lamp.023;Lamp;-5.0502;1.3382;2.4908
+200;Corridor;Corridor.001;Lamp.029;Lamp;-5.1917;3.3301;2.4908
+201;Corridor;Corridor.001;Mirror.005;Mirror;-4.7029;4.2658;1.1721
+202;Corridor;Corridor.001;Phone;Phone;-4.6022;2.5148;1.4891
+203;Corridor;Corridor.001;Rug.007;Rug;-4.6214;4.2159;0.0078
+204;Corridor;Corridor.001;Shelf.002;Shelf;-4.6597;1.3369;2.2936
+205;Corridor;Corridor.001;Socket.005;Socket;-5.6082;2.0828;2.3592
+206;Corridor;Corridor.001;Socket.006;Socket;-4.5765;2.2643;0.2195
+207;Corridor;Corridor.001;Switch.007;Switch;-5.5016;0.4031;1.1041
+208;Corridor;Corridor.001;Switch.008;Switch;-5.6189;3.5689;1.0986

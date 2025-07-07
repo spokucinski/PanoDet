@@ -3,5 +3,5 @@ data/original_images/*
 data/scroll_values/*
 data/scrolled_annotations/*
 data/scrolled_images/*
-
+data/archive
 __pycache__

@@ -1,29 +1,22 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
-// README at: https://github.com/devcontainers/templates/tree/main/src/alpine
+// README at: https://github.com/devcontainers/templates/tree/main/src/ubuntu
 {
-	"name": "DatasetExporterContainer",
+	"name": "Yolo11DevContainer",
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	// "image": "voxel51/fiftyone",
 	"build": { "dockerfile": "Dockerfile" },
 	"customizations": {
 		"vscode": {
 			"extensions": [
 				"ms-python.python",
 				"ms-python.vscode-pylance"
-			],
-			"settings": {
-				"python.defaultInterpreterPath": "/opt/.fiftyone-venv/bin/python",
-				"python.analysis.extraPaths": [
-					"/opt/.fiftyone-venv/lib/python3.10/site-packages"
-				]
-      		}		
+			]
 		}
 	},
 	"runArgs": [
 		"--gpus",
 		"all",
 		"--name",
-		"DatasetExporterContainer",
+		"Yolo11DevContainer",
 		"--ipc=host"
 	]
 

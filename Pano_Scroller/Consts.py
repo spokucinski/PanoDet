@@ -5,7 +5,7 @@ SCROLLED_IMAGES_PATH = "data\\scrolled_images"
 SCROLL_VALUES_PATH = "data\\scroll_values"
 SCROLLED_ANNOTATIONS_PATH = "data\\scrolled_annotations"
 
-ACCEPTED_IMAGE_FORMATS = [".jpg", ".png"]
+ACCEPTED_IMAGE_FORMATS = [".jpg", ".png", ".webp", ".JPG", ".PNG", ".WEBP"]
 
 WINDOW_MAIN: str = "Main window"
 WINDOW_PREVIEW: str = "Preview"

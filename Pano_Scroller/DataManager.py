@@ -20,6 +20,8 @@ def getInput() -> (list[str], list[str]):
             annotationPath = annotationPath.replace(imageFormat, ".txt")
         if os.path.exists(annotationPath):
             annotationPaths.append(annotationPath)
+        else:
+            print(f"Missing annotation file for {annotationPath}!")
     foundAnnotationsCount = len(annotationPaths)
     print(f"Found: {foundAnnotationsCount} according annotation files!")
 

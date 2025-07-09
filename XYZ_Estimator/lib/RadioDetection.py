@@ -2,11 +2,11 @@ from dataclasses import dataclass
 
 @dataclass
 class RadioDetection:
-    radio_id: int
+    radioId: int
     experiment: str
     room: str
-    tracker_id: str
-    object_id: str
+    trackerId: str
+    objectId: str
     xr: float
     yr: float
     zr: float

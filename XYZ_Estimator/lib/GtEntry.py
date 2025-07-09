@@ -2,11 +2,11 @@ from dataclasses import dataclass
 
 @dataclass
 class GtEntry:
-    ground_truth_id: int
+    groundTruthId: int
     room: str
     collection: str
-    object_id: str
-    code55: str
+    objectId: str
+    code55Class: str
     xgt: float
     ygt: float
     zgt: float

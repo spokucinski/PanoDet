@@ -2,4 +2,4 @@
 /data/images/*
 /data/labels/*
 /data/out/*
-__pycache__/*
+*/__pycache__/*

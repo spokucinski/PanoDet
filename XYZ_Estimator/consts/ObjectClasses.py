@@ -1,4 +1,4 @@
-OBJECT_CLASSES = {
+CODE55_CLASSES = {
     "Chair",
     "Table",
     "TV",

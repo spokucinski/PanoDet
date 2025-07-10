@@ -269,7 +269,13 @@ def computeIJD(
     aggregateIJDStatistics(ijdResults)
 
 
-def main(groundTruthPath: str, visualDetectionsPath: str, radioPredictionsPath: str) -> None:
+def main(groundTruthPath: str, 
+         visualDetectionsPath: str, 
+         radioPredictionsPath: str,
+         radioWeight: float = 0.5,
+         visionWeight: float = 0.5,
+         radioSensitivity: float = 0.5,
+         visionSensitivity: float = 0.5) -> None:
     
     gtEntries = DataLoader.readGroundTruth(groundTruthPath)
     Validator.validateGtClasses(gtEntries)
@@ -287,17 +293,36 @@ def main(groundTruthPath: str, visualDetectionsPath: str, radioPredictionsPath: 
     radioPredictions = DataLoader.readRadioPredictions(radioPredictionsPath) 
     Validator.validateRadioObjectIds(radioPredictions, gtEntries)
     
-    computeIJD(gtEntries, visualDetections, radioPredictions)
+    computeIJD(gtEntries=gtEntries, 
+               visualDetections=visualDetections, 
+               radioPredictions=radioPredictions,
+               radioWeight=radioWeight,
+               visionWeight=visionWeight,
+               radioSensitivity=radioSensitivity,
+               visionSensitivity=visionSensitivity)
 
     compute_euclidean_errors(visualDetections, gtEntries)
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Obróbka wyników GT i detekcji.")
+    parser = argparse.ArgumentParser(description="Calculation script for the IJD.")
     
+    # Base parameters
     parser.add_argument("--gtPath", type=str, default="data/GroundTruth.csv", help="File path to GroundTruth.csv")
     parser.add_argument("--visualDetectionsPath", type=str, default="data/DetectionsSummary.csv", help="File path to DetectionsSummary.csv")
     parser.add_argument("--radioPredictionsPath", type=str, default="data/RadioDetections.csv", help="File path to RadioDetections.csv")
     
+    # Calculation parameters
+    parser.add_argument("--radioWeight", type=float, default=0.5, help="Weight for radio subsystem (default: 0.5)")
+    parser.add_argument("--visionWeight", type=float, default=0.5, help="Weight for vision subsystem (default: 0.5)")
+    parser.add_argument("--radioSensitivity", type=float, default=0.5, help="Error sensitivity for radio (k_RAD, default: 0.5)")
+    parser.add_argument("--visionSensitivity", type=float, default=0.5, help="Error sensitivity for vision (k_WIZ, default: 0.5)")
+
     args = parser.parse_args()
     
-    main(groundTruthPath=args.gtPath, visualDetectionsPath=args.visualDetectionsPath, radioPredictionsPath=args.radioPredictionsPath)
+    main(groundTruthPath=args.gtPath, 
+         visualDetectionsPath=args.visualDetectionsPath, 
+         radioPredictionsPath=args.radioPredictionsPath,
+         radioWeight=args.radioWeight,
+         visionWeight=args.visionWeight,
+         radioSensitivity=args.radioSensitivity,
+         visionSensitivity=args.visionSensitivity)

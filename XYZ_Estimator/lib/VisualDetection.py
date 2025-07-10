@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 @dataclass
-class Detection:
+class VisualDetection:
     detectionId: int
     relativeDetectionNumber: int
     label: str

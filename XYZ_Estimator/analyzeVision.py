@@ -5,10 +5,10 @@ import matplotlib.pyplot as plt
 import statistics
 
 from lib.GtEntry import GtEntry
-from lib.Detection import Detection
-from lib.IJDCalculationEntry import IJDCalculationEntry
+from lib.VisualDetection import VisualDetection
+from lib.IJDCalculationEntry import CalculationEntry
 from lib.Visualizer import Visualizer
-from lib.RadioDetection import RadioDetection
+from lib.RadioDetection import RadioPrediction
 
 from lib.Validator import Validator
 from lib.DataLoader import DataLoader
@@ -17,7 +17,7 @@ from typing import List
 from consts.ObjectClasses import CODE55_CLASSES
 
 def compute_euclidean_errors(
-    detections: List[Detection], 
+    detections: List[VisualDetection], 
     gt_entries: List[GtEntry]
 ) -> None:
     gt_map = {entry.objectId: entry for entry in gt_entries}
@@ -94,7 +94,7 @@ def main(
     ) -> None:
 
     gtEntries = DataLoader.readGroundTruth(groundTruthPath)
-    visualDetections = DataLoader.readVisualDetections(visualDetectionsPath)
+    visualDetections = DataLoader.readVisionDetections(visualDetectionsPath)
     compute_euclidean_errors(visualDetections, gtEntries)
 
 if __name__ == "__main__":

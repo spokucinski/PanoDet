@@ -6,7 +6,7 @@ class GtEntry:
     room: str
     collection: str
     objectId: str
-    code55Class: str
+    classLabel: str
     xgt: float
     ygt: float
     zgt: float

@@ -1,32 +1,56 @@
 from typing import List
 from lib.GtEntry import GtEntry
-from lib.Detection import Detection
-from lib.RadioDetection import RadioDetection
+from lib.VisualDetection import VisualDetection
+from lib.RadioDetection import RadioPrediction
 from consts.ObjectClasses import CODE55_CLASSES
 
 class Validator:
     @staticmethod
-    def validateGtClasses(gtEntries: List[GtEntry]) -> None:
-        notFoundClasses = []
-        
+    def validateClassLabels(gtEntries: List[GtEntry], expectedLabels: set) -> None:
+        """
+        Checks whether all class labels used in the ground truth entries are recognized.
+
+        Args:
+            gtEntries (List[GtEntry]): List of ground truth entries to check.
+            expectedLabels (set): Set of allowed/recognized class labels.
+
+        Output:
+            Prints to the console a report of any unrecognized class labels,
+            or a summary if all are valid.
+        """
+        notFound = []
         for gtEntry in gtEntries:
-            if gtEntry.code55Class not in CODE55_CLASSES:
-                notFoundClasses.append((gtEntry.objectId, gtEntry.code55Class))
+            if gtEntry.classLabel not in expectedLabels:
+                notFound.append((gtEntry.objectId, gtEntry.classLabel))
         
-        if notFoundClasses:
-            print("Nierozpoznane klasy CODE55 w Ground Truth:")
-            for obj_id, code in notFoundClasses:
-                print(f"  ObjectId: {obj_id}  |  CODE55: '{code}'")
+        if notFound:
+            print("Unrecognized class labels found in Ground Truth:")
+            for objectId, label in notFound:
+                print(f"  ObjectId: {objectId}  |  class label: '{label}'")
         else:
-            print("Wszystkie klasy CODE55 w GT są prawidłowe.")
+            print("All class labels in Ground Truth are valid.")
 
     @staticmethod
-    def validateDetectionLabels(detections: List[Detection]) -> None:
+    def validateDetectionLabels(
+        visualDetections: List[VisualDetection], 
+        expectedClasses: set
+        ) -> None:
+        """
+        Validates that all detection labels are present in the expected class set.
+
+        Args:
+            visualDetections (List[Detection]): List of visual detection entries.
+            expectedClasses (set): Set of valid class labels.
+        
+        Output:
+            Prints a report of unrecognized class labels or a summary if all are valid.
+        """
         unrecognizedClasses = []
         
-        for detection in detections:
-            if detection.label not in CODE55_CLASSES:
-                unrecognizedClasses.append((detection.relativeDetectionNumber, detection.label))
+        for detection in visualDetections:
+            if detection.label not in expectedClasses:
+                unrecognizedClasses.append(
+                    (detection.relativeDetectionNumber, detection.label))
                 
         if unrecognizedClasses:
             print("Unrecognized class labels in detections:")
@@ -37,14 +61,24 @@ class Validator:
 
     @staticmethod
     def validateDetectedObjectIds(
-        detections: List[Detection],
+        visualDetections: List[VisualDetection],
         gtEntries: List[GtEntry]
     ) -> None:
+        """
+        Validates that all detected object IDs in visual detections match objects from ground truth.
+
+        Args:
+            detections (List[VisualDetection]): List of visual detection entries.
+            gtEntries (List[GtEntry]): List of ground truth entries.
+
+        Output:
+            Prints a report of unmatched object IDs or a summary if all are valid.
+        """
         allGtObjectIds = {entry.objectId for entry in gtEntries}
         
         unmatched = [
             (detection.detectionId, detection.detectedObjectId)
-            for detection in detections
+            for detection in visualDetections
             if detection.detectedObjectId not in allGtObjectIds
         ]
 
@@ -58,7 +92,7 @@ class Validator:
 
     @staticmethod
     def validateRadioObjectIds(
-        radioDetections: List[RadioDetection],
+        radioDetections: List[RadioPrediction],
         gtEntries: List[GtEntry]
     ) -> None:
         gtObjectIds = {entry.objectId for entry in gtEntries}

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 @dataclass
-class RadioDetection:
+class RadioPrediction:
     radioId: int
     experiment: str
     room: str

@@ -1,8 +1,8 @@
 from typing import Tuple, List
 import pandas as pd
 from lib.GtEntry import GtEntry
-from lib.Detection import Detection
-from lib.RadioDetection import RadioDetection
+from lib.VisualDetection import VisualDetection
+from lib.RadioDetection import RadioPrediction
 
 class DataLoader:
     @staticmethod
@@ -16,16 +16,30 @@ class DataLoader:
         raise ValueError(f"Invalid value for boolean field: {val!r}")
 
     @staticmethod
-    def readGroundTruth(path: str) -> List[GtEntry]:
-        dataFrame = pd.read_csv(path, sep=';')
-        
+    def readGroundTruth(groundTruthPath: str) -> List[GtEntry]:
+        """
+        Reads the ground truth data from a CSV file and converts each row into a GtEntry object.
+
+        Args:
+            groundTruthPath (str): Path to the GroundTruth.csv file.
+
+        Returns:
+            List[GtEntry]: A list of GtEntry objects parsed from the CSV file.
+
+        Notes:
+            - The CSV file must use a semicolon (';') as the separator.
+            - All required columns (GroundTruthId, Room, Collection, ObjectId, CODE55, Xgt, Ygt, Zgt) must be present.
+            - Each GtEntry holds the spatial ground truth information for one object.
+        """
+        dataFrame = pd.read_csv(groundTruthPath, sep=';')
+
         gtEntries = [
             GtEntry(
                 groundTruthId=int(row['GroundTruthId']),
                 room=row['Room'],
                 collection=row['Collection'],
                 objectId=row['ObjectId'],
-                code55Class=row['CODE55'],
+                classLabel=row['CODE55'],
                 xgt=float(row['Xgt']),
                 ygt=float(row['Ygt']),
                 zgt=float(row['Zgt'])
@@ -36,10 +50,10 @@ class DataLoader:
         return gtEntries
 
     @staticmethod
-    def readRadioPredictions(path: str) -> List[RadioDetection]:
-        df = pd.read_csv(path, sep=';')
-        entries = [
-            RadioDetection(
+    def readRadioPredictions(radioPredictionsPath: str) -> List[RadioPrediction]:
+        dataFrame = pd.read_csv(radioPredictionsPath, sep=';')
+        radioPredictions = [
+            RadioPrediction(
                 radioId=int(row['RadioId']),
                 experiment=row['Experiment'],
                 room=row['Room'],
@@ -52,19 +66,27 @@ class DataLoader:
                 yrgt=float(row['Yrgt']),
                 zrgt=float(row['Zrgt'])
             )
-            for _, row in df.iterrows()
+            for _, row in dataFrame.iterrows()
         ]
-        return entries
+        return radioPredictions
 
     @staticmethod
-    def readVisualDetections(path: str) -> Tuple[List[Detection], int, int, int, List[int]]:
-        dataFrame = pd.read_csv(path, sep=';')
+    def readVisionDetections(visionDetectionsPath: str) -> List[VisualDetection]:
+        """
+        Reads a CSV file containing vision detections and returns a list of Detection objects.
+        
+        Args:
+            visionDetectionsPath (str): Path to the CSV file.
+        
+        Returns:
+            List[Detection]: List of parsed Detection objects.
+        """
+        dataFrame = pd.read_csv(visionDetectionsPath, sep=';')
         detections = []
 
         for _, row in dataFrame.iterrows():
             bool_val = DataLoader.parseStringToBool(row['DetectionCorrect'])
-            
-            detection = Detection(
+            detection = VisualDetection(
                 detectionId=int(row['DetectionId']),
                 relativeDetectionNumber=int(row['RelDetNumber']),
                 label=row['Label'],
@@ -83,7 +105,6 @@ class DataLoader:
                 detectionCorrect=bool_val,
                 detectedInRoom=row['DetectedInRoom']
             )
-
             detections.append(detection)
 
         return detections

@@ -62,15 +62,24 @@ def calculateMeanVisualError(
         d for d in visualDetections
         if d.detectedObjectId == gtEntry.objectId and d.detectionCorrect is True
     ]
+
     if not matchingDetections:
         return 0
+    
     errors = []
     for detection in matchingDetections:
-        dx = gtEntry.xgt - detection.xglobal
-        dy = gtEntry.ygt - detection.yglobal
-        dz = gtEntry.zgt - detection.zglobal
+        if useHybridPositioning:
+            dx = gtEntry.xgt - detection.xradio
+            dy = gtEntry.ygt - detection.yradio
+            dz = gtEntry.zgt - detection.zradio
+        else:
+            dx = gtEntry.xgt - detection.xglobal
+            dy = gtEntry.ygt - detection.yglobal
+            dz = gtEntry.zgt - detection.zglobal
+
         error = math.sqrt(dx*dx + dy*dy + dz*dz)
         errors.append(error)
+
     return float(sum(errors) / len(errors))
 
 def calculateMeanRadioError(gtEntry: GtEntry, radioPredictions: List[RadioDetection]) -> float | None:
@@ -147,7 +156,8 @@ def computeIJD(
         radioWeight: float = 0.5,
         visionWeight: float = 0.5,
         radioSensitivity: float = 0.5,
-        visionSensitivity: float = 0.5
+        visionSensitivity: float = 0.5,
+        useHybridPositioning: bool = False
     ) -> None:
     
     # Watch out for decimal reprezentation
@@ -160,7 +170,7 @@ def computeIJD(
         cWiz = calculateVisualDetectionCorrectness(entry.objectId, visualDetections)
         cRad = calculateRadioAvailability(entry.objectId, radioPredictions)
         
-        eWiz = calculateMeanVisualError(entry, visualDetections)
+        eWiz = calculateMeanVisualError(entry, visualDetections, useHybridPositioning)
         eRad = calculateMeanRadioError(entry, radioPredictions)
     
         wlw = calculateWLW(eWiz, visionSensitivity)
@@ -177,24 +187,27 @@ def computeIJD(
             radioWeight=radioWeight,
             visionError=eWiz,
             radioError=eRad,
-            kRad=radioSensitivity,
-            kWiz=visionSensitivity,
+            radioSensitivity=radioSensitivity,
+            visionSensitivity=visionSensitivity,
             wlw=wlw,
             wlr=wlr,
-            ijd=ijd)
+            ijd=ijd,
+            useHybridPositioning=useHybridPositioning)
         
         ijdResults.append(ijdEntry)
 
         print(
-            f"ObjectId: {entry.objectId:20s} | "
+            f"ObjId: {entry.objectId:20s} | "
             f"CODE55: {entry.code55Class:20s} | "
             f"WZO: {wzo} | "
             f"C_WIZ: {cWiz} | "
             f"C_RAD: {cRad} | "
-            f"visionWeight: {visionWeight:.2f} | "
-            f"radioWeight: {radioWeight:.2f} | "
-            f"visionError: {eWiz:.2f} | "
-            f"radioError: {eRad:.2f} | "
+            f"visWeight: {visionWeight:.2f} | "
+            f"radWeight: {radioWeight:.2f} | "
+            f"visErr: {eWiz:.2f} | "
+            f"radErr: {eRad:.2f} | "
+            f"visSens: {visionSensitivity:.2f} | "
+            f"radSens: {radioSensitivity:.2f} | "
             f"WLW: {wlw:.2f} | "
             f"WLR: {wlr:.2f} | "
             f"IJD: {ijd:.2f}"
@@ -209,7 +222,8 @@ def main(groundTruthPath: str,
          radioWeight: float = 0.5,
          visionWeight: float = 0.5,
          radioSensitivity: float = 0.5,
-         visionSensitivity: float = 0.5) -> None:
+         visionSensitivity: float = 0.5,
+         useHybridPositioning: bool = False) -> None:
     
     gtEntries = DataLoader.readGroundTruth(groundTruthPath)
     Validator.validateGtClasses(gtEntries)
@@ -233,7 +247,8 @@ def main(groundTruthPath: str,
                radioWeight=radioWeight,
                visionWeight=visionWeight,
                radioSensitivity=radioSensitivity,
-               visionSensitivity=visionSensitivity)
+               visionSensitivity=visionSensitivity,
+               useHybridPositioning=useHybridPositioning)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Calculation script for the IJD.")
@@ -248,6 +263,7 @@ if __name__ == "__main__":
     parser.add_argument("--visionWeight", type=float, default=0.5, help="Weight for vision subsystem (default: 0.5)")
     parser.add_argument("--radioSensitivity", type=float, default=0.5, help="Error sensitivity for radio (k_RAD, default: 0.5)")
     parser.add_argument("--visionSensitivity", type=float, default=0.5, help="Error sensitivity for vision (k_WIZ, default: 0.5)")
+    parser.add_argument("--useHybridPositioning", action="store_true", default=False, help="Use radio-based positions of cameras (hybrid-mode) in visual error calculation (default: False)")
 
     args = parser.parse_args()
     
@@ -257,4 +273,5 @@ if __name__ == "__main__":
          radioWeight=args.radioWeight,
          visionWeight=args.visionWeight,
          radioSensitivity=args.radioSensitivity,
-         visionSensitivity=args.visionSensitivity)
+         visionSensitivity=args.visionSensitivity,
+         useHybridPositioning=args.useHybridPositioning)

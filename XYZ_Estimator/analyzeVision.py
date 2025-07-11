@@ -1,18 +1,13 @@
 import argparse
-import math
 import numpy as np
 import matplotlib.pyplot as plt
-import statistics
+import argparse
 
 from lib.GtEntry import GtEntry
 from lib.VisualDetection import VisualDetection
-from lib.IJDCalculationEntry import CalculationEntry
 from lib.Visualizer import Visualizer
-from lib.RadioDetection import RadioPrediction
-
 from lib.Validator import Validator
 from lib.DataLoader import DataLoader
-
 from typing import List
 from consts.ObjectClasses import CODE55_CLASSES
 
@@ -88,23 +83,86 @@ def compute_euclidean_errors(
         plt.tight_layout()
         plt.show()
 
-def main(
-        groundTruthPath: str,
-        visualDetectionsPath: str
-    ) -> None:
+def main(gtPath, visualDetectionsPath, skipValidation=False):
 
-    gtEntries = DataLoader.readGroundTruth(groundTruthPath)
-    visualDetections = DataLoader.readVisionDetections(visualDetectionsPath)
-    compute_euclidean_errors(visualDetections, gtEntries)
+    gtEntries = DataLoader.readGroundTruth(gtPath)
+    visualDetections = DataLoader.readVisualDetections(visualDetectionsPath)
 
+    if not skipValidation:
+        Validator.validateVisualDetectionLabels(visualDetections, CODE55_CLASSES)
+        Validator.validateVisualDetectionObjectIds(visualDetections, gtEntries)
+
+    outDir = "data/out/vision"
+    Visualizer.saveDetectionsPerRoomHistogram(visualDetections=visualDetections, outDir=outDir)
+    Visualizer.saveDetectionsPerRoomHistogram(visualDetections=visualDetections, outDir=outDir, polish=True)
+
+    Visualizer.saveCorrectIncorrectPerRoomHistogram(visualDetections=visualDetections,
+                                                    outDir=outDir,
+                                                    polish=False)
+    
+    Visualizer.saveCorrectIncorrectPerRoomHistogram(visualDetections=visualDetections,
+                                                    outDir=outDir,
+                                                    polish=True)
+    
+    Visualizer.saveDetectionsPerLabelHistogram(visualDetections=visualDetections,
+                                               outDir=outDir,
+                                               topN=15,
+                                               polish=False)
+    
+    Visualizer.saveDetectionsPerLabelHistogram(visualDetections=visualDetections,
+                                               outDir=outDir,
+                                               topN=15,
+                                               polish=True)
+    
+    Visualizer.saveDetectionCorrectnessPerClassBar(visualDetections=visualDetections,
+                                                   outDir=outDir,
+                                                   topN=15,
+                                                   polish=False)
+    
+    Visualizer.saveDetectionCorrectnessPerClassBar(visualDetections=visualDetections,
+                                                   outDir=outDir,
+                                                   topN=15,
+                                                   polish=True)
+    
+    Visualizer.saveDetectionDistancesHistogram(visualDetections=visualDetections,
+                                               outDir=outDir,
+                                               polish=False,
+                                               correctOnly=False)
+    
+    Visualizer.saveDetectionDistancesHistogram(visualDetections=visualDetections,
+                                               outDir=outDir,
+                                               polish=True,
+                                               correctOnly=False)
+    
+    Visualizer.saveDetectionDistancesHistogram(visualDetections=visualDetections,
+                                               outDir=outDir,
+                                               polish=False,
+                                               correctOnly=True)
+    
+    Visualizer.saveDetectionDistancesHistogram(visualDetections=visualDetections,
+                                               outDir=outDir,
+                                               polish=True,
+                                               correctOnly=True)
+    
+    Visualizer.saveDetectionCorrectnessPie(visualDetections=visualDetections,
+                                           outDir=outDir,
+                                           polish=False)
+    
+    Visualizer.saveDetectionCorrectnessPie(visualDetections=visualDetections,
+                                           outDir=outDir,
+                                           polish=True)
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Analyzer of visual detections.")
-    
-    # Base parameters
-    parser.add_argument("--gtPath", type=str, default="data/GroundTruth.csv", help="File path to GroundTruth.csv")
-    parser.add_argument("--visualDetectionsPath", type=str, default="data/DetectionsSummary.csv", help="File path to DetectionsSummary.csv")
 
-    args = parser.parse_args()
+    parser = argparse.ArgumentParser(description="Analyzer for performance of the visual subsystem only.")
+
+    parser.add_argument("--gtPath", type=str, default="data/GroundTruth.csv", help="CSV file path for Ground Truth")
+    parser.add_argument("--visualDetectionsPath", type=str, default="data/DetectionsSummary.csv", help="CSV file path for Visual Detections")
+    parser.add_argument("--skipValidation", action="store_true", default=False, help="Skip input validation (default: False)")
     
-    main(groundTruthPath=args.gtPath, 
-         visualDetectionsPath=args.visualDetectionsPath,)
+    args = parser.parse_args()
+
+    main(
+        gtPath=args.gtPath,
+        visualDetectionsPath=args.visualDetectionsPath,
+        skipValidation=args.skipValidation
+    )

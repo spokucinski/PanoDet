@@ -16,6 +16,7 @@ from lib.RadioDetection import RadioPrediction
 
 from lib.Validator import Validator
 from lib.DataLoader import DataLoader
+from lib.Printer import Printer
 
 from typing import List
 from consts.ObjectClasses import CODE55_CLASSES
@@ -496,32 +497,25 @@ def main(groundTruthPath: str,
          skipPrinting=False) -> None:
     
     gtEntries = DataLoader.readGroundTruth(groundTruthPath=groundTruthPath)
-    visualDetections = DataLoader.readVisionDetections(visionDetectionsPath=visualDetectionsPath)
+    visualDetections = DataLoader.readVisualDetections(visionDetectionsPath=visualDetectionsPath)
     radioPredictions = DataLoader.readRadioPredictions(radioPredictionsPath)
 
     if not skipValidation:
-        Validator.validateClassLabels(gtEntries=gtEntries, 
-                                    expectedLabels=CODE55_CLASSES)
+        Validator.validateGtClassLabels(gtEntries=gtEntries, 
+                                      expectedLabels=CODE55_CLASSES)
         
-        Validator.validateDetectionLabels(visualDetections=visualDetections, 
+        Validator.validateVisualDetectionLabels(visualDetections=visualDetections, 
                                         expectedClasses=CODE55_CLASSES)
         
-        Validator.validateDetectedObjectIds(visualDetections=visualDetections, 
+        Validator.validateVisualDetectionObjectIds(visualDetections=visualDetections, 
                                             gtEntries=gtEntries)
         
         Validator.validateRadioObjectIds(radioPredictions, gtEntries)
     
     if not skipPrinting:
-        Visualizer.printGtStatistics(gtEntries=gtEntries)
-        Visualizer.saveGtStatisticsHistograms(gtEntries=gtEntries, 
-                                            outDir="data/out/statistics", 
-                                            allClassLabels=CODE55_CLASSES)
-
-        Visualizer.printVisualDetectionsStatistics(visualDetections=visualDetections)
-        Visualizer.saveVisualDetectionsHistograms(visualDetections=visualDetections,
-                                                outDir="data/out/statistics",
-                                                topNImages=20) 
-    
+        Printer.printGtStatistics(gtEntries=gtEntries)
+        Printer.printVisualDetectionsStatistics(visualDetections=visualDetections)
+        
     ijdResults = computeIJD(gtEntries=gtEntries, 
                             visualDetections=visualDetections, 
                             radioPredictions=radioPredictions,

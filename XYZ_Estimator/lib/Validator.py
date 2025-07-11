@@ -6,7 +6,10 @@ from consts.ObjectClasses import CODE55_CLASSES
 
 class Validator:
     @staticmethod
-    def validateClassLabels(gtEntries: List[GtEntry], expectedLabels: set) -> None:
+    def validateGtClassLabels(
+        gtEntries: List[GtEntry], 
+        expectedLabels: set
+    ) -> None:
         """
         Checks whether all class labels used in the ground truth entries are recognized.
 
@@ -31,10 +34,10 @@ class Validator:
             print("All class labels in Ground Truth are valid.")
 
     @staticmethod
-    def validateDetectionLabels(
+    def validateVisualDetectionLabels(
         visualDetections: List[VisualDetection], 
         expectedClasses: set
-        ) -> None:
+    ) -> None:
         """
         Validates that all detection labels are present in the expected class set.
 
@@ -60,7 +63,7 @@ class Validator:
             print("All class labels in detections are valid.")
 
     @staticmethod
-    def validateDetectedObjectIds(
+    def validateVisualDetectionObjectIds(
         visualDetections: List[VisualDetection],
         gtEntries: List[GtEntry]
     ) -> None:
@@ -83,7 +86,7 @@ class Validator:
         ]
 
         if unmatched:
-            print(f"Some detections (Count: {len(unmatched)}) refer to unrecognized ObjectIds!")
+            print(f"Some detections (Count: {len(unmatched)} out of {len(visualDetections)}) refer to unrecognized ObjectIds!")
             print("Unmatched ObjectIds:")
             for detectionId, objectId in unmatched:
                 print(f"  DetectionId: {detectionId}  |  DetectedObjectId: '{objectId}'")

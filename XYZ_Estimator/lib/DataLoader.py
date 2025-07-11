@@ -71,7 +71,7 @@ class DataLoader:
         return radioPredictions
 
     @staticmethod
-    def readVisionDetections(visionDetectionsPath: str) -> List[VisualDetection]:
+    def readVisualDetections(visionDetectionsPath: str) -> List[VisualDetection]:
         """
         Reads a CSV file containing vision detections and returns a list of Detection objects.
         

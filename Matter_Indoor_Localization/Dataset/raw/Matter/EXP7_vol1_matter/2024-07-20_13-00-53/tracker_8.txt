@@ -1,0 +1,4 @@
+Tracker 8 collected 0 measurements.
+Tracker 8 had 1 errors.
+Error: Timeout, Exec Time: 3.25s
+Whole experiment took: 3.26s

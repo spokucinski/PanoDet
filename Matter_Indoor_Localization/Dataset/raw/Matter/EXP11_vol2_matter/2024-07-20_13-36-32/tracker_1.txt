@@ -1,0 +1,43 @@
+Tracker 1 collected 40 measurements.
+Anchor ID: 1, Distance: 2.37, Exec Time: 1.01s
+Anchor ID: 2, Distance: 5.18, Exec Time: 1.01s
+Anchor ID: 3, Distance: 3.02, Exec Time: 1.01s
+Anchor ID: 4, Distance: 4.97, Exec Time: 1.01s
+Anchor ID: 5, Distance: 3.78, Exec Time: 1.01s
+Anchor ID: 6, Distance: 2.71, Exec Time: 1.01s
+Anchor ID: 7, Distance: 2.36, Exec Time: 1.01s
+Anchor ID: 8, Distance: 2.61, Exec Time: 1.01s
+Anchor ID: 1, Distance: 2.35, Exec Time: 1.01s
+Anchor ID: 2, Distance: 5.13, Exec Time: 1.01s
+Anchor ID: 3, Distance: 3.70, Exec Time: 1.01s
+Anchor ID: 4, Distance: 1.20, Exec Time: 1.01s
+Anchor ID: 5, Distance: 4.43, Exec Time: 1.01s
+Anchor ID: 6, Distance: 2.71, Exec Time: 1.01s
+Anchor ID: 7, Distance: 2.38, Exec Time: 1.01s
+Anchor ID: 8, Distance: 2.63, Exec Time: 1.01s
+Anchor ID: 1, Distance: 2.42, Exec Time: 1.01s
+Anchor ID: 2, Distance: 4.96, Exec Time: 1.01s
+Anchor ID: 3, Distance: 4.46, Exec Time: 1.01s
+Anchor ID: 4, Distance: 4.93, Exec Time: 1.01s
+Anchor ID: 5, Distance: 4.35, Exec Time: 1.01s
+Anchor ID: 6, Distance: 2.76, Exec Time: 1.01s
+Anchor ID: 7, Distance: 2.37, Exec Time: 1.01s
+Anchor ID: 8, Distance: 2.58, Exec Time: 1.01s
+Anchor ID: 1, Distance: 2.39, Exec Time: 1.01s
+Anchor ID: 2, Distance: 4.99, Exec Time: 1.01s
+Anchor ID: 3, Distance: 3.64, Exec Time: 1.01s
+Anchor ID: 4, Distance: 4.94, Exec Time: 1.01s
+Anchor ID: 5, Distance: 4.36, Exec Time: 1.01s
+Anchor ID: 6, Distance: 2.74, Exec Time: 1.01s
+Anchor ID: 7, Distance: 2.37, Exec Time: 1.01s
+Anchor ID: 8, Distance: 2.60, Exec Time: 1.01s
+Anchor ID: 1, Distance: 2.40, Exec Time: 1.01s
+Anchor ID: 2, Distance: 4.89, Exec Time: 1.01s
+Anchor ID: 3, Distance: 3.64, Exec Time: 1.01s
+Anchor ID: 4, Distance: 4.93, Exec Time: 1.01s
+Anchor ID: 5, Distance: 4.43, Exec Time: 1.01s
+Anchor ID: 6, Distance: 2.86, Exec Time: 1.01s
+Anchor ID: 7, Distance: 2.35, Exec Time: 1.01s
+Anchor ID: 8, Distance: 2.56, Exec Time: 1.01s
+Tracker 1 had 0 errors.
+Whole experiment took: 1.01s

@@ -1,0 +1,4 @@
+Tracker 1 collected 0 measurements.
+Tracker 1 had 1 errors.
+Error: NoLogs, Exec Time: 1.07s
+Whole experiment took: 1.07s

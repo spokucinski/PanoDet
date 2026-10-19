@@ -1,0 +1,18 @@
+experiment,technology,type,description,acquisition_time_per_repetition,repetitions,series
+1,UWB + BLE,Static,"UWB Trackers 1-4 and BLE Trackers 1-4 placed in reference points 1-4, respectively. I.e. trackers UWB1 and BLE1 in point 1, UWB2 and BLE2 in point2, etc.",1 minute,3,48
+2,UWB + BLE,Static,"UWB Trackers 1-4 and BLE Trackers 1-4 placed in reference points 5-8, respectively. I.e. trackers UWB1 and BLE1 in point 5, UWB2 and BLE2 in point6, etc.",1 minute,3,48
+3,UWB + BLE,Static,"UWB Trackers 1-4 and BLE Trackers 1-4 placed in reference points 9,10,1,2, respectively. I.e. trackers UWB1 and BLE1 in point 9, UWB2 and BLE2 in point10, etc.",1 minute,3,48
+4,UWB,Dynamic,"UWB Trackers 1-4 placed on a moving platform, 13-14cm height, recorded a closed loop track: points1 to 10, point 3, point2, point1.",Around 5 minutes,3,24
+5,BLE,Dynamic,"BLE Trackers 1-4 placed on a moving platform, 13-14cm height, recorded a closed loop track: points1 to 10, point 3, point2, point1.",Around 5 minutes,3,24
+6,UWB,Static,"Tracker UWB1 placed in point1, 150cm height (tripod).",1 minute,3,6
+7,UWB,Static,"Tracker UWB1 placed in point3, 150cm height (tripod).",1 minute,3,6
+8,UWB,Static,"Tracker UWB1 placed in point5, 150cm height (tripod).",1 minute,3,6
+9,UWB,Static,"Tracker UWB1 placed in point7, 150cm height (tripod).",1 minute,3,6
+10,UWB,Static,"Tracker UWB1 placed in point10, 150cm height (tripod).",1 minute,3,6
+11,UWB,Dynamic,"Tracker UWB1 placed on tripod on a moving platform, recorded a closed loop track: points1 to 1, point3, point2, point1, Height: 140cm",Around 5 minutes,3,6
+12,BLE,Static,"Tracker BLE1 placed in point1, 150cm height (tripod).",1 minute,3,6
+13,BLE,Static,"Tracker BLE1 placed in point3, 150cm height (tripod).",1 minute,3,6
+14,BLE,Static,"Tracker BLE1 placed in point5, 150cm height (tripod).",1 minute,3,6
+15,BLE,Static,"Tracker BLE1 placed in point7, 150cm height (tripod).",1 minute,3,6
+16,BLE,Static,"Tracker BLE1 placed in point10, 150cm height (tripod).",1 minute,3,6
+17,BLE,Dynamic,"Tracker BLE1 placed on tripod on a moving platform, recorded a closed loop track: points1 to 1, point3, point2, point1, Height: 140cm",Around 5 minutes,3,6

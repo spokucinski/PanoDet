@@ -1,2 +1,5 @@
 *.pyc
 */out
+managed_components/
+.vscode/
+sdkconfig.old

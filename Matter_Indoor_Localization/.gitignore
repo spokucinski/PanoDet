@@ -3,3 +3,4 @@
 managed_components/
 .vscode/
 sdkconfig.old
+Utils/matter_log_consolidator/secrets.py
